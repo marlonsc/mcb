@@ -74,7 +74,8 @@ def test_main_returns_one_when_service_unreachable(tmp_path: Path) -> None:
     """Test main returns one when service unreachable."""
     config = tmp_path / "tests.toml"
     config.write_text(
-        '[test_services]\nmilvus = "http://localhost:1"\n', encoding="utf-8",
+        '[test_services]\nmilvus = "http://localhost:1"\n',
+        encoding="utf-8",
     )
     with mock.patch("mcb_scripts.external_services_check.CONFIG_PATH", config):
         assert main() == 1

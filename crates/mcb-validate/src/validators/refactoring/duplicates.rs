@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::utils::regex::compile_regex;
 
 use super::RefactoringValidator;
@@ -39,15 +39,15 @@ fn duplicate_dirs_count(locations: &[PathBuf]) -> usize {
 }
 
 /// Build the cross-crate consolidation suggestion message for a given severity.
-fn duplicate_suggestion(type_name: &str, crates: &HashSet<String>, severity: Severity) -> String {
+fn duplicate_suggestion(type_name: &str, crates: &HashSet<String>, severity: McbScriptsSeverity) -> String {
     match severity {
-        Severity::Info => format!(
+        McbScriptsSeverity::Info => format!(
             "Type '{type_name}' exists in {crates:?}. This is a known migration pattern - consolidate when migration completes."
         ),
-        Severity::Warning => format!(
+        McbScriptsSeverity::Warning => format!(
             "Type '{type_name}' is defined in {crates:?}. Consider consolidating to one location."
         ),
-        Severity::Error => format!(
+        McbScriptsSeverity::Error => format!(
             "Type '{type_name}' is unexpectedly defined in multiple crates: {crates:?}. This requires immediate consolidation."
         ),
     }
@@ -104,7 +104,7 @@ fn duplicate_violation(
             type_name,
             locations.len()
         ),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     })
 }
 
@@ -186,15 +186,15 @@ fn categorize_duplicate_severity(
     validator: &RefactoringValidator,
     type_name: &str,
     crates: &HashSet<String>,
-) -> Severity {
+) -> McbScriptsSeverity {
     // Intentionally duplicated utility types are informational.
     if validator.utility_types.contains(type_name) {
-        return Severity::Info;
+        return McbScriptsSeverity::Info;
     }
 
     // Known migration pairs are an expected, temporary duplication.
     if is_known_migration_pair(validator, crates) {
-        return Severity::Info;
+        return McbScriptsSeverity::Info;
     }
 
     // A migration-suffixed type touching a known pair is migration-related.
@@ -203,8 +203,8 @@ fn categorize_duplicate_severity(
         .any(|p| type_name.ends_with(p))
         && touches_migration_pair(validator, crates)
     {
-        return Severity::Warning;
+        return McbScriptsSeverity::Warning;
     }
 
-    Severity::Warning
+    McbScriptsSeverity::Warning
 }

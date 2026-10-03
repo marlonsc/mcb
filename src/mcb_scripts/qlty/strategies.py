@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 
-class FixStrategy:
+class McbScriptsFixStrategy:
     """Base for smell-fix strategies.
 
     The three members are class-level CONSTANTS, not computed properties: every
@@ -26,7 +26,7 @@ class FixStrategy:
     instructions: ClassVar[str] = ""
 
 
-class IdenticalCodeStrategy(FixStrategy):
+class McbScriptsIdenticalCodeStrategy(McbScriptsFixStrategy):
     """Strategy for fixing identical code blocks."""
 
     rule = "identical-code"
@@ -42,7 +42,7 @@ class IdenticalCodeStrategy(FixStrategy):
     )
 
 
-class SimilarCodeStrategy(FixStrategy):
+class McbScriptsSimilarCodeStrategy(McbScriptsFixStrategy):
     """Strategy for fixing similar code blocks."""
 
     rule = "similar-code"
@@ -58,7 +58,7 @@ class SimilarCodeStrategy(FixStrategy):
     )
 
 
-class FunctionComplexityStrategy(FixStrategy):
+class McbScriptsFunctionComplexityStrategy(McbScriptsFixStrategy):
     """Strategy for reducing function complexity."""
 
     rule = "function-complexity"
@@ -76,15 +76,15 @@ class FunctionComplexityStrategy(FixStrategy):
     )
 
 
-class MethodComplexityStrategy(FixStrategy):
+class McbScriptsMethodComplexityStrategy(McbScriptsFixStrategy):
     """Strategy for reducing method complexity."""
 
     rule = "method-complexity"
     title = "Reduce method complexity"
-    instructions = FunctionComplexityStrategy.instructions
+    instructions = McbScriptsFunctionComplexityStrategy.instructions
 
 
-class CognitiveComplexityStrategy(FixStrategy):
+class McbScriptsCognitiveComplexityStrategy(McbScriptsFixStrategy):
     """Strategy for reducing cognitive complexity."""
 
     rule = "cognitive-complexity"
@@ -100,7 +100,7 @@ class CognitiveComplexityStrategy(FixStrategy):
     )
 
 
-class NestedControlFlowStrategy(FixStrategy):
+class McbScriptsNestedControlFlowStrategy(McbScriptsFixStrategy):
     """Strategy for flattening nested control flow."""
 
     rule = "nested-control-flow"
@@ -115,15 +115,15 @@ class NestedControlFlowStrategy(FixStrategy):
     )
 
 
-class DeepNestingStrategy(FixStrategy):
+class McbScriptsDeepNestingStrategy(McbScriptsFixStrategy):
     """Strategy for flattening deep nesting."""
 
     rule = "deep-nesting"
     title = "Flatten deep nesting"
-    instructions = NestedControlFlowStrategy.instructions
+    instructions = McbScriptsNestedControlFlowStrategy.instructions
 
 
-class FileComplexityStrategy(FixStrategy):
+class McbScriptsFileComplexityStrategy(McbScriptsFixStrategy):
     """Strategy for splitting complex files."""
 
     rule = "file-complexity"
@@ -139,7 +139,7 @@ class FileComplexityStrategy(FixStrategy):
     )
 
 
-class LongMethodStrategy(FixStrategy):
+class McbScriptsLongMethodStrategy(McbScriptsFixStrategy):
     """Strategy for shortening long methods."""
 
     rule = "long-method"
@@ -154,7 +154,7 @@ class LongMethodStrategy(FixStrategy):
     )
 
 
-class LargeClassStrategy(FixStrategy):
+class McbScriptsLargeClassStrategy(McbScriptsFixStrategy):
     """Strategy for decomposing large classes."""
 
     rule = "large-class"
@@ -170,7 +170,7 @@ class LargeClassStrategy(FixStrategy):
     )
 
 
-class GodClassStrategy(FixStrategy):
+class McbScriptsGodClassStrategy(McbScriptsFixStrategy):
     """Strategy for decomposing god classes."""
 
     rule = "god-class"
@@ -186,7 +186,7 @@ class GodClassStrategy(FixStrategy):
     )
 
 
-class FeatureEnvyStrategy(FixStrategy):
+class McbScriptsFeatureEnvyStrategy(McbScriptsFixStrategy):
     """Strategy for resolving feature envy."""
 
     rule = "feature-envy"
@@ -202,7 +202,7 @@ class FeatureEnvyStrategy(FixStrategy):
     )
 
 
-class DataClumpStrategy(FixStrategy):
+class McbScriptsDataClumpStrategy(McbScriptsFixStrategy):
     """Strategy for encapsulating data clumps."""
 
     rule = "data-clump"
@@ -218,7 +218,7 @@ class DataClumpStrategy(FixStrategy):
     )
 
 
-class BooleanLogicStrategy(FixStrategy):
+class McbScriptsBooleanLogicStrategy(McbScriptsFixStrategy):
     """Strategy for simplifying boolean logic."""
 
     rule = "boolean-logic"
@@ -233,15 +233,15 @@ class BooleanLogicStrategy(FixStrategy):
     )
 
 
-class ComplexConditionStrategy(FixStrategy):
+class McbScriptsComplexConditionStrategy(McbScriptsFixStrategy):
     """Strategy for simplifying complex conditions."""
 
     rule = "complex-condition"
     title = "Simplify complex conditional"
-    instructions = BooleanLogicStrategy.instructions
+    instructions = McbScriptsBooleanLogicStrategy.instructions
 
 
-class FunctionParametersStrategy(FixStrategy):
+class McbScriptsFunctionParametersStrategy(McbScriptsFixStrategy):
     """Strategy for reducing function parameters."""
 
     rule = "function-parameters"
@@ -256,15 +256,15 @@ class FunctionParametersStrategy(FixStrategy):
     )
 
 
-class TooManyArgumentsStrategy(FixStrategy):
+class McbScriptsTooManyArgumentsStrategy(McbScriptsFixStrategy):
     """Strategy for reducing too many arguments."""
 
     rule = "too-many-arguments"
     title = "Reduce argument count"
-    instructions = FunctionParametersStrategy.instructions
+    instructions = McbScriptsFunctionParametersStrategy.instructions
 
 
-class ReturnStatementsStrategy(FixStrategy):
+class McbScriptsReturnStatementsStrategy(McbScriptsFixStrategy):
     """Strategy for consolidating return statements."""
 
     rule = "return-statements"
@@ -283,33 +283,33 @@ class ReturnStatementsStrategy(FixStrategy):
 STRATEGIES = {
     s.rule: s()
     for s in (
-        IdenticalCodeStrategy,
-        SimilarCodeStrategy,
-        FunctionComplexityStrategy,
-        MethodComplexityStrategy,
-        CognitiveComplexityStrategy,
-        NestedControlFlowStrategy,
-        DeepNestingStrategy,
-        FileComplexityStrategy,
-        LongMethodStrategy,
-        LargeClassStrategy,
-        GodClassStrategy,
-        FeatureEnvyStrategy,
-        DataClumpStrategy,
-        BooleanLogicStrategy,
-        ComplexConditionStrategy,
-        FunctionParametersStrategy,
-        TooManyArgumentsStrategy,
-        ReturnStatementsStrategy,
+        McbScriptsIdenticalCodeStrategy,
+        McbScriptsSimilarCodeStrategy,
+        McbScriptsFunctionComplexityStrategy,
+        McbScriptsMethodComplexityStrategy,
+        McbScriptsCognitiveComplexityStrategy,
+        McbScriptsNestedControlFlowStrategy,
+        McbScriptsDeepNestingStrategy,
+        McbScriptsFileComplexityStrategy,
+        McbScriptsLongMethodStrategy,
+        McbScriptsLargeClassStrategy,
+        McbScriptsGodClassStrategy,
+        McbScriptsFeatureEnvyStrategy,
+        McbScriptsDataClumpStrategy,
+        McbScriptsBooleanLogicStrategy,
+        McbScriptsComplexConditionStrategy,
+        McbScriptsFunctionParametersStrategy,
+        McbScriptsTooManyArgumentsStrategy,
+        McbScriptsReturnStatementsStrategy,
     )
 }
 
 
-def get_strategy(rule_id: str) -> FixStrategy | None:
+def get_strategy(rule_id: str) -> McbScriptsFixStrategy | None:
     """Get the appropriate fix strategy for a given rule ID.
 
     Returns:
-        The resulting ``FixStrategy | None``.
+        The resulting ``McbScriptsFixStrategy | None``.
     """
     # Rule ID might be "qlty:similar-code" or just "similar-code"
     short = rule_id.rsplit(":", maxsplit=1)[-1]

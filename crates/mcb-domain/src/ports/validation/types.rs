@@ -10,10 +10,10 @@ pub type ValidatorError = Box<dyn std::error::Error + Send + Sync>;
 /// Specialized result for validation operations.
 pub type ValidatorResult<T> = std::result::Result<T, ValidatorError>;
 
-/// Severity level of a code violation.
+/// McbScriptsSeverity level of a code violation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
-pub enum Severity {
+pub enum McbScriptsSeverity {
     /// Blocking issue that must be fixed.
     Error,
     /// Non-blocking issue that should be fixed.
@@ -22,7 +22,7 @@ pub enum Severity {
     Info,
 }
 
-impl Display for Severity {
+impl Display for McbScriptsSeverity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Error => write!(f, "ERROR"),
@@ -119,7 +119,7 @@ pub trait Violation: Display + Send + Sync + std::fmt::Debug {
     /// Category used for grouping violations in reports.
     fn category(&self) -> ViolationCategory;
     /// Importance of the violation.
-    fn severity(&self) -> Severity;
+    fn severity(&self) -> McbScriptsSeverity;
     /// Path to the file containing the violation, if applicable.
     fn file(&self) -> Option<&PathBuf>;
     /// Line number where the violation occurs, if applicable.

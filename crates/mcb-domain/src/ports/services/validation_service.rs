@@ -32,7 +32,7 @@ pub struct ViolationEntry {
     pub id: String,
     /// Category (e.g., "`clean_architecture`", "solid", "quality")
     pub category: String,
-    /// Severity level: "ERROR", "WARNING", or "INFO"
+    /// McbScriptsSeverity level: "ERROR", "WARNING", or "INFO"
     pub severity: String,
     /// File path where violation was found (if applicable)
     pub file: Option<String>,

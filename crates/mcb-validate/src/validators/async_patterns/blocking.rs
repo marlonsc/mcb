@@ -4,7 +4,7 @@
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::TEST_DIR_FRAGMENT;
 use mcb_utils::utils::regex::compile_regex_triples;
 
@@ -84,7 +84,7 @@ pub fn validate_blocking_in_async(config: &ValidationConfig) -> Result<Vec<Async
                         line: line_num + 1,
                         blocking_call: desc.to_string(),
                         suggestion: sugg.to_string(),
-                        severity: Severity::Warning,
+                        severity: McbScriptsSeverity::Warning,
                     });
                 }
             }

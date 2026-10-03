@@ -35,7 +35,12 @@ def _run_make(*args: str) -> subprocess.CompletedProcess[str]:
     for name in ("MAKEFLAGS", "MFLAGS", "MAKELEVEL"):
         env.pop(name, None)
     return subprocess.run(
-        ["make", *args], cwd=ROOT, check=False, capture_output=True, text=True, env=env,
+        ["make", *args],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
     )
 
 
@@ -101,7 +106,11 @@ def test_tree_is_at_generator_fixed_point() -> None:
 
 def _assert_make_fails(command: list[str], *, expect_unsupported: bool) -> None:
     result = subprocess.run(
-        command, cwd=ROOT, check=False, capture_output=True, text=True,
+        command,
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
     )
     combined = result.stdout + result.stderr
     assert result.returncode != 0, (
@@ -123,7 +132,8 @@ def _assert_make_fails(command: list[str], *, expect_unsupported: bool) -> None:
 def test_invalid_release_selector_fails() -> None:
     """Test invalid release selector fails."""
     _assert_make_fails(
-        ["make", "release", "WHAT=__invalid__"], expect_unsupported=False,
+        ["make", "release", "WHAT=__invalid__"],
+        expect_unsupported=False,
     )
 
 

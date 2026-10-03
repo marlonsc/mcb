@@ -69,7 +69,11 @@ def create_adr(root: Path, title: str, status: str, *, dry_run: bool = False) ->
         return destination
 
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=directory, prefix=".adr-stage-", delete=True,
+        mode="w",
+        encoding="utf-8",
+        dir=directory,
+        prefix=".adr-stage-",
+        delete=True,
     ) as staged:
         staged.write(rendered)
         staged.flush()

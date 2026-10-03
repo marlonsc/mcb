@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::Result;
-use crate::Severity;
+use crate::McbScriptsSeverity;
 use crate::ValidationConfig;
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::for_each_rust_file;
@@ -94,7 +94,7 @@ fn collect_block_partial_impl_violations(input: &BlockScanInput<'_>) -> Vec<Soli
                 line: method_line,
                 impl_name: format!("{}::{}", input.impl_name, input.trait_name),
                 method_name,
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
     }

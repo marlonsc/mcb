@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 
 use crate::define_violations;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
 use mcb_utils::utils::regex::compile_regex_pairs;
 
@@ -38,7 +38,7 @@ define_violations! {
             line: usize,
             error_type: String,
             layer: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Internal error details leaked to external API
         #[violation(
@@ -51,7 +51,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             pattern: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
     }
 }
@@ -162,7 +162,7 @@ impl ErrorBoundaryValidator {
                             line: line_num,
                             error_type: desc.to_string(),
                             layer: "domain".to_owned(),
-                            severity: Severity::Warning,
+                            severity: McbScriptsSeverity::Warning,
                         });
                     }
                 }
@@ -212,7 +212,7 @@ impl ErrorBoundaryValidator {
                             file: path.clone(),
                             line: line_num,
                             pattern: desc.to_string(),
-                            severity: Severity::Info,
+                            severity: McbScriptsSeverity::Info,
                         });
                     }
                 }

@@ -7,7 +7,7 @@
 
 use std::collections::HashMap;
 
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use mcb_utils::constants::validate::{
     METRICS_FIELD_MAX, SEVERITY_ERROR, SEVERITY_INFO, YAML_FIELD_COGNITIVE_COMPLEXITY,
     YAML_FIELD_CYCLOMATIC_COMPLEXITY, YAML_FIELD_FUNCTION_LENGTH, YAML_FIELD_NESTING_DEPTH,
@@ -83,8 +83,8 @@ impl MetricType {
 pub struct MetricThreshold {
     /// Maximum allowed value
     pub max_value: u32,
-    /// Severity when threshold is exceeded
-    pub severity: Severity,
+    /// McbScriptsSeverity when threshold is exceeded
+    pub severity: McbScriptsSeverity,
 }
 
 /// Configuration for all metric thresholds
@@ -97,10 +97,10 @@ impl Default for MetricThresholds {
     fn default() -> Self {
         Self::new()
             // Default thresholds based on common industry standards
-            .with_threshold(MetricType::CognitiveComplexity, 15, Severity::Warning)
-            .with_threshold(MetricType::CyclomaticComplexity, 10, Severity::Warning)
-            .with_threshold(MetricType::FunctionLength, 50, Severity::Warning)
-            .with_threshold(MetricType::NestingDepth, 4, Severity::Warning)
+            .with_threshold(MetricType::CognitiveComplexity, 15, McbScriptsSeverity::Warning)
+            .with_threshold(MetricType::CyclomaticComplexity, 10, McbScriptsSeverity::Warning)
+            .with_threshold(MetricType::FunctionLength, 50, McbScriptsSeverity::Warning)
+            .with_threshold(MetricType::NestingDepth, 4, McbScriptsSeverity::Warning)
     }
 }
 
@@ -119,7 +119,7 @@ impl MetricThresholds {
         mut self,
         metric: MetricType,
         max_value: u32,
-        severity: Severity,
+        severity: McbScriptsSeverity,
     ) -> Self {
         self.thresholds.insert(
             metric,
@@ -137,11 +137,11 @@ impl MetricThresholds {
         self.thresholds.get(&metric)
     }
 
-    fn severity_from_str(s: Option<&str>) -> Severity {
+    fn severity_from_str(s: Option<&str>) -> McbScriptsSeverity {
         match s {
-            Some(SEVERITY_ERROR) => Severity::Error,
-            Some(SEVERITY_INFO) => Severity::Info,
-            _ => Severity::Warning,
+            Some(SEVERITY_ERROR) => McbScriptsSeverity::Error,
+            Some(SEVERITY_INFO) => McbScriptsSeverity::Info,
+            _ => McbScriptsSeverity::Warning,
         }
     }
 
@@ -152,7 +152,7 @@ impl MetricThresholds {
     fn parse_metric(
         obj: &serde_json::Map<String, serde_json::Value>,
         key: &str,
-    ) -> Option<(u32, Severity)> {
+    ) -> Option<(u32, McbScriptsSeverity)> {
         let section = obj.get(key)?;
         let max = section.get(METRICS_FIELD_MAX)?.as_u64()?;
         let severity_str = section.get(YAML_FIELD_SEVERITY).and_then(|v| v.as_str());
@@ -160,11 +160,11 @@ impl MetricThresholds {
     }
 
     fn ensure_defaults(mut self) -> Self {
-        const DEFAULTS: [(MetricType, u32, Severity); 4] = [
-            (MetricType::CognitiveComplexity, 15, Severity::Warning),
-            (MetricType::CyclomaticComplexity, 10, Severity::Warning),
-            (MetricType::FunctionLength, 50, Severity::Warning),
-            (MetricType::NestingDepth, 4, Severity::Warning),
+        const DEFAULTS: [(MetricType, u32, McbScriptsSeverity); 4] = [
+            (MetricType::CognitiveComplexity, 15, McbScriptsSeverity::Warning),
+            (MetricType::CyclomaticComplexity, 10, McbScriptsSeverity::Warning),
+            (MetricType::FunctionLength, 50, McbScriptsSeverity::Warning),
+            (MetricType::NestingDepth, 4, McbScriptsSeverity::Warning),
         ];
 
         for (metric, max, severity) in &DEFAULTS {

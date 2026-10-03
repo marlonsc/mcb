@@ -17,7 +17,7 @@ use super::router::{RoutedEngine, RuleEngineRouter};
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
 use crate::ValidationConfig;
-use mcb_domain::ports::validation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{McbScriptsSeverity, ViolationCategory};
 
 pub use crate::engines::rule_violation::RuleViolation;
 
@@ -104,8 +104,8 @@ pub struct LintRuleInput<'a> {
     pub context: &'a RuleContext,
     /// Custom violation message
     pub custom_message: Option<&'a str>,
-    /// Severity level
-    pub severity: Severity,
+    /// McbScriptsSeverity level
+    pub severity: McbScriptsSeverity,
     /// Category classification
     pub category: ViolationCategory,
 }

@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
 //!
-use crate::Severity;
+use crate::McbScriptsSeverity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 use std::path::PathBuf;
@@ -21,7 +21,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Indicates usage of `expect()` in production code, which poses a panic risk.
         #[violation(
@@ -34,7 +34,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Indicates usage of `panic!()` macro in production code.
         #[violation(
@@ -47,7 +47,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Indicates a file that exceeds the maximum allowed line count.
         #[violation(
@@ -60,7 +60,7 @@ define_violations! {
             file: PathBuf,
             lines: usize,
             max_allowed: usize,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Indicates presence of pending task comments (tracked via `PENDING_LABEL_*` constants).
         #[violation(
@@ -73,7 +73,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             content: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Indicates usage of `allow(dead_code)` attribute, which is not permitted.
         #[violation(
@@ -86,7 +86,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             item_name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Indicates a struct field that is defined but never used.
         #[violation(
@@ -100,7 +100,7 @@ define_violations! {
             line: usize,
             struct_name: String,
             field_name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Indicates a function that is marked as dead code and appears uncalled.
         #[violation(
@@ -113,7 +113,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             function_name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
     }
 }

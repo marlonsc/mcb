@@ -14,7 +14,7 @@ from mcb_scripts.docs.metrics import generate_metrics
 from mcb_scripts.docs.utils import get_project_root
 
 
-class AdrInput(m.Value):
+class McbScriptsAdrInput(m.Value):
     """Validated request for a new architecture decision record."""
 
     title: str = m.Field(description="Single-line ADR title.")
@@ -22,19 +22,22 @@ class AdrInput(m.Value):
     dry_run: bool = m.Field(default=False, description="Preview without publishing.")
 
 
-class MetricsInput(m.Value):
+class McbScriptsMetricsInput(m.Value):
     """No caller values are needed to generate repository metrics."""
 
 
-def _create_adr(request: AdrInput) -> p.Result[str]:
+def _create_adr(request: McbScriptsAdrInput) -> p.Result[str]:
     destination = create_adr(
-        get_project_root(), request.title, request.status, dry_run=request.dry_run,
+        get_project_root(),
+        request.title,
+        request.status,
+        dry_run=request.dry_run,
     )
     verb = "Would create" if request.dry_run else "Created"
     return r[str].ok(f"{verb} {destination}")
 
 
-def _generate_metrics(_request: MetricsInput) -> p.Result[str]:
+def _generate_metrics(_request: McbScriptsMetricsInput) -> p.Result[str]:
     destination, changed = generate_metrics(get_project_root())
     state = "updated" if changed else "unchanged"
     return r[str].ok(f"{destination}: {state}")
@@ -47,20 +50,21 @@ def main() -> int:
         The resulting ``int``.
     """
     app = cli.create_app_with_common_params(
-        name="mcb-scripts", help_text="MCB repository automation",
+        name="mcb-scripts",
+        help_text="MCB repository automation",
     )
     cli.register_result_command(
         app,
         name="adr",
         help_text="Create an architecture decision record",
-        model_cls=AdrInput,
+        model_cls=McbScriptsAdrInput,
         handler=_create_adr,
     )
     cli.register_result_command(
         app,
         name="metrics",
         help_text="Generate deterministic project metrics",
-        model_cls=MetricsInput,
+        model_cls=McbScriptsMetricsInput,
         handler=_generate_metrics,
     )
     return cli.finalize_result(cli.execute_app(app, prog_name="mcb-scripts"))

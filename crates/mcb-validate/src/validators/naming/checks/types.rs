@@ -7,7 +7,7 @@ use rust_code_analysis::SpaceKind;
 
 use super::super::violation::NamingViolation;
 use crate::ast::rca_helpers;
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use mcb_utils::utils::naming::is_camel_case;
 
 /// Validates that struct, enum, and trait names follow `CamelCase` convention using RCA AST.
@@ -64,6 +64,6 @@ fn check_camel_case(
         line: start_line,
         name: name.to_owned(),
         expected_case: "CamelCase".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     });
 }

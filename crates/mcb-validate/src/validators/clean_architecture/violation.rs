@@ -13,7 +13,7 @@
 
 use std::path::PathBuf;
 
-use crate::Severity;
+use crate::McbScriptsSeverity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -32,7 +32,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             impl_type: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Handler creates service directly instead of using DI
         #[violation(
@@ -46,7 +46,7 @@ define_violations! {
             line: usize,
             service_name: String,
             context: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Port implementation missing linkme provider registration
         #[violation(
@@ -60,7 +60,7 @@ define_violations! {
             line: usize,
             struct_name: String,
             trait_name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Entity missing identity field
         #[violation(
@@ -73,7 +73,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             entity_name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Value object has mutable method
         #[violation(
@@ -87,7 +87,7 @@ define_violations! {
             line: usize,
             vo_name: String,
             method_name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Server imports provider directly
         #[violation(
@@ -100,7 +100,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             import_path: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Infrastructure layer imports concrete service from Application
         ///
@@ -116,7 +116,7 @@ define_violations! {
             line: usize,
             import_path: String,
             concrete_type: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Application layer imports ports from wrong location
         ///
@@ -132,7 +132,7 @@ define_violations! {
             line: usize,
             import_path: String,
             should_be: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Infrastructure layer imports from Application layer
         ///
@@ -155,7 +155,7 @@ define_violations! {
             line: usize,
             import_path: String,
             suggestion: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
     }
 }

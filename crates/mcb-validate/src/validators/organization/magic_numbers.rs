@@ -8,7 +8,7 @@ use regex::Regex;
 use super::violation::OrganizationViolation;
 use crate::filters::LanguageId;
 use crate::scan::{for_each_crate_file, is_test_path};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::{ALLOWED_MAGIC_NUMBERS, MAGIC_NUMBER_REGEX};
 use mcb_utils::constants::validate::{
     ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS, DOC_COMMENT_PREFIX,
@@ -97,7 +97,7 @@ fn collect_magic_numbers(
                 value: num.to_owned(),
                 context: trimmed.to_owned(),
                 suggestion: "Consider using a named constant".to_owned(),
-                severity: Severity::Info,
+                severity: McbScriptsSeverity::Info,
             });
         }
     });

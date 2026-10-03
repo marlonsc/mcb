@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
 
 /// Pattern violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,8 +20,8 @@ pub enum PatternViolation {
         concrete_type: String,
         /// Suggested replacement.
         suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
+        /// McbScriptsSeverity level of the violation.
+        severity: McbScriptsSeverity,
     },
     /// Async trait missing Send + Sync bounds
     MissingSendSync {
@@ -33,8 +33,8 @@ pub enum PatternViolation {
         trait_name: String,
         /// The missing bounds.
         missing_bound: String,
-        /// Severity level of the violation.
-        severity: Severity,
+        /// McbScriptsSeverity level of the violation.
+        severity: McbScriptsSeverity,
     },
     /// Async trait missing #[`async_trait`] attribute
     MissingAsyncTrait {
@@ -44,8 +44,8 @@ pub enum PatternViolation {
         line: usize,
         /// Name of the trait.
         trait_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
+        /// McbScriptsSeverity level of the violation.
+        severity: McbScriptsSeverity,
     },
     /// Using `std::result::Result` instead of `crate::error::Result`
     RawResultType {
@@ -57,8 +57,8 @@ pub enum PatternViolation {
         context: String,
         /// Suggested replacement.
         suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
+        /// McbScriptsSeverity level of the violation.
+        severity: McbScriptsSeverity,
     },
     /// Missing Interface trait bound for DI
     MissingInterfaceBound {
@@ -68,8 +68,8 @@ pub enum PatternViolation {
         line: usize,
         /// Name of the trait.
         trait_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
+        /// McbScriptsSeverity level of the violation.
+        severity: McbScriptsSeverity,
     },
 }
 
@@ -78,7 +78,7 @@ impl PatternViolation {
     ///
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     #[must_use]
-    pub fn severity(&self) -> Severity {
+    pub fn severity(&self) -> McbScriptsSeverity {
         <Self as Violation>::severity(self)
     }
 }
@@ -207,7 +207,7 @@ impl Violation for PatternViolation {
         }
     }
 
-    fn severity(&self) -> Severity {
+    fn severity(&self) -> McbScriptsSeverity {
         match self {
             Self::ConcreteTypeInDi { severity, .. }
             | Self::MissingSendSync { severity, .. }

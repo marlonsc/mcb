@@ -13,21 +13,24 @@ from pathlib import Path
 from flext_cli import cli
 
 from flext_core import m, p
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
+from mcb_scripts.core import McbScriptsBaseSettings, get_logger, r
 from mcb_scripts.docs import utils
-from mcb_scripts.settings import McbSettings
+from mcb_scripts.settings import McbScriptsSettings
 
 logger = get_logger(__name__)
 
 
-class CheckLinksSettings(BaseMcbSettings):
+class CheckLinksSettings(McbScriptsBaseSettings):
     """Settings for the broken-link documentation check."""
 
     root: Path = m.Field(default=Path(), description="Project root directory")
 
 
 def _process_links(
-    links: list[tuple[str, str]], filepath: str, rel_filepath: str, project_root: Path,
+    links: list[tuple[str, str]],
+    filepath: str,
+    rel_filepath: str,
+    project_root: Path,
 ) -> tuple[list[tuple[str, str, str, str]], int]:
     broken_in_file: list[tuple[str, str, str, str]] = []
     checked_in_file = 0
@@ -54,7 +57,8 @@ def _process_links(
 
 
 def _check_files(
-    docs_dir: str, project_root: Path,
+    docs_dir: str,
+    project_root: Path,
 ) -> tuple[list[tuple[str, str, str, str]], int, int, list[str]]:
     broken: list[tuple[str, str, str, str]] = []
     checked_files = 0
@@ -76,7 +80,10 @@ def _check_files(
 
         links = utils.extract_links(content)
         file_broken, file_links = _process_links(
-            links, filepath, rel_filepath, project_root,
+            links,
+            filepath,
+            rel_filepath,
+            project_root,
         )
 
         broken.extend(file_broken)
@@ -95,13 +102,14 @@ def run(settings: CheckLinksSettings) -> p.Result[int]:
     if settings.root == Path():
         project_root = utils.get_project_root()
 
-    docs_dir = os.path.join(project_root, str(McbSettings().docs_dir))
+    docs_dir = os.path.join(project_root, str(McbScriptsSettings().docs_dir))
 
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
     broken, checked_files, checked_links, unreadable = _check_files(
-        docs_dir, project_root,
+        docs_dir,
+        project_root,
     )
 
     logger.info("Checked %s files, %s internal links.", checked_files, checked_links)
@@ -123,7 +131,8 @@ def run(settings: CheckLinksSettings) -> p.Result[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-links", help_text="Check broken internal links in docs.",
+        name="check-links",
+        help_text="Check broken internal links in docs.",
     )
     cli.register_result_command(
         app,

@@ -116,7 +116,8 @@ def test_guard_fails_when_ast_grep_invocation_breaks(temp_dir: Path) -> None:
     (source_dir / "lib.rs").write_text("pub fn clean() {}\n", encoding="utf-8")
     ast_grep = bin_dir / "ast-grep"
     ast_grep.write_text(
-        '#!/bin/sh\n[ "$1" = "--version" ] && exit 0\nexit 1\n', encoding="utf-8",
+        '#!/bin/sh\n[ "$1" = "--version" ] && exit 0\nexit 1\n',
+        encoding="utf-8",
     )
     ast_grep.chmod(ast_grep.stat().st_mode | stat.S_IXUSR)
     env = os.environ.copy()

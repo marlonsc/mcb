@@ -42,6 +42,38 @@ def _declared_dir(root: Path, value: object) -> Path:
     return directory
 
 
+def _string_list(value: object) -> list[str] | None:
+    """Narrow an untrusted value into a list of strings.
+
+    Returns:
+        The resulting ``list[str] | None``.
+    """
+    if not isinstance(value, list):
+        return None
+    names: list[str] = []
+    for name in value:
+        if not isinstance(name, str):
+            return None
+        names.append(name)
+    return names
+
+
+def _string_map(value: object) -> dict[str, str] | None:
+    """Narrow an untrusted value into a string-to-string mapping.
+
+    Returns:
+        The resulting ``dict[str, str] | None``.
+    """
+    if not isinstance(value, dict):
+        return None
+    labels: dict[str, str] = {}
+    for name, label in value.items():
+        if not isinstance(name, str) or not isinstance(label, str):
+            return None
+        labels[name] = label
+    return labels
+
+
 def _category(root: Path, raw: dict[str, object]) -> tuple[str, ...]:
     """Resolve one configured code category without inventing missing sources.
 
@@ -51,45 +83,44 @@ def _category(root: Path, raw: dict[str, object]) -> tuple[str, ...]:
     Raises:
         TypeError: If Invalid docs metrics category; or if Invalid docs metrics labels.
     """
-    relative = raw["root"]
-    excludes = raw["exclude"]
-    labels = raw.get("labels", {})
-    if not isinstance(excludes, list) or not all(
-        isinstance(name, str) for name in excludes
-    ):
+    excludes = _string_list(raw["exclude"])
+    labels = _string_map(raw.get("labels", {}))
+    if excludes is None or labels is None:
         msg = "Invalid docs metrics category"
         raise TypeError(msg)
-    if not isinstance(labels, dict) or not all(
-        isinstance(name, str) and isinstance(label, str)
-        for name, label in labels.items()
-    ):
-        msg = "Invalid docs metrics labels"
-        raise TypeError(msg)
-    directory = _declared_dir(root, relative)
+    directory = _declared_dir(root, raw["root"])
     names = (
         labels.get(path.stem, path.stem.replace("_", " ").title())
         for path in sorted(directory.glob("*.rs"))
         if path.stem not in excludes
     )
-    return tuple(str(name) for name in names)
+    return tuple(names)
 
 
-def _metrics_inputs(root: Path) -> tuple[dict[str, object], Path, Path, Path]:
+def _metrics_inputs(
+    root: Path,
+) -> tuple[dict[str, dict[str, object]], Path, Path, Path]:
     """Load the declared metrics config and resolve its directories.
 
     Returns:
-        The resulting ``tuple[dict[str, object], Path, Path, Path]``.
+        The resulting ``tuple[dict[str, dict[str, object]], Path, Path, Path]``.
 
     Raises:
         TypeError: If Invalid docs metrics categories.
     """
     config_path = root / "config/docs-metrics.toml"
     with config_path.open("rb") as source:
-        config = tomllib.load(source)
-    categories = config["categories"]
-    if not isinstance(categories, dict):
+        config: dict[str, object] = tomllib.load(source)
+    categories: dict[str, dict[str, object]] = {}
+    declared = config.get("categories")
+    if not isinstance(declared, dict):
         msg = "Invalid docs metrics categories"
         raise TypeError(msg)
+    for key, value in declared.items():
+        if not isinstance(key, str) or not isinstance(value, dict):
+            msg = "Invalid docs metrics categories"
+            raise TypeError(msg)
+        categories[key] = value
     return (
         categories,
         _declared_dir(root, config["source_root"]),
@@ -234,7 +265,10 @@ def generate_metrics(root: Path) -> tuple[Path, bool]:
         return destination, False
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=destination.parent, prefix=".metrics-stage-",
+        mode="w",
+        encoding="utf-8",
+        dir=destination.parent,
+        prefix=".metrics-stage-",
     ) as staged:
         staged.write(content)
         staged.flush()

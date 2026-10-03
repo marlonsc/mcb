@@ -6,7 +6,7 @@
 
 use std::path::PathBuf;
 
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use rstest::rstest;
 
 // ============================================================================
@@ -19,7 +19,7 @@ fn display_parity_quality_unwrap_smoke_test() {
         file: PathBuf::from("src/test.rs"),
         line: 42,
         context: "foo.unwrap()".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     let display = format!("{v}");
     eprintln!("QUALITY DISPLAY: {display}");
@@ -36,7 +36,7 @@ fn display_parity_error_boundary_wrong_layer() {
         line: 15,
         error_type: "std::io::Error".to_owned(),
         layer: "domain".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     assert_eq!(
         format!("{v}"),
@@ -50,7 +50,7 @@ fn display_parity_error_boundary_leaked_internal() {
         file: PathBuf::from("src/handlers/api.rs"),
         line: 88,
         pattern: "Debug formatting in response".to_owned(),
-        severity: Severity::Info,
+        severity: McbScriptsSeverity::Info,
     };
     assert_eq!(
         format!("{v}"),
@@ -69,7 +69,7 @@ fn display_parity_refactoring_orphan_import() {
         line: 10,
         import_path: "use crate::deleted::Item".to_owned(),
         suggestion: "Remove the import".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     assert_eq!(
         format!("{v}"),
@@ -86,7 +86,7 @@ fn display_parity_refactoring_duplicate_definition() {
         type_name: "MyStruct".to_owned(),
         locations: vec![PathBuf::from("src/a/mod.rs"), PathBuf::from("src/b/mod.rs")],
         suggestion: "Consolidate to one location".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     assert_eq!(
         format!("{v}"),
@@ -99,7 +99,7 @@ fn display_parity_refactoring_missing_test_file() {
     let v = mcb_validate::RefactoringViolation::MissingTestFile {
         source_file: PathBuf::from("src/foo.rs"),
         expected_test: PathBuf::from("tests/foo_test.rs"),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     assert_eq!(
         format!("{v}"),
@@ -113,7 +113,7 @@ fn display_parity_refactoring_stale_reexport() {
         file: PathBuf::from("src/lib.rs"),
         line: 5,
         re_export: "old_module".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     assert_eq!(
         format!("{v}"),
@@ -127,7 +127,7 @@ fn display_parity_refactoring_deleted_module_reference() {
         referencing_file: PathBuf::from("src/lib.rs"),
         line: 3,
         deleted_module: "gone_module".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     assert_eq!(
         format!("{v}"),
@@ -141,7 +141,7 @@ fn display_parity_refactoring_dead_code() {
         file: PathBuf::from("src/old.rs"),
         item_name: "unused_fn".to_owned(),
         item_type: "function".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     };
     assert_eq!(
         format!("{v}"),
@@ -159,7 +159,7 @@ fn display_parity_vec_pathbuf_rendering() {
         type_name: "T".to_owned(),
         locations: vec![PathBuf::from("a.rs")],
         suggestion: "fix".to_owned(),
-        severity: Severity::Info,
+        severity: McbScriptsSeverity::Info,
     };
     assert_eq!(format!("{v}"), "Duplicate definition 'T' in [a.rs] - fix");
 }

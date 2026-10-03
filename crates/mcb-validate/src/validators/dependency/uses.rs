@@ -8,7 +8,7 @@ use regex::Regex;
 
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::utils::regex::compile_regex;
 
 use super::DependencyValidator;
@@ -79,7 +79,7 @@ fn collect_forbidden_uses(
                     file: path.to_path_buf(),
                     line: line_num + 1,
                     context: line.trim().to_owned(),
-                    severity: Severity::Error,
+                    severity: McbScriptsSeverity::Error,
                 }
             })
         }));

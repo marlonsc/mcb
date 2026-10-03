@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use super::DependencyValidator;
 use super::violation::{DependencyCycle, DependencyViolation};
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use mcb_utils::constants::validate::MCB_DEPENDENCY_PREFIX;
 
@@ -23,7 +23,7 @@ pub fn detect_circular_dependencies(
         if let Some(cycle) = find_cycle_impl(&graph, start, &mut visited, &mut path) {
             violations.push(DependencyViolation::CircularDependency {
                 cycle: DependencyCycle(cycle),
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             });
         }
     }

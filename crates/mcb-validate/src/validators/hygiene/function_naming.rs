@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::utils::source::for_each_test_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::COMMENT_PREFIX;
 use mcb_utils::utils::regex::compile_regex;
 
@@ -127,7 +127,7 @@ fn collect_naming_violations_for_file(
                 file: path.to_path_buf(),
                 line: fn_line_idx + 1,
                 function_name: fn_name,
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
     }

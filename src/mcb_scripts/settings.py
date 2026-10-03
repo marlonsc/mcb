@@ -14,7 +14,7 @@ from flext_core import FlextSettings, m
 from mcb_scripts.constants import c
 
 
-class BaseMcbSettings(FlextSettings):
+class McbScriptsBaseSettings(FlextSettings):
     """Base settings for MCB scripts with per-class singleton lifecycle.
 
     Environment variables are read with the ``MCB_`` prefix, e.g.
@@ -61,7 +61,7 @@ class BaseMcbSettings(FlextSettings):
         return c.ENV_FILE_DEFAULT
 
 
-class BaseCommandSettings(BaseMcbSettings):
+class McbScriptsBaseCommandSettings(McbScriptsBaseSettings):
     """Base settings for cosmos-command scripts using unprefixed env vars.
 
     The cosmos-command dispatcher exposes ``WHAT``, ``ACT``, ``APPLY`` and
@@ -70,12 +70,12 @@ class BaseCommandSettings(BaseMcbSettings):
     """
 
     model_config: ClassVar[m.SettingsConfigDict] = {
-        **BaseMcbSettings.model_config,
+        **McbScriptsBaseSettings.model_config,
         "env_prefix": "",
     }
 
 
-class McbSettings(BaseMcbSettings):
+class McbScriptsSettings(McbScriptsBaseSettings):
     """Shared MCB settings with configurable project paths.
 
     These fields are intentionally overridable through ``MCB_*`` environment
@@ -85,10 +85,12 @@ class McbSettings(BaseMcbSettings):
 
     project_root: Path = m.Field(default=Path(), description="Project root directory")
     k8s_dir: Path = m.Field(
-        default=Path("k8s"), description="Kubernetes manifests directory",
+        default=Path("k8s"),
+        description="Kubernetes manifests directory",
     )
     docs_dir: Path = m.Field(
-        default=Path("docs"), description="Documentation directory",
+        default=Path("docs"),
+        description="Documentation directory",
     )
     qlty_check_sarif: Path = m.Field(
         default=Path("qlty.check.current.sarif"),
@@ -104,4 +106,8 @@ class McbSettings(BaseMcbSettings):
     )
 
 
-__all__ = ["BaseCommandSettings", "BaseMcbSettings", "McbSettings"]
+__all__ = [
+    "McbScriptsBaseCommandSettings",
+    "McbScriptsBaseSettings",
+    "McbScriptsSettings",
+]

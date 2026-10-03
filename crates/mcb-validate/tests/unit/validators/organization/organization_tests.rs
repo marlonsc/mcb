@@ -5,7 +5,7 @@
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use mcb_domain::ports::validation::Violation;
 use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
 use mcb_validate::organization::OrganizationViolation;
@@ -95,8 +95,8 @@ fn test_organization_violation_severity_is_non_recursive() {
         value: "99999".to_owned(),
         context: "let n = 99999;".to_owned(),
         suggestion: "Use constant".to_owned(),
-        severity: Severity::Info,
+        severity: McbScriptsSeverity::Info,
     };
 
-    assert_eq!(Violation::severity(&violation), Severity::Info);
+    assert_eq!(Violation::severity(&violation), McbScriptsSeverity::Info);
 }

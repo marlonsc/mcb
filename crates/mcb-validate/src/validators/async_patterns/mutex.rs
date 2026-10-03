@@ -4,7 +4,7 @@
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
 use mcb_utils::constants::validate::WRONG_MUTEX_PATTERNS;
 use mcb_utils::utils::regex::compile_regex_triples;
@@ -45,7 +45,7 @@ pub fn validate_mutex_types(config: &ValidationConfig) -> Result<Vec<AsyncViolat
                             line: line_num + 1,
                             mutex_type: desc.to_string(),
                             suggestion: sugg.to_string(),
-                            severity: Severity::Warning,
+                            severity: McbScriptsSeverity::Warning,
                         });
                     }
                 }

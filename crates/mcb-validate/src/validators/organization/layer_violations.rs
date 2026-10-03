@@ -8,7 +8,7 @@ use regex::Regex;
 use super::violation::OrganizationViolation;
 use crate::filters::LanguageId;
 use crate::scan::{for_each_scan_file, is_test_path};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::PUB_USE_PREFIX;
 use mcb_utils::constants::validate::{
     APPLICATION_LAYER_PATH, ARC_NEW_SERVICE_REGEX, INFRASTRUCTURE_LAYER_PATH, SERVER_IMPORT_REGEX,
@@ -85,7 +85,7 @@ fn scan_layer_file(
                 line: line_num + 1,
                 service_name: service_name.to_owned(),
                 suggestion: "Use DI container to resolve services".to_owned(),
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
 
@@ -97,7 +97,7 @@ fn scan_layer_file(
                 file: path.to_path_buf(),
                 line: line_num + 1,
                 import_statement: trimmed.to_owned(),
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
     });

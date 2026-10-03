@@ -14,9 +14,9 @@ from pathlib import Path
 from flext_cli import cli
 
 from flext_core import m, p
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
+from mcb_scripts.core import McbScriptsBaseSettings, get_logger, r
 from mcb_scripts.docs import utils
-from mcb_scripts.settings import McbSettings
+from mcb_scripts.settings import McbScriptsSettings
 
 logger = get_logger(__name__)
 
@@ -39,7 +39,7 @@ SUPPRESS_RE = re.compile(
 )
 
 
-class CheckOutdatedSettings(BaseMcbSettings):
+class CheckOutdatedSettings(McbScriptsBaseSettings):
     """Settings for the outdated-content documentation check."""
 
     root: Path = m.Field(default=Path(), description="Project root directory")
@@ -50,7 +50,9 @@ def _is_suppressed(line: str) -> bool:
 
 
 def _process_lines(
-    lines: list[str], rel_filepath: str, outdated_patterns: list[tuple[str, str]],
+    lines: list[str],
+    rel_filepath: str,
+    outdated_patterns: list[tuple[str, str]],
 ) -> list[tuple[str, int, str, str]]:
     issues_in_file: list[tuple[str, int, str, str]] = []
     for i, line in enumerate(lines, 1):
@@ -66,14 +68,16 @@ def _process_lines(
 
 
 def _check_files(
-    docs_dir: str, project_root: Path,
+    docs_dir: str,
+    project_root: Path,
 ) -> tuple[list[tuple[str, int, str, str]], int, list[str]]:
     issues: list[tuple[str, int, str, str]] = []
     checked = 0
     unreadable: list[str] = []
 
     md_files = utils.find_md_files(
-        docs_dir, exclude_dirs={".git", "fixtures", "archive"},
+        docs_dir,
+        exclude_dirs={".git", "fixtures", "archive"},
     )
 
     for filepath in md_files:
@@ -104,7 +108,7 @@ def run(settings: CheckOutdatedSettings) -> p.Result[int]:
     if settings.root == Path():
         project_root = utils.get_project_root()
 
-    docs_dir = os.path.join(project_root, str(McbSettings().docs_dir))
+    docs_dir = os.path.join(project_root, str(McbScriptsSettings().docs_dir))
 
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
@@ -131,7 +135,8 @@ def run(settings: CheckOutdatedSettings) -> p.Result[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-outdated", help_text="Check outdated content in docs.",
+        name="check-outdated",
+        help_text="Check outdated content in docs.",
     )
     cli.register_result_command(
         app,

@@ -553,7 +553,7 @@ Operator progresses through a sequence of decisions:
    ├─→ Approve (project:decide approve)
    │   ├─→ all tests pass?
    │   │   ├─→ Yes: immediately forward to merge
-   │   │   └─→ No: return Severity::Warning (don't block)
+   │   │   └─→ No: return McbScriptsSeverity::Warning (don't block)
    │   └─→ back to Assigned/Idle
    │
    ├─→ RequestChanges (project:decide request_changes)

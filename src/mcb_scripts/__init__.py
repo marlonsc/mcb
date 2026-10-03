@@ -14,10 +14,10 @@ from flext_core import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from mcb_scripts import docs, qlty
-    from mcb_scripts.constants import McbConstants
+    from mcb_scripts.constants import McbScriptsConstants
     from mcb_scripts.core import (
-        BaseCommandSettings,
-        BaseMcbSettings,
+        McbScriptsBaseCommandSettings,
+        McbScriptsBaseSettings,
         McbService,
         c,
         configure_logging,
@@ -26,17 +26,17 @@ if TYPE_CHECKING:
     )
     from mcb_scripts.result import McbResult
     from mcb_scripts.service import McbScriptsService, s
-    from mcb_scripts.settings import McbSettings
+    from mcb_scripts.settings import McbScriptsSettings
 
 
 __all__: tuple[str, ...] = (
-    "BaseCommandSettings",
-    "BaseMcbSettings",
-    "McbConstants",
     "McbResult",
+    "McbScriptsBaseCommandSettings",
+    "McbScriptsBaseSettings",
+    "McbScriptsConstants",
     "McbScriptsService",
+    "McbScriptsSettings",
     "McbService",
-    "McbSettings",
     "c",
     "configure_logging",
     "docs",
@@ -49,10 +49,10 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".constants": ("McbConstants",),
+            ".constants": ("McbScriptsConstants",),
             ".core": (
-                "BaseCommandSettings",
-                "BaseMcbSettings",
+                "McbScriptsBaseCommandSettings",
+                "McbScriptsBaseSettings",
                 "McbService",
                 "c",
                 "configure_logging",
@@ -63,7 +63,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".qlty": ("qlty",),
             ".result": ("McbResult",),
             ".service": ("McbScriptsService", "s"),
-            ".settings": ("McbSettings",),
+            ".settings": ("McbScriptsSettings",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

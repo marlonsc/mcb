@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use mcb_utils::constants::validate::MCB_DEPENDENCY_PREFIX;
 
@@ -41,7 +41,7 @@ pub fn validate_cargo_dependencies(
                         crate_name: crate_name.clone(),
                         forbidden_dep: dep_crate,
                         location: cargo_toml.clone(),
-                        severity: Severity::Error,
+                        severity: McbScriptsSeverity::Error,
                     }),
             );
         }

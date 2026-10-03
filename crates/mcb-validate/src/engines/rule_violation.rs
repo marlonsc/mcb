@@ -5,7 +5,7 @@
 
 use derive_more::Display;
 
-use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
 
 /// Concrete violation structure for rule engines
 #[derive(Debug, Clone, Display)]
@@ -15,8 +15,8 @@ pub struct RuleViolation {
     pub id: String,
     /// Category of the violation (SOLID, quality, etc.)
     pub category: ViolationCategory,
-    /// Severity level
-    pub severity: Severity,
+    /// McbScriptsSeverity level
+    pub severity: McbScriptsSeverity,
     /// Detailed error message
     pub message: String,
     /// Path to the file containing the violation
@@ -38,7 +38,7 @@ impl Violation for RuleViolation {
         self.category
     }
 
-    fn severity(&self) -> Severity {
+    fn severity(&self) -> McbScriptsSeverity {
         self.severity
     }
 
@@ -60,7 +60,7 @@ impl RuleViolation {
     pub fn new(
         id: impl Into<String>,
         category: ViolationCategory,
-        severity: Severity,
+        severity: McbScriptsSeverity,
         message: impl Into<String>,
     ) -> Self {
         Self {

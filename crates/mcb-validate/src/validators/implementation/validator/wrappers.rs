@@ -9,7 +9,7 @@ use super::super::violation::ImplementationViolation;
 use crate::Result;
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::{extract_functions_with_body, non_test_lines};
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 
 /// Detects single-line pass-through wrapper methods that merely delegate to a
 /// field's identically named method and reports each as a `PassThroughWrapper`
@@ -79,7 +79,7 @@ fn collect_pass_through_wrappers(
                 struct_name: current_struct_name.clone(),
                 method_name: func.name.clone(),
                 delegated_to: format!("self.{field}.{method}()"),
-                severity: Severity::Info,
+                severity: McbScriptsSeverity::Info,
             });
         }
     }

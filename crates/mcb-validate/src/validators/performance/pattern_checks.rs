@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::constants::validate::{
     ARC_MUTEX_OVERUSE_PATTERNS, INEFFICIENT_ITERATOR_PATTERNS, INEFFICIENT_STRING_PATTERNS,
 };
@@ -31,21 +31,21 @@ fn build_info_violation(
             line,
             pattern: pattern.to_owned(),
             suggestion: suggestion.to_owned(),
-            severity: Severity::Info,
+            severity: McbScriptsSeverity::Info,
         },
         InfoViolationKind::InefficientIterator => PerformanceViolation::InefficientIterator {
             file,
             line,
             pattern: pattern.to_owned(),
             suggestion: suggestion.to_owned(),
-            severity: Severity::Info,
+            severity: McbScriptsSeverity::Info,
         },
         InfoViolationKind::InefficientString => PerformanceViolation::InefficientString {
             file,
             line,
             pattern: pattern.to_owned(),
             suggestion: suggestion.to_owned(),
-            severity: Severity::Info,
+            severity: McbScriptsSeverity::Info,
         },
     }
 }

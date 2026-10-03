@@ -21,14 +21,14 @@ from pathlib import Path
 from flext_cli import cli
 
 from flext_core import m, p
-from mcb_scripts.core import BaseCommandSettings, get_logger, r
+from mcb_scripts.core import McbScriptsBaseCommandSettings, get_logger, r
 from mcb_scripts.gitops import summarize
-from mcb_scripts.settings import McbSettings
+from mcb_scripts.settings import McbScriptsSettings
 
 logger = get_logger(__name__)
 
 
-class GitopsSettings(BaseCommandSettings):
+class GitopsSettings(McbScriptsBaseCommandSettings):
     """Settings for the GitOps validation command.
 
     cosmos-command exposes parameters unprefixed, so this base disables the
@@ -46,14 +46,14 @@ def run(settings: GitopsSettings) -> p.Result[str]:
     """Discover and validate GitOps manifests.
 
     Returns the status string rather than the whole summary: the CLI facade
-    serializes a successful result as a JSON value, and GitOpsSummary carries
+    serializes a successful result as a JSON value, and McbScriptsGitOpsSummary carries
     Path and nested report objects that are not JSON values. The summary is
     still reported in full through the logger below.
 
     Returns:
         The resulting ``p.Result[str]``.
     """
-    k8s_root = settings.root / str(McbSettings().k8s_dir)
+    k8s_root = settings.root / str(McbScriptsSettings().k8s_dir)
     if not k8s_root.is_dir():
         # A missing root is a configuration error, not a legitimate skip:
         # a wrong k8s_dir must fail the gate, never pass it vacuously.
@@ -64,11 +64,11 @@ def run(settings: GitopsSettings) -> p.Result[str]:
         logger.error(summary_result.error or "gitops discovery failed")
         return r[str].from_failure(summary_result)
     summary = summary_result.unwrap()
-    logger.info("GITOPS %s: %s", summary.status, summary.message)
+    logger.info(f"GITOPS {summary.status}: {summary.message}")
     if summary.report.total_issues:
         logger.info(summary.report.generate_summary())
     for target in summary.targets:
-        logger.info("%s\t%s", target.kind, target.path)
+        logger.info(f"{target.kind}\t{target.path}")
     if summary.status not in {"OK", "SKIP"}:
         return r[str].fail(summary.message)
     return r[str].ok(summary.status)
@@ -81,7 +81,8 @@ def main() -> None:
         SystemExit: If ``result.failure``.
     """
     app = cli.create_app_with_common_params(
-        name="check-gitops", help_text="Run MCB GitOps validation discovery.",
+        name="check-gitops",
+        help_text="Run MCB GitOps validation discovery.",
     )
     cli.register_result_command(
         app,

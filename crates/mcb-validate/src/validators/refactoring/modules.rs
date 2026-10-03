@@ -5,7 +5,7 @@ use std::path::Path;
 
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::utils::regex::compile_regex;
 
 use super::RefactoringValidator;
@@ -76,7 +76,7 @@ fn collect_deleted_module_refs(
                 referencing_file: path.to_path_buf(),
                 line: line_num + 1,
                 deleted_module: mod_name.to_owned(),
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
     }

@@ -87,7 +87,7 @@ receive a `ProjectContext` (ADR-035) and a `TransitionTrigger` (ADR-034), return
 - Configurable per-project via `mcb.toml` (enable/disable, thresholds)
 - Two evaluation modes: fail-fast (stop on first error) and collect-all (gather all
   violations)
-- Severity levels: Error (blocks transition), Warning (logged but allowed), Info
+- McbScriptsSeverity levels: Error (blocks transition), Warning (logged but allowed), Info
   (informational)
 - Extensible: new policies can be added without modifying existing code
 
@@ -176,10 +176,10 @@ pub trait Policy: Send + Sync {
 
 use serde::{Deserialize, Serialize};
 
-/// Severity of a policy violation.
+/// McbScriptsSeverity of a policy violation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Severity {
+pub enum McbScriptsSeverity {
     /// Blocks the transition. Must be resolved.
     Error,
     /// Logged but does not block. Advisory.
@@ -195,8 +195,8 @@ pub struct Violation {
     pub policy_name: String,
     /// Human-readable message.
     pub message: String,
-    /// Severity level.
-    pub severity: Severity,
+    /// McbScriptsSeverity level.
+    pub severity: McbScriptsSeverity,
     /// Optional suggestion for resolution.
     pub suggestion: Option<String>,
 }
@@ -223,7 +223,7 @@ impl PolicyResult {
             violations: vec![Violation {
                 policy_name: policy_name.to_string(),
                 message: message.to_string(),
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
                 suggestion: None,
             }],
         }
@@ -236,7 +236,7 @@ impl PolicyResult {
             violations: vec![Violation {
                 policy_name: policy_name.to_string(),
                 message: message.to_string(),
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
                 suggestion: None,
             }],
         }
@@ -250,12 +250,12 @@ impl PolicyResult {
 
     /// True if any Error-level violations exist.
     pub fn has_errors(&self) -> bool {
-        self.violations.iter().any(|v| v.severity == Severity::Error)
+        self.violations.iter().any(|v| v.severity == McbScriptsSeverity::Error)
     }
 
     /// True if any Warning-level violations exist.
     pub fn has_warnings(&self) -> bool {
-        self.violations.iter().any(|v| v.severity == Severity::Warning)
+        self.violations.iter().any(|v| v.severity == McbScriptsSeverity::Warning)
     }
 
     /// Format violations for display.
@@ -264,9 +264,9 @@ impl PolicyResult {
             .iter()
             .map(|v| {
                 let icon = match v.severity {
-                    Severity::Error => "ERROR",
-                    Severity::Warning => "WARN",
-                    Severity::Info => "INFO",
+                    McbScriptsSeverity::Error => "ERROR",
+                    McbScriptsSeverity::Warning => "WARN",
+                    McbScriptsSeverity::Info => "INFO",
                 };
                 let suggestion = v.suggestion.as_deref().unwrap_or("");
                 if suggestion.is_empty() {
@@ -286,7 +286,7 @@ pub struct PolicyConfig {
     pub name: String,
     pub description: String,
     pub enabled: bool,
-    pub severity: Severity,
+    pub severity: McbScriptsSeverity,
     /// Policy-specific settings (JSON).
     pub settings: serde_json::Value,
 }
@@ -513,7 +513,7 @@ impl PolicyGuardProvider for ConfigurablePolicyGuard {
             name: p.name().to_string(),
             description: p.description().to_string(),
             enabled: true,
-            severity: Severity::Error,
+            severity: McbScriptsSeverity::Error,
             settings: serde_json::Value::Null,
         }).collect())
     }
@@ -571,27 +571,27 @@ fn configurable_guard_factory(
 
 ### 8. Module Locations
 
-| Crate                | Path                                          | Content                                                 |
-| -------------------- | --------------------------------------------- | ------------------------------------------------------- |
-| `mcb-domain`         | `src/entities/policy.rs`                      | `Severity`, `Violation`, `PolicyResult`, `PolicyConfig` |
-| `mcb-domain`         | `src/ports/providers/policy_guard.rs`         | `PolicyGuardProvider` trait                             |
-| `mcb-domain`         | `src/ports/providers/policy.rs`               | `Policy` trait (individual policies)                    |
-| `mcb-application`    | `src/registry/guard.rs`                       | `GUARD_PROVIDERS` slice                                 |
-| `mcb-providers`      | `src/guard/mod.rs`                            | Module root + linkme registration                       |
-| `mcb-providers`      | `src/guard/provider.rs`                       | `ConfigurablePolicyGuard` (all 11 policies)             |
-| `mcb-providers`      | `src/guard/composition.rs`                    | `AllPolicies`, `AnyPolicy` combinators                  |
-| `mcb-providers`      | `src/guard/policies/wip_limit.rs`             | `WipLimitPolicy` (policy #1)                            |
-| `mcb-providers`      | `src/guard/policies/clean_worktree.rs`        | `CleanWorktreePolicy` (policy #2)                       |
-| `mcb-providers`      | `src/guard/policies/branch_naming.rs`         | `BranchNamingPolicy` (policy #3)                        |
-| `mcb-providers`      | `src/guard/policies/commit_message_format.rs` | `CommitMessageFormatPolicy` (policy #6)                 |
-| `mcb-providers`      | `src/guard/policies/require_tests.rs`         | `RequireTestsPolicy` (policy #4)                        |
-| `mcb-providers`      | `src/guard/policies/code_coverage.rs`         | `CodeCoveragePolicy` (policy #8)                        |
-| `mcb-providers`      | `src/guard/policies/security_scan.rs`         | `SecurityScanPolicy` (policy #9)                        |
-| `mcb-providers`      | `src/guard/policies/code_review_gate.rs`      | `CodeReviewGatePolicy` (policy #7)                      |
-| `mcb-providers`      | `src/guard/policies/changelog_check.rs`       | `ChangelogCheckPolicy` (policy #5)                      |
-| `mcb-providers`      | `src/guard/policies/version_bump.rs`          | `VersionBumpPolicy` (policy #10)                        |
-| `mcb-providers`      | `src/guard/policies/documentation_update.rs`  | `DocumentationUpdatePolicy` (policy #11)                |
-| `mcb-infrastructure` | `src/config/policies.rs`                      | `PoliciesConfig` + 11 policy settings structs           |
+| Crate                | Path                                          | Content                                                           |
+| -------------------- | --------------------------------------------- | ----------------------------------------------------------------- |
+| `mcb-domain`         | `src/entities/policy.rs`                      | `McbScriptsSeverity`, `Violation`, `PolicyResult`, `PolicyConfig` |
+| `mcb-domain`         | `src/ports/providers/policy_guard.rs`         | `PolicyGuardProvider` trait                                       |
+| `mcb-domain`         | `src/ports/providers/policy.rs`               | `Policy` trait (individual policies)                              |
+| `mcb-application`    | `src/registry/guard.rs`                       | `GUARD_PROVIDERS` slice                                           |
+| `mcb-providers`      | `src/guard/mod.rs`                            | Module root + linkme registration                                 |
+| `mcb-providers`      | `src/guard/provider.rs`                       | `ConfigurablePolicyGuard` (all 11 policies)                       |
+| `mcb-providers`      | `src/guard/composition.rs`                    | `AllPolicies`, `AnyPolicy` combinators                            |
+| `mcb-providers`      | `src/guard/policies/wip_limit.rs`             | `WipLimitPolicy` (policy #1)                                      |
+| `mcb-providers`      | `src/guard/policies/clean_worktree.rs`        | `CleanWorktreePolicy` (policy #2)                                 |
+| `mcb-providers`      | `src/guard/policies/branch_naming.rs`         | `BranchNamingPolicy` (policy #3)                                  |
+| `mcb-providers`      | `src/guard/policies/commit_message_format.rs` | `CommitMessageFormatPolicy` (policy #6)                           |
+| `mcb-providers`      | `src/guard/policies/require_tests.rs`         | `RequireTestsPolicy` (policy #4)                                  |
+| `mcb-providers`      | `src/guard/policies/code_coverage.rs`         | `CodeCoveragePolicy` (policy #8)                                  |
+| `mcb-providers`      | `src/guard/policies/security_scan.rs`         | `SecurityScanPolicy` (policy #9)                                  |
+| `mcb-providers`      | `src/guard/policies/code_review_gate.rs`      | `CodeReviewGatePolicy` (policy #7)                                |
+| `mcb-providers`      | `src/guard/policies/changelog_check.rs`       | `ChangelogCheckPolicy` (policy #5)                                |
+| `mcb-providers`      | `src/guard/policies/version_bump.rs`          | `VersionBumpPolicy` (policy #10)                                  |
+| `mcb-providers`      | `src/guard/policies/documentation_update.rs`  | `DocumentationUpdatePolicy` (policy #11)                          |
+| `mcb-infrastructure` | `src/config/policies.rs`                      | `PoliciesConfig` + 11 policy settings structs                     |
 
 ## Consequences
 
@@ -600,7 +600,7 @@ fn configurable_guard_factory(
 - **Composable**: Policies combined via AND/OR without modifying each other.
 - **Configurable**: Per-project settings via `mcb.toml`. Enable/disable and adjust
   thresholds without code changes.
-- **Severity levels**: Errors block, warnings log. Teams choose enforcement strictness.
+- **McbScriptsSeverity levels**: Errors block, warnings log. Teams choose enforcement strictness.
 - **Extensible**: New policies implement `Policy` trait and register via linkme. No
   existing code modified.
 - **Dry-run**: Policies can be tested without blocking transitions.

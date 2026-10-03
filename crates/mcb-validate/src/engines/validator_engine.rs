@@ -89,7 +89,7 @@ pub struct RuleConfigValidation {
     /// Category validation
     pub category: Option<String>,
 
-    /// Severity validation
+    /// McbScriptsSeverity validation
     pub severity: Option<String>,
 
     /// Description validation

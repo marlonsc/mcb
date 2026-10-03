@@ -55,7 +55,9 @@ verification).
 - Parent FLEXT chain: read this project's `pyproject.toml` `dependencies` array filtered
   by `flext-*`. The FLEXT cascade is encoded in the inheritance lists of the facade
   classes listed under Module Map above.
-- Public extensions exposed by this project: `McbScriptsService`.
+- Public extensions exposed by this project: `McbScriptsBaseCommandSettings`,
+  `McbScriptsBaseSettings`, `McbScriptsConstants`, `McbScriptsService`,
+  `McbScriptsSettings`.
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates

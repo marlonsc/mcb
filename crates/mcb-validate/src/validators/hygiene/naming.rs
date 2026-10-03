@@ -2,12 +2,12 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::utils::source::for_each_test_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 
 use super::violation::HygieneViolation;
 
 /// Naming suggestion for an `integration/` test file lacking a purpose marker.
-fn integration_naming(file_name: &str) -> Option<(String, Severity)> {
+fn integration_naming(file_name: &str) -> Option<(String, McbScriptsSeverity)> {
     let ok = ["integration", "workflow"]
         .iter()
         .any(|kw| file_name.contains(kw) || file_name.ends_with(&format!("_{kw}")));
@@ -16,13 +16,13 @@ fn integration_naming(file_name: &str) -> Option<(String, Severity)> {
             format!(
                 "{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"
             ),
-            Severity::Info,
+            McbScriptsSeverity::Info,
         )
     })
 }
 
 /// Naming suggestion for an `e2e/` test file lacking an end-to-end marker.
-fn e2e_naming(file_name: &str) -> Option<(String, Severity)> {
+fn e2e_naming(file_name: &str) -> Option<(String, McbScriptsSeverity)> {
     let ok = ["e2e", "end_to_end"]
         .iter()
         .any(|kw| file_name.contains(kw))
@@ -32,17 +32,17 @@ fn e2e_naming(file_name: &str) -> Option<(String, Severity)> {
             format!(
                 "{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"
             ),
-            Severity::Info,
+            McbScriptsSeverity::Info,
         )
     })
 }
 
-fn expected_naming_for_parent(parent_dir: &str, file_name: &str) -> Option<(String, Severity)> {
+fn expected_naming_for_parent(parent_dir: &str, file_name: &str) -> Option<(String, McbScriptsSeverity)> {
     match parent_dir {
         "unit" => (!file_name.ends_with("_tests")).then(|| {
             (
                 format!("{file_name}_tests.rs (unit tests must end with _tests)"),
-                Severity::Warning,
+                McbScriptsSeverity::Warning,
             )
         }),
         "integration" => integration_naming(file_name),

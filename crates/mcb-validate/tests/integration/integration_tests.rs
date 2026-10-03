@@ -2,7 +2,7 @@
 
 use rstest::rstest;
 
-use mcb_domain::ports::validation::{Severity, ValidationConfig, Violation};
+use mcb_domain::ports::validation::{McbScriptsSeverity, ValidationConfig, Violation};
 use mcb_validate::ValidationConfigExt;
 
 #[rstest]
@@ -45,11 +45,11 @@ fn test_validate_workspace_quality() {
     println!("\n=== Quality Violations ===");
     let errors: Vec<_> = violations
         .iter()
-        .filter(|v| v.severity() == Severity::Error)
+        .filter(|v| v.severity() == McbScriptsSeverity::Error)
         .collect();
     let warnings: Vec<_> = violations
         .iter()
-        .filter(|v| v.severity() == Severity::Warning)
+        .filter(|v| v.severity() == McbScriptsSeverity::Warning)
         .collect();
 
     for v in &errors {
@@ -82,13 +82,13 @@ fn test_validate_workspace_documentation() {
         mcb_validate::validators::validate_named(&config, &["documentation"]).unwrap_or_default();
 
     println!("\n=== Documentation Violations ===");
-    let by_severity = |sev: Severity| violations.iter().filter(|v| v.severity() == sev).count();
+    let by_severity = |sev: McbScriptsSeverity| violations.iter().filter(|v| v.severity() == sev).count();
 
     println!(
         "  Errors: {}, Warnings: {}, Info: {}",
-        by_severity(Severity::Error),
-        by_severity(Severity::Warning),
-        by_severity(Severity::Info)
+        by_severity(McbScriptsSeverity::Error),
+        by_severity(McbScriptsSeverity::Warning),
+        by_severity(McbScriptsSeverity::Info)
     );
 
     // Only print first 20 violations to avoid noise

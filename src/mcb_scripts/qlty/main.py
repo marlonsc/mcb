@@ -13,21 +13,27 @@ from flext_cli import cli
 
 from flext_core import m, p
 from mcb_scripts.core import get_logger, r
-from mcb_scripts.qlty.model import QltyCategory, SarifIssue, Severity
+from mcb_scripts.qlty.model import (
+    McbScriptsQltyCategory,
+    McbScriptsSarifIssue,
+    McbScriptsSeverity,
+)
 from mcb_scripts.qlty.parser import parse_sarif_file
 from mcb_scripts.qlty.report import analyze_issues
 from mcb_scripts.qlty.runner import run_qlty_check, run_qlty_smells
-from mcb_scripts.settings import McbSettings
+from mcb_scripts.settings import McbScriptsSettings
 
 logger = get_logger(__name__)
 
 
-class QltyParams(m.BaseModel):
+class McbScriptsQltyParams(m.BaseModel):
     """Command parameters for the qlty analysis verb."""
 
     scan: bool = False
     checks_file: Path | None = None
-    smells_file: Path = m.Field(default_factory=lambda: McbSettings().qlty_smells_sarif)
+    smells_file: Path = m.Field(
+        default_factory=lambda: McbScriptsSettings().qlty_smells_sarif,
+    )
     type: str = "both"
     check: bool = False
     smells: bool = False
@@ -39,11 +45,14 @@ class QltyParams(m.BaseModel):
     exclude_category: list[str] = m.Field(default_factory=list)
     exclude_file: list[str] = m.Field(default_factory=list)
     summary_only: bool = False
-    report_file: Path = m.Field(default_factory=lambda: McbSettings().qlty_report_md)
+    report_file: Path = m.Field(
+        default_factory=lambda: McbScriptsSettings().qlty_report_md,
+    )
 
 
 def _load_checks_from_file(
-    checks_file: Path, all_issues: list[SarifIssue],
+    checks_file: Path,
+    all_issues: list[McbScriptsSarifIssue],
 ) -> p.Result[None]:
     if not checks_file.exists():
         return r[None].ok(None)
@@ -53,14 +62,15 @@ def _load_checks_from_file(
         return r[None].from_failure(checks_result)
     checks = checks_result.unwrap()
     for check in checks:
-        check.category = QltyCategory.CHECK
+        check.category = McbScriptsQltyCategory.CHECK
     all_issues.extend(checks)
     logger.info("   Found %s check issues", len(checks))
     return r[None].ok(None)
 
 
 def _collect_smells_issues(
-    params: QltyParams, all_issues: list[SarifIssue],
+    params: McbScriptsQltyParams,
+    all_issues: list[McbScriptsSarifIssue],
 ) -> p.Result[None]:
     if params.smells_file.exists() and not params.scan:
         logger.info("📖 Reading smells from %s", params.smells_file)
@@ -69,12 +79,12 @@ def _collect_smells_issues(
             return r[None].from_failure(smells_result)
         smells = smells_result.unwrap()
         for smell in smells:
-            smell.category = QltyCategory.SMELL
+            smell.category = McbScriptsQltyCategory.SMELL
         all_issues.extend(smells)
         logger.info("   Found %s code smells", len(smells))
     elif params.scan:
         smells_result = run_qlty_smells(
-            params.smells_file or McbSettings().qlty_smells_sarif,
+            params.smells_file or McbScriptsSettings().qlty_smells_sarif,
         )
         if smells_result.failure:
             return r[None].from_failure(smells_result)
@@ -86,16 +96,17 @@ def _collect_smells_issues(
 
 
 def _collect_checks_issues(
-    params: QltyParams, all_issues: list[SarifIssue],
+    params: McbScriptsQltyParams,
+    all_issues: list[McbScriptsSarifIssue],
 ) -> p.Result[None]:
     if params.scan:
-        outfile = params.checks_file or McbSettings().qlty_check_sarif
+        outfile = params.checks_file or McbScriptsSettings().qlty_check_sarif
         checks_result = run_qlty_check(output_file=outfile)
         if checks_result.failure:
             return r[None].from_failure(checks_result)
         checks = checks_result.unwrap()
         for check in checks:
-            check.category = QltyCategory.CHECK
+            check.category = McbScriptsQltyCategory.CHECK
         all_issues.extend(checks)
         return r[None].ok(None)
 
@@ -109,7 +120,7 @@ def _collect_checks_issues(
     return r[None].ok(None)
 
 
-def _resolve_issue_types(params: QltyParams) -> tuple[bool, bool]:
+def _resolve_issue_types(params: McbScriptsQltyParams) -> tuple[bool, bool]:
     do_checks = params.type in {"checks", "both"}
     do_smells = params.type in {"smells", "both"}
 
@@ -130,36 +141,40 @@ def _resolve_issue_types(params: QltyParams) -> tuple[bool, bool]:
     return do_checks, do_smells
 
 
-def _collect_all_issues(params: QltyParams) -> p.Result[list[SarifIssue]]:
-    all_issues: list[SarifIssue] = []
+def _collect_all_issues(
+    params: McbScriptsQltyParams,
+) -> p.Result[list[McbScriptsSarifIssue]]:
+    all_issues: list[McbScriptsSarifIssue] = []
     do_checks, do_smells = _resolve_issue_types(params)
 
     if do_checks:
         checks_result = _collect_checks_issues(params, all_issues)
         if checks_result.failure:
-            return r[list[SarifIssue]].from_failure(checks_result)
+            return r[list[McbScriptsSarifIssue]].from_failure(checks_result)
 
     if do_smells:
         smells_result = _collect_smells_issues(params, all_issues)
         if smells_result.failure:
-            return r[list[SarifIssue]].from_failure(smells_result)
+            return r[list[McbScriptsSarifIssue]].from_failure(smells_result)
 
-    return r[list[SarifIssue]].ok(all_issues)
+    return r[list[McbScriptsSarifIssue]].ok(all_issues)
 
 
 def _apply_severity_filter(
-    severity: str | None, filtered: list[SarifIssue],
-) -> list[SarifIssue]:
+    severity: str | None,
+    filtered: list[McbScriptsSarifIssue],
+) -> list[McbScriptsSarifIssue]:
     if severity:
-        target_sev = Severity.from_str(severity)
+        target_sev = McbScriptsSeverity.from_str(severity)
         filtered = [i for i in filtered if i.level == target_sev]
         logger.info("🔍 Filtered to %s %s issues", len(filtered), severity)
     return filtered
 
 
 def _apply_rule_filter(
-    rule: str | None, filtered: list[SarifIssue],
-) -> list[SarifIssue]:
+    rule: str | None,
+    filtered: list[McbScriptsSarifIssue],
+) -> list[McbScriptsSarifIssue]:
     if rule:
         filtered = [i for i in filtered if rule in i.rule_id]
         logger.info("🔍 Filtered to %s issues matching rule '%s'", len(filtered), rule)
@@ -167,19 +182,23 @@ def _apply_rule_filter(
 
 
 def _apply_category_filter(
-    category: str | None, filtered: list[SarifIssue],
-) -> list[SarifIssue]:
+    category: str | None,
+    filtered: list[McbScriptsSarifIssue],
+) -> list[McbScriptsSarifIssue]:
     if category:
         filtered = [i for i in filtered if category in i.rule_category]
         logger.info(
-            "🔍 Filtered to %s issues in category '%s'", len(filtered), category,
+            "🔍 Filtered to %s issues in category '%s'",
+            len(filtered),
+            category,
         )
     return filtered
 
 
 def _apply_file_filter(
-    file_pattern: str | None, filtered: list[SarifIssue],
-) -> list[SarifIssue]:
+    file_pattern: str | None,
+    filtered: list[McbScriptsSarifIssue],
+) -> list[McbScriptsSarifIssue]:
     if file_pattern:
         filtered = [i for i in filtered if fnmatch.fnmatch(i.file_path, file_pattern)]
         logger.info(
@@ -191,8 +210,9 @@ def _apply_file_filter(
 
 
 def _apply_exclude_rule_filter(
-    exclude_rules: list[str], filtered: list[SarifIssue],
-) -> list[SarifIssue]:
+    exclude_rules: list[str],
+    filtered: list[McbScriptsSarifIssue],
+) -> list[McbScriptsSarifIssue]:
     for rule in exclude_rules:
         filtered = [i for i in filtered if rule not in i.rule_id]
         logger.info("🔍 Excluded issues matching rule '%s'", rule)
@@ -200,8 +220,9 @@ def _apply_exclude_rule_filter(
 
 
 def _apply_exclude_category_filter(
-    exclude_categories: list[str], filtered: list[SarifIssue],
-) -> list[SarifIssue]:
+    exclude_categories: list[str],
+    filtered: list[McbScriptsSarifIssue],
+) -> list[McbScriptsSarifIssue]:
     for cat in exclude_categories:
         filtered = [i for i in filtered if cat not in i.rule_category]
         logger.info("🔍 Excluded issues in category '%s'", cat)
@@ -209,19 +230,20 @@ def _apply_exclude_category_filter(
 
 
 def _apply_exclude_file_filter(
-    exclude_files: list[str], filtered: list[SarifIssue],
-) -> list[SarifIssue]:
+    exclude_files: list[str],
+    filtered: list[McbScriptsSarifIssue],
+) -> list[McbScriptsSarifIssue]:
     for pattern in exclude_files:
         filtered = [i for i in filtered if not fnmatch.fnmatch(i.file_path, pattern)]
         logger.info("🔍 Excluded issues in files matching '%s'", pattern)
     return filtered
 
 
-def analyze(params: QltyParams) -> p.Result[str]:
+def analyze(params: McbScriptsQltyParams) -> p.Result[str]:
     """Analyze SARIF quality reports.
 
     Returns a short status string rather than the report object: the CLI facade
-    serializes a successful result as a JSON value, and AnalysisReport carries
+    serializes a successful result as a JSON value, and McbScriptsAnalysisReport carries
     Counter and dataclass members that are not JSON values. The full report is
     still emitted through the logger and, unless --summary-only, written to the
     report file.
@@ -274,13 +296,14 @@ def main() -> None:
         SystemExit: If ``result.failure``.
     """
     app = cli.create_app_with_common_params(
-        name="qlty", help_text="Analyze SARIF quality reports.",
+        name="qlty",
+        help_text="Analyze SARIF quality reports.",
     )
     cli.register_result_command(
         app,
         name="analyze",
         help_text="Analyze SARIF quality reports.",
-        model_cls=QltyParams,
+        model_cls=McbScriptsQltyParams,
         handler=analyze,
     )
     result = cli.execute_app(app, prog_name="qlty")

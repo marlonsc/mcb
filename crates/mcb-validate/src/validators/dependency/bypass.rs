@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::scan::for_each_file_under_root;
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::constants::validate::COMMENT_PREFIX;
 
 use std::path::{Path, PathBuf};
@@ -40,13 +40,13 @@ pub fn validate_bypass_boundaries(
                         file,
                         line,
                         context,
-                        severity: Severity::Error,
+                        severity: McbScriptsSeverity::Error,
                     },
                     _ => DependencyViolation::AdminBypassImport {
                         file,
                         line,
                         context,
-                        severity: Severity::Error,
+                        severity: McbScriptsSeverity::Error,
                     },
                 },
             },

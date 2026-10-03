@@ -8,7 +8,7 @@
 
 /// Architecture path fragments, clean architecture naming, and linter integration.
 mod architecture;
-/// Severity levels, categories, and validator names.
+/// McbScriptsSeverity levels, categories, and validator names.
 mod categories;
 /// Detection patterns: quality, SOLID, KISS, refactoring, implementation,
 /// documentation, async, performance, and organization.

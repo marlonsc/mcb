@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from mcb_scripts.core import r
-from mcb_scripts.qlty.model import SarifIssue, Severity
+from mcb_scripts.qlty.model import McbScriptsSarifIssue, McbScriptsSeverity
 from mcb_scripts.qlty.strategies import get_strategy
 
 if TYPE_CHECKING:
@@ -19,17 +19,17 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class AnalysisReport:
+class McbScriptsAnalysisReport:
     """Statistical analysis of SARIF issues."""
 
     total_issues: int = 0
-    by_severity: Counter[Severity] = field(default_factory=Counter)
+    by_severity: Counter[McbScriptsSeverity] = field(default_factory=Counter)
     by_rule: Counter[str] = field(default_factory=Counter)
     by_category: Counter[str] = field(default_factory=Counter)
     by_file: Counter[str] = field(default_factory=Counter)
     top_files: list[tuple[str, int]] = field(default_factory=list)
     top_rules: list[tuple[str, int]] = field(default_factory=list)
-    issues: list[SarifIssue] = field(default_factory=list)
+    issues: list[McbScriptsSarifIssue] = field(default_factory=list)
 
     def generate_summary(self) -> str:
         """Generate human-readable summary.
@@ -43,11 +43,15 @@ class AnalysisReport:
             f"📊 ANALYSIS SUMMARY: {self.total_issues} issues",
             "━" * 72,
             "",
-            # Severity breakdown
-            "## By Severity",
+            # McbScriptsSeverity breakdown
+            "## By McbScriptsSeverity",
             "",
         ))
-        for sev in [Severity.ERROR, Severity.WARNING, Severity.INFO]:
+        for sev in [
+            McbScriptsSeverity.ERROR,
+            McbScriptsSeverity.WARNING,
+            McbScriptsSeverity.INFO,
+        ]:
             count = self.by_severity.get(sev, 0)
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"{sev.to_emoji()} {sev.name:8s} {count:4d} ({pct:5.1f}%)")
@@ -67,12 +71,16 @@ class AnalysisReport:
 
     def _generate_severity_table(self, lines: list[str]) -> None:
         lines.extend((
-            "## Severity Distribution",
+            "## McbScriptsSeverity Distribution",
             "",
-            "| Severity | Count | Percentage |",
+            "| McbScriptsSeverity | Count | Percentage |",
             "| ---------- | ------- | ------------ |",
         ))
-        for sev in [Severity.ERROR, Severity.WARNING, Severity.INFO]:
+        for sev in [
+            McbScriptsSeverity.ERROR,
+            McbScriptsSeverity.WARNING,
+            McbScriptsSeverity.INFO,
+        ]:
             count = self.by_severity.get(sev, 0)
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"| {sev.to_emoji()} {sev.name} | {count} | {pct:.1f}% |")
@@ -115,7 +123,9 @@ class AnalysisReport:
 
     @staticmethod
     def _generate_rule_section(
-        lines: list[str], rule: str, rule_issues: list[SarifIssue],
+        lines: list[str],
+        rule: str,
+        rule_issues: list[McbScriptsSarifIssue],
     ) -> None:
         lines.extend((f"### {rule} ({len(rule_issues)} issues)", ""))
 
@@ -148,22 +158,26 @@ class AnalysisReport:
         if count > limit:
             lines.extend((f"*...and {count - limit} more issues.*", ""))
 
-    def _generate_severity_section(self, lines: list[str], sev: Severity) -> None:
+    def _generate_severity_section(
+        self, lines: list[str], sev: McbScriptsSeverity,
+    ) -> None:
         sev_issues = [i for i in self.issues if i.level == sev]
         if not sev_issues:
             return
 
         lines.extend((f"## {sev.to_emoji()} {sev.name} Issues ({len(sev_issues)})", ""))
 
-        by_rule: defaultdict[str, list[SarifIssue]] = defaultdict(list)
+        by_rule: defaultdict[str, list[McbScriptsSarifIssue]] = defaultdict(list)
         for issue in sev_issues:
             by_rule[issue.rule_id].append(issue)
 
-        def _issue_count(item: tuple[str, list[SarifIssue]]) -> int:
+        def _issue_count(item: tuple[str, list[McbScriptsSarifIssue]]) -> int:
             return len(item[1])
 
         for rule, rule_issues in sorted(
-            by_rule.items(), key=_issue_count, reverse=True,
+            by_rule.items(),
+            key=_issue_count,
+            reverse=True,
         ):
             self._generate_rule_section(lines, rule, rule_issues)
 
@@ -181,37 +195,48 @@ class AnalysisReport:
         self._generate_rules_table(lines)
         self._generate_files_table(lines)
 
-        for sev in [Severity.ERROR, Severity.WARNING, Severity.INFO]:
+        for sev in [
+            McbScriptsSeverity.ERROR,
+            McbScriptsSeverity.WARNING,
+            McbScriptsSeverity.INFO,
+        ]:
             self._generate_severity_section(lines, sev)
 
         return "\n".join(lines)
 
 
-def _populate_severity_counts(report: AnalysisReport, issues: list[SarifIssue]) -> None:
+def _populate_severity_counts(
+    report: McbScriptsAnalysisReport, issues: list[McbScriptsSarifIssue],
+) -> None:
     for issue in issues:
         report.by_severity[issue.level] += 1
 
 
 def _populate_category_and_rule_counts(
-    report: AnalysisReport, issues: list[SarifIssue],
+    report: McbScriptsAnalysisReport,
+    issues: list[McbScriptsSarifIssue],
 ) -> None:
     for issue in issues:
         report.by_rule[issue.rule_id] += 1
         report.by_category[issue.rule_category] += 1
 
 
-def _populate_file_counts(report: AnalysisReport, issues: list[SarifIssue]) -> None:
+def _populate_file_counts(
+    report: McbScriptsAnalysisReport, issues: list[McbScriptsSarifIssue],
+) -> None:
     for issue in issues:
         report.by_file[issue.file_path] += 1
 
 
-def analyze_issues(issues: list[SarifIssue]) -> p.Result[AnalysisReport]:
+def analyze_issues(
+    issues: list[McbScriptsSarifIssue],
+) -> p.Result[McbScriptsAnalysisReport]:
     """Generate statistical analysis of issues.
 
     Returns:
-        The resulting ``p.Result[AnalysisReport]``.
+        The resulting ``p.Result[McbScriptsAnalysisReport]``.
     """
-    report = AnalysisReport()
+    report = McbScriptsAnalysisReport()
     report.total_issues = len(issues)
     report.issues = issues
 
@@ -222,4 +247,4 @@ def analyze_issues(issues: list[SarifIssue]) -> p.Result[AnalysisReport]:
     report.top_files = report.by_file.most_common(20)
     report.top_rules = report.by_rule.most_common(20)
 
-    return r[AnalysisReport].ok(report)
+    return r[McbScriptsAnalysisReport].ok(report)

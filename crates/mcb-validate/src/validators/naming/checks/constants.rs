@@ -6,7 +6,7 @@ use std::path::Path;
 use regex::Regex;
 
 use super::super::violation::NamingViolation;
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use mcb_utils::utils::naming::is_screaming_snake_case;
 
 /// Validates that every `const` and `static` declaration uses
@@ -45,6 +45,6 @@ fn bad_constant_name(
         line: line_num + 1,
         name: name.to_owned(),
         expected_case: "SCREAMING_SNAKE_CASE".to_owned(),
-        severity: Severity::Warning,
+        severity: McbScriptsSeverity::Warning,
     })
 }

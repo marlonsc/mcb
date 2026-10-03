@@ -14,9 +14,9 @@ import pytest
 from pydantic import create_model
 from structlog.testing import capture_logs
 
-from mcb_scripts.core import BaseMcbSettings
+from mcb_scripts.core import McbScriptsBaseSettings
 
-SettingsFactory = Callable[..., BaseMcbSettings]
+SettingsFactory = Callable[..., McbScriptsBaseSettings]
 """Factory that builds a fresh settings subclass instance per test."""
 
 
@@ -27,8 +27,9 @@ def reset_settings() -> Generator[Callable[[], None]]:
     Yields:
         Each ``Callable[[], None]``.
     """
+
     def _reset() -> None:
-        BaseMcbSettings.reset_for_testing()
+        McbScriptsBaseSettings.reset_for_testing()
 
     _reset()
     yield _reset
@@ -39,12 +40,14 @@ def reset_settings() -> Generator[Callable[[], None]]:
 def settings_factory(reset_settings: Callable[[], None]) -> SettingsFactory:
     """Return a factory that creates a fresh settings subclass instance."""
 
-    def _make(**fields: object) -> BaseMcbSettings:
+    def _make(**fields: object) -> McbScriptsBaseSettings:
         reset_settings()
         defs: dict[str, Any] = {
             name: (type(value), value) for name, value in fields.items()
         }
-        settings_cls = create_model("_Settings", __base__=BaseMcbSettings, **defs)
+        settings_cls = create_model(
+            "_Settings", __base__=McbScriptsBaseSettings, **defs,
+        )
         settings_cls.model_rebuild()
         return settings_cls.fetch_global()
 

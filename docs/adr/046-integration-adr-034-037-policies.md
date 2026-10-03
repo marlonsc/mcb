@@ -330,7 +330,7 @@ pub enum WorkflowEvent {
 
     // Policy checks
     PolicyEvaluated { result: PolicyEvaluationResult },
-    PolicyViolation { policy_id: PolicyId, severity: Severity },
+    PolicyViolation { policy_id: PolicyId, severity: McbScriptsSeverity },
 
     // Compensation
     CompensationTriggered { action: CompensationAction, reason: String },
@@ -371,7 +371,7 @@ pub struct CompensationSubscriber {
 impl EventHandler for CompensationSubscriber {
     async fn handle(&self, event: &DomainEvent) -> Result<()> {
         if let DomainEvent::Workflow(WorkflowEvent::PolicyViolation { policy_id, severity }) = event {
-            if *severity == Severity::Critical {
+            if *severity == McbScriptsSeverity::Critical {
                 self.handler.trigger_compensation(policy_id).await?;
             }
         }

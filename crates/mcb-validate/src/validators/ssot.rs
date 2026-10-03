@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
 use mcb_utils::utils::regex::compile_regex;
 
@@ -35,7 +35,7 @@ crate::define_validator! {
             line: usize,
             declaration_name: String,
             locations: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         #[doc = "Forbidden import of the legacy repositories compatibility path."]
         #[violation(
@@ -48,7 +48,7 @@ crate::define_validator! {
             file: PathBuf,
             line: usize,
             import_path: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         #[doc = "Forbidden legacy schema symbol usage."]
         #[violation(
@@ -61,7 +61,7 @@ crate::define_validator! {
             file: PathBuf,
             line: usize,
             symbol_name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         #[doc = "Forbidden macro path referencing `schema::memory` internals."]
         #[violation(
@@ -74,7 +74,7 @@ crate::define_validator! {
             file: PathBuf,
             line: usize,
             macro_path: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         #[doc = "Forbidden legacy schema import path."]
         #[violation(
@@ -87,7 +87,7 @@ crate::define_validator! {
             file: PathBuf,
             line: usize,
             import_path: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         #[doc = "Forbidden root-level schema path usage."]
         #[violation(
@@ -100,7 +100,7 @@ crate::define_validator! {
             file: PathBuf,
             line: usize,
             path: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         #[doc = "Forbidden raw ID field type in domain entities/value objects."]
         #[violation(
@@ -114,7 +114,7 @@ crate::define_validator! {
             line: usize,
             field_name: String,
             field_type: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
     }
 
@@ -217,7 +217,7 @@ impl SsotValidator {
                 file: path.to_path_buf(),
                 line: line_number,
                 import_path,
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             }
         });
 
@@ -252,7 +252,7 @@ impl SsotValidator {
                 file: path.to_path_buf(),
                 line: line_number,
                 symbol_name: symbol_name.to_owned(),
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             },
         );
 
@@ -264,7 +264,7 @@ impl SsotValidator {
                 file: path.to_path_buf(),
                 line: line_number,
                 macro_path,
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             },
         );
 
@@ -276,7 +276,7 @@ impl SsotValidator {
                 file: path.to_path_buf(),
                 line: line_number,
                 import_path,
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             },
         );
     }
@@ -297,7 +297,7 @@ impl SsotValidator {
                 file: path.to_path_buf(),
                 line: line_number,
                 path: path_text,
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             },
         );
 
@@ -310,7 +310,7 @@ impl SsotValidator {
                 file: path.to_path_buf(),
                 line: line_number,
                 path: path_text.to_owned(),
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             },
         );
     }
@@ -410,7 +410,7 @@ fn push_duplicate_declarations(
             line,
             declaration_name,
             locations: locations_text,
-            severity: Severity::Error,
+            severity: McbScriptsSeverity::Error,
         });
     }
 }
@@ -456,7 +456,7 @@ fn push_raw_id_field_violations(
             line: line_number,
             field_name: field_name_match.as_str().to_owned(),
             field_type: field_type_match.as_str().to_owned(),
-            severity: Severity::Error,
+            severity: McbScriptsSeverity::Error,
         });
     }
 }

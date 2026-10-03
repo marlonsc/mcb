@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from mcb_scripts.gitops import (
-    GitOpsTarget,
+    McbScriptsGitOpsTarget,
     analyze,
     cached_render,
     discover_targets,
@@ -169,7 +169,7 @@ spec:
 def test_render_cache_key_is_stable_for_same_inputs(temp_dir: Path) -> None:
     """Test render cache key is stable for same inputs."""
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
-    target = GitOpsTarget(kind="helm", path=temp_dir / "k8s" / "chart")
+    target = McbScriptsGitOpsTarget(kind="helm", path=temp_dir / "k8s" / "chart")
 
     assert render_cache_key(target) == render_cache_key(target)
 
@@ -178,7 +178,7 @@ def test_render_cache_key_changes_when_input_changes(temp_dir: Path) -> None:
     """Test render cache key changes when input changes."""
     chart_dir = temp_dir / "k8s" / "chart"
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
-    target = GitOpsTarget(kind="helm", path=chart_dir)
+    target = McbScriptsGitOpsTarget(kind="helm", path=chart_dir)
     before = render_cache_key(target)
     (chart_dir / "values.yaml").write_text("foo: bar\n", encoding="utf-8")
     after = render_cache_key(target)
@@ -187,22 +187,27 @@ def test_render_cache_key_changes_when_input_changes(temp_dir: Path) -> None:
 
 
 def test_cached_render_writes_and_reuses_cache(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
+    temp_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test cached render writes and reuses cache."""
     chart_dir = temp_dir / "k8s" / "chart"
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
-    target = GitOpsTarget(kind="helm", path=chart_dir)
+    target = McbScriptsGitOpsTarget(kind="helm", path=chart_dir)
     rendered = "apiVersion: v1\nkind: Pod\nmetadata:\n  name: test\n"
 
     calls: list[list[str]] = []
 
     def fake_run(
-        cmd: list[str], **_subprocess_kwargs: object,
+        cmd: list[str],
+        **_subprocess_kwargs: object,
     ) -> subprocess.CompletedProcess[str]:
         calls.append(cmd)
         return subprocess.CompletedProcess(
-            args=cmd, returncode=0, stdout=rendered, stderr="",
+            args=cmd,
+            returncode=0,
+            stdout=rendered,
+            stderr="",
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -215,13 +220,14 @@ def test_cached_render_writes_and_reuses_cache(
     assert len(calls) == 1, "cache should prevent a second render"
 
 
-def _helm_target(temp_dir: Path) -> GitOpsTarget:
+def _helm_target(temp_dir: Path) -> McbScriptsGitOpsTarget:
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
-    return GitOpsTarget(kind="helm", path=temp_dir / "k8s" / "chart")
+    return McbScriptsGitOpsTarget(kind="helm", path=temp_dir / "k8s" / "chart")
 
 
 def test_missing_renderer_cli_is_a_red_issue(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
+    temp_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test missing renderer cli is a red issue."""
     _helm_target(temp_dir)
@@ -238,7 +244,8 @@ def test_missing_renderer_cli_is_a_red_issue(
 
 
 def test_render_timeout_is_a_red_issue(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
+    temp_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test render timeout is a red issue."""
     _helm_target(temp_dir)
@@ -249,7 +256,8 @@ def test_render_timeout_is_a_red_issue(
     monkeypatch.setattr("mcb_scripts.gitops.shutil.which", fake_which, raising=True)
 
     def fake_run(
-        cmd: list[str], **_subprocess_kwargs: object,
+        cmd: list[str],
+        **_subprocess_kwargs: object,
     ) -> subprocess.CompletedProcess[str]:
         raise subprocess.TimeoutExpired(cmd=cmd, timeout=60)
 
@@ -262,7 +270,8 @@ def test_render_timeout_is_a_red_issue(
 
 
 def test_failed_render_is_a_red_issue(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
+    temp_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test failed render is a red issue."""
     _helm_target(temp_dir)
@@ -273,10 +282,14 @@ def test_failed_render_is_a_red_issue(
     monkeypatch.setattr("mcb_scripts.gitops.shutil.which", fake_which, raising=True)
 
     def fake_run(
-        cmd: list[str], **_subprocess_kwargs: object,
+        cmd: list[str],
+        **_subprocess_kwargs: object,
     ) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(
-            args=cmd, returncode=1, stdout="", stderr="chart not found",
+            args=cmd,
+            returncode=1,
+            stdout="",
+            stderr="chart not found",
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)

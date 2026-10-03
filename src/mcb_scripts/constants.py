@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Final
 
 
-class McbConstants:
+class McbScriptsConstants:
     """Project-wide constants for MCB Python automation.
 
     This is a standalone SSOT class rather than a subclass of
@@ -29,6 +29,6 @@ class McbConstants:
     PROJECT_NAME: Final[str] = "mcb"
 
 
-c = McbConstants()
+c = McbScriptsConstants()
 
-__all__ = ["McbConstants", "c"]
+__all__ = ["McbScriptsConstants", "c"]

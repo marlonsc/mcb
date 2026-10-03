@@ -8,7 +8,7 @@ use regex::Regex;
 use super::super::violation::ImplementationViolation;
 use crate::Result;
 use crate::utils::source::{compile_pattern_pairs, source_lines, track_fn_name};
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 
 /// Detects stub macros (`todo!`, `unimplemented!`, `panic!("not implemented")`)
 /// that mark incomplete implementations and reports each as a `StubMacro`
@@ -44,7 +44,7 @@ pub fn validate_stub_macros(
                         line: line_num,
                         method_name: current_fn_name.clone(),
                         macro_type: macro_type.to_string(),
-                        severity: Severity::Warning,
+                        severity: McbScriptsSeverity::Warning,
                     });
                 }
             }

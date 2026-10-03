@@ -16,7 +16,7 @@ use serde_json::Value;
 
 use crate::Result;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use mcb_domain::ports::validation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{McbScriptsSeverity, ViolationCategory};
 use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use mcb_utils::constants::validate::{
     DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, GRL, YAML_FIELD_RULE,
@@ -208,7 +208,7 @@ impl ReteEngine {
         RuleViolation::new(
             &rule_name,
             ViolationCategory::Architecture,
-            Severity::Error,
+            McbScriptsSeverity::Error,
             message,
         )
         .with_context(format!(

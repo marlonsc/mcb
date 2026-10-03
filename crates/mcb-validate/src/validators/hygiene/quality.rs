@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::utils::source::for_each_test_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::{COMMENT_PREFIX, FN_PREFIX, MODULE_DOC_PREFIX};
 use mcb_utils::utils::regex::{compile_regex, compile_regex_pairs};
 use regex::Regex;
@@ -220,14 +220,14 @@ fn analyze_test_function_body(input: &TestBodyInput<'_>) -> Vec<HygieneViolation
             file: input.path.to_path_buf(),
             line: input.fn_line_idx + 1,
             function_name: input.fn_name.to_owned(),
-            severity: Severity::Warning,
+            severity: McbScriptsSeverity::Warning,
         });
     } else if !facts.has_assertion && facts.has_unwrap {
         violations.push(HygieneViolation::UnwrapOnlyAssertion {
             file: input.path.to_path_buf(),
             line: input.fn_line_idx + 1,
             function_name: input.fn_name.to_owned(),
-            severity: Severity::Warning,
+            severity: McbScriptsSeverity::Warning,
         });
     }
 
@@ -258,7 +258,7 @@ fn scan_test_body_line(
                 line: body_line_idx + 1,
                 function_name: input.fn_name.to_owned(),
                 assertion: (*desc).to_owned(),
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
     }
@@ -299,7 +299,7 @@ fn check_forbidden_line(
             file: file.to_path_buf(),
             line: line_no,
             token: mat.as_str().to_owned(),
-            severity: Severity::Error,
+            severity: McbScriptsSeverity::Error,
         });
     }
 
@@ -307,7 +307,7 @@ fn check_forbidden_line(
         violations.push(HygieneViolation::SkipBranchUsage {
             file: file.to_path_buf(),
             line: line_no,
-            severity: Severity::Error,
+            severity: McbScriptsSeverity::Error,
         });
     }
 
@@ -320,7 +320,7 @@ fn check_forbidden_line(
                 file: file.to_path_buf(),
                 line: line_no,
                 macro_name: macro_name.to_owned(),
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             });
         }
     }
@@ -341,7 +341,7 @@ fn check_skip_branches(
             violations.push(HygieneViolation::SkipBranchUsage {
                 file: file.to_path_buf(),
                 line: idx + 1,
-                severity: Severity::Error,
+                severity: McbScriptsSeverity::Error,
             });
         }
     }

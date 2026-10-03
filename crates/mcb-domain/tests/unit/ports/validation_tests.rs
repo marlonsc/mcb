@@ -1,10 +1,10 @@
 //! Unit tests for validation port types and configuration.
 //!
 //! Tests cover: `ValidationConfig` construction, builder methods, path exclusion,
-//! Severity serialization, `ViolationCategory` display, and `NamedCheck/run_checks` flow.
+//! McbScriptsSeverity serialization, `ViolationCategory` display, and `NamedCheck/run_checks` flow.
 
 use mcb_domain::ports::validation::{
-    NamedCheck, Severity, ValidationConfig, ViolationCategory, run_checks,
+    NamedCheck, McbScriptsSeverity, ValidationConfig, ViolationCategory, run_checks,
 };
 use rstest::rstest;
 
@@ -67,30 +67,30 @@ fn config_should_exclude_empty_patterns() {
 }
 
 // ---------------------------------------------------------------------------
-// Severity serialization
+// McbScriptsSeverity serialization
 // ---------------------------------------------------------------------------
 
 #[rstest]
-#[case(Severity::Error, "\"ERROR\"")]
-#[case(Severity::Warning, "\"WARNING\"")]
-#[case(Severity::Info, "\"INFO\"")]
-fn severity_serializes_uppercase(#[case] severity: Severity, #[case] expected: &str) {
+#[case(McbScriptsSeverity::Error, "\"ERROR\"")]
+#[case(McbScriptsSeverity::Warning, "\"WARNING\"")]
+#[case(McbScriptsSeverity::Info, "\"INFO\"")]
+fn severity_serializes_uppercase(#[case] severity: McbScriptsSeverity, #[case] expected: &str) {
     let json = serde_json::to_string(&severity).expect("serialization should succeed");
     assert_eq!(json, expected);
 }
 
 #[rstest]
-#[case("\"ERROR\"", Severity::Error)]
-#[case("\"WARNING\"", Severity::Warning)]
-#[case("\"INFO\"", Severity::Info)]
-fn severity_deserializes_uppercase(#[case] json: &str, #[case] expected: Severity) {
-    let severity: Severity = serde_json::from_str(json).expect("deserialization should succeed");
+#[case("\"ERROR\"", McbScriptsSeverity::Error)]
+#[case("\"WARNING\"", McbScriptsSeverity::Warning)]
+#[case("\"INFO\"", McbScriptsSeverity::Info)]
+fn severity_deserializes_uppercase(#[case] json: &str, #[case] expected: McbScriptsSeverity) {
+    let severity: McbScriptsSeverity = serde_json::from_str(json).expect("deserialization should succeed");
     assert_eq!(severity, expected);
 }
 
 #[rstest]
 fn severity_rejects_wrong_case() {
-    let result = serde_json::from_str::<Severity>("\"Error\"");
+    let result = serde_json::from_str::<McbScriptsSeverity>("\"Error\"");
     assert!(result.is_err(), "PascalCase 'Error' should be rejected");
 }
 

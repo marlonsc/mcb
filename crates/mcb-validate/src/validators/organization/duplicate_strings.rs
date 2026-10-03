@@ -4,7 +4,7 @@
 use super::violation::OrganizationViolation;
 use crate::filters::LanguageId;
 use crate::scan::{for_each_crate_file, is_test_path};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::{
     ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS,
 };
@@ -61,7 +61,7 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
                         value,
                         occurrences,
                         suggestion: "Consider creating a named constant".to_owned(),
-                        severity: Severity::Info,
+                        severity: McbScriptsSeverity::Info,
                     }
                 })
             }),

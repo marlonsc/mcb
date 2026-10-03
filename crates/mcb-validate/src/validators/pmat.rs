@@ -26,7 +26,7 @@ use mcb_domain::registry::resolve_code_analyzer;
 use mcb_utils::constants::validate::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 
 use crate::define_violations;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 
 define_violations! {
     dynamic_severity,
@@ -48,7 +48,7 @@ define_violations! {
             function: String,
             complexity: u32,
             threshold: u32,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Dead code detected.
         ///
@@ -66,7 +66,7 @@ define_violations! {
             line: usize,
             item_type: String,
             name: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Low TDG score (high technical debt).
         ///
@@ -83,7 +83,7 @@ define_violations! {
             file: PathBuf,
             score: u32,
             threshold: u32,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// PMAT tooling unavailable.
         #[violation(
@@ -93,7 +93,7 @@ define_violations! {
         )]
         PmatUnavailable {
             message: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// PMAT execution error.
         #[violation(
@@ -105,7 +105,7 @@ define_violations! {
         PmatError {
             command: String,
             error: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
     }
 }
@@ -185,7 +185,7 @@ impl PmatValidator {
         let Some(ref analyzer) = self.analyzer else {
             return Ok(vec![PmatViolation::PmatUnavailable {
                 message: "No code analyzer registered".to_owned(),
-                severity: Severity::Info,
+                severity: McbScriptsSeverity::Info,
             }]);
         };
         let findings = analyzer
@@ -205,9 +205,9 @@ impl PmatValidator {
                     complexity,
                     threshold: self.complexity_threshold,
                     severity: if complexity > self.complexity_threshold * 2 {
-                        Severity::Warning
+                        McbScriptsSeverity::Warning
                     } else {
-                        Severity::Info
+                        McbScriptsSeverity::Info
                     },
                 }),
                 AnalysisFinding::DeadCode { .. } | AnalysisFinding::TechnicalDebt { .. } => None,
@@ -224,7 +224,7 @@ impl PmatValidator {
         let Some(ref analyzer) = self.analyzer else {
             return Ok(vec![PmatViolation::PmatUnavailable {
                 message: "No code analyzer registered".to_owned(),
-                severity: Severity::Info,
+                severity: McbScriptsSeverity::Info,
             }]);
         };
         let findings = analyzer
@@ -244,7 +244,7 @@ impl PmatValidator {
                     line,
                     item_type,
                     name,
-                    severity: Severity::Info,
+                    severity: McbScriptsSeverity::Info,
                 }),
                 AnalysisFinding::Complexity { .. } | AnalysisFinding::TechnicalDebt { .. } => None,
             })
@@ -260,7 +260,7 @@ impl PmatValidator {
         let Some(ref analyzer) = self.analyzer else {
             return Ok(vec![PmatViolation::PmatUnavailable {
                 message: "No code analyzer registered".to_owned(),
-                severity: Severity::Info,
+                severity: McbScriptsSeverity::Info,
             }]);
         };
         let findings = analyzer
@@ -276,9 +276,9 @@ impl PmatValidator {
                         score,
                         threshold: self.tdg_threshold,
                         severity: if score > self.tdg_threshold + 25 {
-                            Severity::Warning
+                            McbScriptsSeverity::Warning
                         } else {
-                            Severity::Info
+                            McbScriptsSeverity::Info
                         },
                     })
                 }

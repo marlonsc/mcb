@@ -5,7 +5,7 @@ use std::path::Path;
 
 use super::super::violation::NamingViolation;
 use crate::apply_ca_rule;
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use mcb_utils::constants::validate::STANDARD_SKIP_FILES;
 use mcb_utils::constants::validate::{
     ADAPTERS_DIR, CA_ADAPTERS_REPOSITORY_DIR, CA_DI_DIR, CA_DOMAIN_PROVIDER_KEYWORD,
@@ -19,7 +19,7 @@ fn ca_violation(
     detected_type: &str,
     issue: &str,
     suggestion: &str,
-    severity: Severity,
+    severity: McbScriptsSeverity,
 ) -> NamingViolation {
     NamingViolation::BadCaNaming {
         path: path.to_path_buf(),
@@ -94,7 +94,7 @@ fn check_domain_naming(path: &Path, file_name: &str, path_str: &str) -> Option<N
         "Provider Port",
         "Provider file outside ports/ directory",
         "Move to ports/providers/",
-        Severity::Warning
+        McbScriptsSeverity::Warning
     )
     .or_else(|| {
         apply_ca_rule!(
@@ -106,7 +106,7 @@ fn check_domain_naming(path: &Path, file_name: &str, path_str: &str) -> Option<N
             "Repository Port",
             "Repository file outside repositories/ directory",
             "Move to repositories/",
-            Severity::Warning
+            McbScriptsSeverity::Warning
         )
     })
 }
@@ -126,7 +126,7 @@ fn check_infrastructure_naming(
         "Adapter",
         "Adapter/implementation file outside adapters/ directory",
         "Move to adapters/",
-        Severity::Warning
+        McbScriptsSeverity::Warning
     )
     .or_else(|| {
         apply_ca_rule!(
@@ -138,7 +138,7 @@ fn check_infrastructure_naming(
             "Adapter",
             "Adapter/implementation file outside adapters/ directory",
             "Move to adapters/",
-            Severity::Warning
+            McbScriptsSeverity::Warning
         )
     })
     .or_else(|| {
@@ -151,7 +151,7 @@ fn check_infrastructure_naming(
             "DI Module",
             "Module file outside di/ directory",
             "Move to di/modules/",
-            Severity::Info
+            McbScriptsSeverity::Info
         )
     })
 }
@@ -167,6 +167,6 @@ fn check_server_naming(path: &Path, file_name: &str, path_str: &str) -> Option<N
         "Handler",
         "Handler file outside handlers/ directory",
         "Move to handlers/, admin/, or tools/",
-        Severity::Warning
+        McbScriptsSeverity::Warning
     )
 }

@@ -5,7 +5,7 @@
 
 #[cfg(test)]
 mod yaml_metrics_tests {
-    use mcb_domain::ports::validation::Severity;
+    use mcb_domain::ports::validation::McbScriptsSeverity;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use mcb_validate::rules::yaml_loader::{MetricThresholdConfig, MetricsConfig, YamlRuleLoader};
     use rstest::rstest;
@@ -38,15 +38,15 @@ mod yaml_metrics_tests {
 
         let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
         assert_eq!(cc.max_value, 10);
-        assert_eq!(cc.severity, Severity::Error);
+        assert_eq!(cc.severity, McbScriptsSeverity::Error);
 
         let fl = thresholds.get(MetricType::FunctionLength).unwrap();
         assert_eq!(fl.max_value, 30);
-        assert_eq!(fl.severity, Severity::Warning);
+        assert_eq!(fl.severity, McbScriptsSeverity::Warning);
 
         let nd = thresholds.get(MetricType::NestingDepth).unwrap();
         assert_eq!(nd.max_value, 3);
-        assert_eq!(nd.severity, Severity::Warning);
+        assert_eq!(nd.severity, McbScriptsSeverity::Warning);
     }
 
     /// Test analyzing code with thresholds from `MetricsConfig`
@@ -90,7 +90,7 @@ fn complex(x: i32) -> i32 {
         let v = &violations[0];
         assert_eq!(v.item_name, "complex");
         assert_eq!(v.metric_type, MetricType::CognitiveComplexity);
-        assert_eq!(v.severity, Severity::Error);
+        assert_eq!(v.severity, McbScriptsSeverity::Error);
     }
 
     /// Test loading YAML rules with and without metrics section

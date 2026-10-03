@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use derive_more::Display;
 
 use super::MetricType;
-use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
 
 /// A metric violation when a threshold is exceeded
 #[derive(Debug, Clone, Display)]
@@ -35,8 +35,8 @@ pub struct MetricViolation {
     pub actual_value: u32,
     /// Configured threshold
     pub threshold: u32,
-    /// Severity level
-    pub severity: Severity,
+    /// McbScriptsSeverity level
+    pub severity: McbScriptsSeverity,
 }
 
 impl MetricViolation {
@@ -59,7 +59,7 @@ impl Violation for MetricViolation {
         ViolationCategory::Metrics
     }
 
-    fn severity(&self) -> Severity {
+    fn severity(&self) -> McbScriptsSeverity {
         self.severity
     }
 

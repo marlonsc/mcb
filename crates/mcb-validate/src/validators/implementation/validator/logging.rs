@@ -8,7 +8,7 @@ use regex::Regex;
 use super::super::violation::ImplementationViolation;
 use crate::Result;
 use crate::utils::source::{extract_functions_with_body, non_test_lines, required_patterns};
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 
 /// Detects methods whose entire body is logging statements (and thus perform no
 /// real work) and reports each as a `LogOnlyMethod` violation.
@@ -49,7 +49,7 @@ pub fn validate_log_only_methods(
                     file: file_path.clone(),
                     line: func.start_line,
                     method_name: func.name.clone(),
-                    severity: Severity::Warning,
+                    severity: McbScriptsSeverity::Warning,
                 });
             }
         }

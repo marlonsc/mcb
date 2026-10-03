@@ -315,7 +315,9 @@ def _from_model_int_cast(field: str, domain_field: str, conv: ConverterConfig) -
     return f"            {domain_field}: m.{field} as i32,"
 
 
-def _from_model_opt_int_cast(field: str, domain_field: str, conv: ConverterConfig) -> str:
+def _from_model_opt_int_cast(
+    field: str, domain_field: str, conv: ConverterConfig,
+) -> str:
     return f"            {domain_field}: m.{field}.map(|v| v as i32),"
 
 
@@ -332,11 +334,15 @@ def _from_model_json_array(field: str, domain_field: str, conv: ConverterConfig)
     return _from_model_json_opt_deser(field, domain_field)
 
 
-def _from_model_json_object(field: str, domain_field: str, conv: ConverterConfig) -> str:
+def _from_model_json_object(
+    field: str, domain_field: str, conv: ConverterConfig,
+) -> str:
     return _from_model_json_opt_deser(field, domain_field)
 
 
-def _from_model_json_array_required(field: str, domain_field: str, conv: ConverterConfig) -> str:
+def _from_model_json_array_required(
+    field: str, domain_field: str, conv: ConverterConfig,
+) -> str:
     return (
         f"            {domain_field}: serde_json::from_str(&m.{field})\n"
         f'                .map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column"))\n'
@@ -344,7 +350,9 @@ def _from_model_json_array_required(field: str, domain_field: str, conv: Convert
     )
 
 
-def _from_model_json_object_opt(field: str, domain_field: str, conv: ConverterConfig) -> str:
+def _from_model_json_object_opt(
+    field: str, domain_field: str, conv: ConverterConfig,
+) -> str:
     obj_type = conv.get("object_type", "")
     return (
         f"            {domain_field}: m\n"
@@ -361,7 +369,9 @@ def _from_model_json_value(field: str, domain_field: str, conv: ConverterConfig)
     )
 
 
-def _from_model_unwrap_default(field: str, domain_field: str, conv: ConverterConfig) -> str:
+def _from_model_unwrap_default(
+    field: str, domain_field: str, conv: ConverterConfig,
+) -> str:
     return f"            {domain_field}: m.{field}.unwrap_or_default(),"
 
 
@@ -370,7 +380,8 @@ def _from_model_computed(field: str, domain_field: str, conv: ConverterConfig) -
 
 
 _FROM_MODEL_GENERATORS: dict[
-    str, Callable[[str, str, ConverterConfig], str],
+    str,
+    Callable[[str, str, ConverterConfig], str],
 ] = {
     "enum": _from_model_enum,
     "enum_opt": _from_model_enum_opt,
@@ -431,7 +442,9 @@ def _to_active_opt_int_cast(field: str, domain_field: str) -> str:
 
 
 def _to_active_json_serialize(
-    field: str, domain_field: str, fallback: str,
+    field: str,
+    domain_field: str,
+    fallback: str,
 ) -> str:
     return (
         f"            {field}: ActiveValue::Set(Some(\n"
@@ -676,7 +689,8 @@ def gen_mod_rs(names: list[str]) -> str:
 def main() -> None:
     with Path(CONFIG_PATH).open("rb") as f:
         config = t.TypeAdapter(dict[str, EntityConfig]).validate_python(
-            tomllib.load(f), experimental_allow_partial=True,
+            tomllib.load(f),
+            experimental_allow_partial=True,
         )
 
     entity_names = []

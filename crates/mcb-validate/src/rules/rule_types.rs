@@ -20,7 +20,7 @@ pub struct ValidatedRule {
     pub name: String,
     /// Category of the rule (e.g., quality, security).
     pub category: String,
-    /// Severity level (error, warning, info).
+    /// McbScriptsSeverity level (error, warning, info).
     pub severity: String,
     /// Whether the rule is active.
     pub enabled: bool,
@@ -68,7 +68,7 @@ pub struct MetricsConfig {
 pub struct MetricThresholdConfig {
     /// Maximum allowed value
     pub max: u32,
-    /// Severity level when threshold is exceeded
+    /// McbScriptsSeverity level when threshold is exceeded
     pub severity: Option<String>,
     /// Languages this threshold applies to
     pub languages: Option<Vec<String>>,

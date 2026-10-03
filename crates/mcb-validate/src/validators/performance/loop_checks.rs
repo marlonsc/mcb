@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::constants::validate::{
     CLONE_REGEX, CONTEXT_TRUNCATION_LENGTH, LOOP_ALLOCATION_PATTERNS,
 };
@@ -40,7 +40,7 @@ pub fn validate_clone_in_loops(
                 .take(CONTEXT_TRUNCATION_LENGTH)
                 .collect(),
             suggestion: "Consider borrowing or moving instead of cloning".to_owned(),
-            severity: Severity::Warning,
+            severity: McbScriptsSeverity::Warning,
         })
     })
 }
@@ -68,7 +68,7 @@ pub fn validate_allocation_in_loops(
             line: line_num,
             allocation_type: allocation_type.to_owned(),
             suggestion: "Move allocation outside loop or reuse buffer".to_owned(),
-            severity: Severity::Warning,
+            severity: McbScriptsSeverity::Warning,
         })
     })
 }

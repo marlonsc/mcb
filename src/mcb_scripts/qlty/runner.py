@@ -12,9 +12,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from mcb_scripts.core import get_logger, r
-from mcb_scripts.qlty.model import QltyCategory, SarifIssue
+from mcb_scripts.qlty.model import McbScriptsQltyCategory, McbScriptsSarifIssue
 from mcb_scripts.qlty.parser import parse_sarif_file
-from mcb_scripts.settings import McbSettings
+from mcb_scripts.settings import McbScriptsSettings
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -35,18 +35,20 @@ def _resolve_qlty() -> str | None:
     return shutil.which("qlty")
 
 
-def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]]:
+def run_qlty_check(
+    output_file: Path | None = None,
+) -> p.Result[list[McbScriptsSarifIssue]]:
     """Run qlty check --all --sarif, save to file, and parse SARIF output.
 
     Returns:
-        The resulting ``p.Result[list[SarifIssue]]``.
+        The resulting ``p.Result[list[McbScriptsSarifIssue]]``.
     """
-    output_file = output_file or McbSettings().qlty_check_sarif
+    output_file = output_file or McbScriptsSettings().qlty_check_sarif
     logger.info("Running qlty check --all --sarif...")
 
     executable = _resolve_qlty()
     if executable is None:
-        return r[list[SarifIssue]].fail("qlty executable not found on PATH")
+        return r[list[McbScriptsSarifIssue]].fail("qlty executable not found on PATH")
 
     try:
         result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- argv is the mise-pinned qlty binary plus literals
@@ -58,16 +60,17 @@ def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]
             shell=False,
         )
     except subprocess.TimeoutExpired:
-        return r[list[SarifIssue]].fail("qlty check timed out after 300s")
+        return r[list[McbScriptsSarifIssue]].fail("qlty check timed out after 300s")
     except (OSError, subprocess.SubprocessError) as exc:
-        return r[list[SarifIssue]].fail(
-            f"error running qlty check: {exc}", exception=exc,
+        return r[list[McbScriptsSarifIssue]].fail(
+            f"error running qlty check: {exc}",
+            exception=exc,
         )
 
     if not result.stdout.strip():
         logger.info("No issues found (clean)")
-        issues: list[SarifIssue] = []
-        return r[list[SarifIssue]].ok(issues)
+        issues: list[McbScriptsSarifIssue] = []
+        return r[list[McbScriptsSarifIssue]].ok(issues)
 
     output_file.write_text(result.stdout, encoding="utf-8")
     logger.info("Saved SARIF to %s", output_file)
@@ -77,21 +80,23 @@ def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]
         return parsed
     issues = parsed.unwrap()
     logger.info("Found %s issues", len(issues))
-    return r[list[SarifIssue]].ok(issues)
+    return r[list[McbScriptsSarifIssue]].ok(issues)
 
 
-def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue]]:
+def run_qlty_smells(
+    output_file: Path | None = None,
+) -> p.Result[list[McbScriptsSarifIssue]]:
     """Run qlty smells --all --sarif, save to file, and parse SARIF output.
 
     Returns:
-        The resulting ``p.Result[list[SarifIssue]]``.
+        The resulting ``p.Result[list[McbScriptsSarifIssue]]``.
     """
-    output_file = output_file or McbSettings().qlty_smells_sarif
+    output_file = output_file or McbScriptsSettings().qlty_smells_sarif
     logger.info("Running qlty smells --all --sarif...")
 
     executable = _resolve_qlty()
     if executable is None:
-        return r[list[SarifIssue]].fail("qlty executable not found on PATH")
+        return r[list[McbScriptsSarifIssue]].fail("qlty executable not found on PATH")
 
     try:
         result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- argv is the mise-pinned qlty binary plus literals
@@ -103,16 +108,17 @@ def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue
             shell=False,
         )
     except subprocess.TimeoutExpired:
-        return r[list[SarifIssue]].fail("qlty smells timed out after 300s")
+        return r[list[McbScriptsSarifIssue]].fail("qlty smells timed out after 300s")
     except (OSError, subprocess.SubprocessError) as exc:
-        return r[list[SarifIssue]].fail(
-            f"error running qlty smells: {exc}", exception=exc,
+        return r[list[McbScriptsSarifIssue]].fail(
+            f"error running qlty smells: {exc}",
+            exception=exc,
         )
 
     if not result.stdout.strip():
         logger.info("No smells found (clean)")
-        issues: list[SarifIssue] = []
-        return r[list[SarifIssue]].ok(issues)
+        issues: list[McbScriptsSarifIssue] = []
+        return r[list[McbScriptsSarifIssue]].ok(issues)
 
     output_file.write_text(result.stdout, encoding="utf-8")
     logger.info("Saved SARIF to %s", output_file)
@@ -124,7 +130,7 @@ def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue
     # Mark issues as 'smell' category if not present
     for issue in issues:
         if not issue.category:
-            issue.category = QltyCategory.SMELL
+            issue.category = McbScriptsQltyCategory.SMELL
 
     logger.info("Found %s smells", len(issues))
-    return r[list[SarifIssue]].ok(issues)
+    return r[list[McbScriptsSarifIssue]].ok(issues)

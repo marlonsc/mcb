@@ -6,7 +6,7 @@ use crate::config::FileConfig;
 use crate::filters::dependency_parser::WorkspaceDependencies;
 use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::rules::yaml_loader::ValidatedRule;
-use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
 use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_WARNING};
 
 pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml::Value {
@@ -78,7 +78,7 @@ pub(crate) struct PatternMatchViolation {
     pub(crate) file_path: PathBuf,
     pub(crate) line: usize,
     pub(crate) message: String,
-    pub(crate) severity: Severity,
+    pub(crate) severity: McbScriptsSeverity,
     pub(crate) category: ViolationCategory,
 }
 
@@ -91,7 +91,7 @@ impl Violation for PatternMatchViolation {
         self.category
     }
 
-    fn severity(&self) -> Severity {
+    fn severity(&self) -> McbScriptsSeverity {
         self.severity
     }
 
@@ -108,11 +108,11 @@ impl Violation for PatternMatchViolation {
     }
 }
 
-pub(crate) fn parse_severity(s: &str) -> Severity {
+pub(crate) fn parse_severity(s: &str) -> McbScriptsSeverity {
     match s.to_lowercase().as_str() {
-        SEVERITY_ERROR => Severity::Error,
-        SEVERITY_WARNING => Severity::Warning,
-        _ => Severity::Info,
+        SEVERITY_ERROR => McbScriptsSeverity::Error,
+        SEVERITY_WARNING => McbScriptsSeverity::Warning,
+        _ => McbScriptsSeverity::Info,
     }
 }
 

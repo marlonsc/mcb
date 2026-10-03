@@ -5,7 +5,7 @@ use regex::Regex;
 
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::for_each_rust_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::COMMENT_PREFIX;
 
 use super::violation::HygieneViolation;
@@ -36,7 +36,7 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
             violations.push(HygieneViolation::InlineTestModule {
                 file: path.clone(),
                 line,
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
         Ok(())

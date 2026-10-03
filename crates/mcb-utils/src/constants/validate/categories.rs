@@ -1,4 +1,4 @@
-//! Severity levels, categories, and validator names.
+//! McbScriptsSeverity levels, categories, and validator names.
 
 use super::super::values::{
     TAG_ARCHITECTURE, TAG_ASYNC, TAG_DOCUMENTATION, TAG_NAMING, TAG_ORGANIZATION, TAG_PERFORMANCE,
@@ -8,16 +8,16 @@ use super::patterns::VAL_ERROR;
 use super::patterns::VAL_INFO;
 
 // ============================================================================
-// Severity Levels
+// McbScriptsSeverity Levels
 // ============================================================================
 
-/// Severity string: error.
+/// McbScriptsSeverity string: error.
 pub const SEVERITY_ERROR: &str = VAL_ERROR;
 
-/// Severity string: warning.
+/// McbScriptsSeverity string: warning.
 pub const SEVERITY_WARNING: &str = "warning";
 
-/// Severity string: info/informational.
+/// McbScriptsSeverity string: info/informational.
 pub const SEVERITY_INFO: &str = VAL_INFO;
 
 // ============================================================================

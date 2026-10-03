@@ -502,7 +502,7 @@ pub trait ServiceProvider: Send + Sync {
 // Specialized traits for each domain (v0.3.0+)
 #[async_trait]
 pub trait AnalysisProvider: ServiceProvider<Input = AnalysisRequest,
-                                            Output = AnalysisReport> {}
+                                            Output = McbScriptsAnalysisReport> {}
 
 #[async_trait]
 pub trait QualityProvider: ServiceProvider<Input = QualityCheckRequest,

@@ -7,7 +7,7 @@ use rust_code_analysis::SpaceKind;
 
 use super::super::violation::NamingViolation;
 use crate::ast::rca_helpers;
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use mcb_utils::constants::validate::TEST_FUNCTION_PREFIX;
 use mcb_utils::utils::naming::is_snake_case;
 
@@ -36,7 +36,7 @@ pub fn validate_function_names(path: &Path, content: &str) -> Vec<NamingViolatio
                 line: space.start_line,
                 name: name.to_owned(),
                 expected_case: "snake_case".to_owned(),
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             });
         }
     }

@@ -224,7 +224,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     #[rstest]
     #[test]
     fn test_duplication_stats() {
-        use mcb_domain::ports::validation::Severity;
+        use mcb_domain::ports::validation::McbScriptsSeverity;
 
         let violations = vec![
             mcb_validate::duplication::DuplicationViolation {
@@ -235,7 +235,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
                 duplication_type: DuplicationType::ExactClone,
                 similarity: 1.0,
                 duplicated_lines: 15,
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             },
             mcb_validate::duplication::DuplicationViolation {
                 file: PathBuf::from("c.rs"),
@@ -245,7 +245,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
                 duplication_type: DuplicationType::RenamedClone,
                 similarity: 0.95,
                 duplicated_lines: 10,
-                severity: Severity::Warning,
+                severity: McbScriptsSeverity::Warning,
             },
             mcb_validate::duplication::DuplicationViolation {
                 file: PathBuf::from("e.rs"),
@@ -255,7 +255,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
                 duplication_type: DuplicationType::GappedClone,
                 similarity: 0.85,
                 duplicated_lines: 8,
-                severity: Severity::Info,
+                severity: McbScriptsSeverity::Info,
             },
         ];
 
@@ -274,7 +274,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     #[rstest]
     #[test]
     fn test_violation_trait_implementation() {
-        use mcb_domain::ports::validation::{Severity, ViolationCategory};
+        use mcb_domain::ports::validation::{McbScriptsSeverity, ViolationCategory};
         use mcb_validate::duplication::DuplicationViolation;
 
         let violation = DuplicationViolation {
@@ -285,14 +285,14 @@ fn calculate_average(numbers: &[f64]) -> f64 {
             duplication_type: DuplicationType::ExactClone,
             similarity: 1.0,
             duplicated_lines: 20,
-            severity: Severity::Warning,
+            severity: McbScriptsSeverity::Warning,
         };
 
         // Test Violation trait methods
         assert_eq!(violation.id(), "DUP001");
         assert!(violation.message().contains("Exact Clone"));
         assert!(violation.message().contains("20 lines"));
-        assert_eq!(violation.severity(), Severity::Warning);
+        assert_eq!(violation.severity(), McbScriptsSeverity::Warning);
         assert_eq!(violation.file(), Some(&PathBuf::from("src/utils.rs")));
         assert_eq!(violation.line(), Some(42));
         assert!(violation.suggestion().is_some());

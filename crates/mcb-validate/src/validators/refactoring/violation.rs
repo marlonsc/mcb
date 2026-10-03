@@ -3,7 +3,7 @@
 //!
 use std::path::PathBuf;
 
-use crate::Severity;
+use crate::McbScriptsSeverity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -23,7 +23,7 @@ define_violations! {
             line: usize,
             import_path: String,
             suggestion: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Same type name defined in multiple locations (incomplete migration)
         #[violation(
@@ -36,7 +36,7 @@ define_violations! {
             type_name: String,
             locations: Vec<PathBuf>,
             suggestion: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// New source file without corresponding test file
         #[violation(
@@ -48,7 +48,7 @@ define_violations! {
         MissingTestFile {
             source_file: PathBuf,
             expected_test: PathBuf,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// pub use/mod statement for item that doesn't exist
         #[violation(
@@ -61,7 +61,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             re_export: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// File/module that was deleted but is still referenced
         #[violation(
@@ -74,7 +74,7 @@ define_violations! {
             referencing_file: PathBuf,
             line: usize,
             deleted_module: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
         /// Dead code left from refactoring (unused after move)
         #[violation(
@@ -87,7 +87,7 @@ define_violations! {
             file: PathBuf,
             item_name: String,
             item_type: String,
-            severity: Severity,
+            severity: McbScriptsSeverity,
         },
     }
 }

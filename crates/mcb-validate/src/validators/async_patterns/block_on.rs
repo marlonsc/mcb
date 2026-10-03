@@ -4,7 +4,7 @@
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, McbScriptsSeverity, ValidationConfig};
 use mcb_utils::constants::validate::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
 use mcb_utils::utils::regex::compile_regexes;
 
@@ -40,7 +40,7 @@ pub fn validate_block_on_usage(config: &ValidationConfig) -> Result<Vec<AsyncVio
                         file: path.clone(),
                         line: line_num + 1,
                         context: trimmed.chars().take(CONTEXT_PREVIEW_LENGTH).collect(),
-                        severity: Severity::Error,
+                        severity: McbScriptsSeverity::Error,
                     });
                 }
             }

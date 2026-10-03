@@ -6,7 +6,7 @@ use crate::ast::rca_helpers;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::scan::for_each_scan_file;
-use crate::{Result, Severity};
+use crate::{Result, McbScriptsSeverity};
 use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
 
 /// Checks that source files do not exceed the configured line count limit.
@@ -82,7 +82,7 @@ fn check_file_size(
             file: path.to_path_buf(),
             lines: line_count,
             max_allowed: validator.max_file_lines,
-            severity: Severity::Warning,
+            severity: McbScriptsSeverity::Warning,
         }),
     )
 }

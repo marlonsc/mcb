@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use super::violation::PatternViolation;
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 use mcb_utils::constants::validate::ATTR_SEARCH_LINES;
 use mcb_utils::utils::regex::compile_regex;
 
@@ -77,7 +77,7 @@ fn push_async_trait_violations(
             file: path.to_path_buf(),
             line: line_num + 1,
             trait_name: trait_name.to_owned(),
-            severity: Severity::Error,
+            severity: McbScriptsSeverity::Error,
         });
     }
 
@@ -87,7 +87,7 @@ fn push_async_trait_violations(
             line: line_num + 1,
             trait_name: trait_name.to_owned(),
             missing_bound: "Send + Sync".to_owned(),
-            severity: Severity::Warning,
+            severity: McbScriptsSeverity::Warning,
         });
     }
 }

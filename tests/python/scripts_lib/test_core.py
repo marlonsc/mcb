@@ -28,6 +28,7 @@ _OR_ELSE = 4
 
 class TestResultBasics:
     """Define ``TestResultBasics``."""
+
     @staticmethod
     def test_ok_is_ok() -> None:
         """Test ok is ok."""
@@ -82,6 +83,7 @@ class TestResultBasics:
 
 class TestResultCombinators:
     """Define ``TestResultCombinators``."""
+
     @staticmethod
     def test_map() -> None:
         """Test map."""
@@ -92,6 +94,7 @@ class TestResultCombinators:
     @staticmethod
     def test_flat_map() -> None:
         """Test flat map."""
+
         def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
@@ -105,6 +108,7 @@ class TestResultCombinators:
     @staticmethod
     def test_map_catches_exceptions_as_failure() -> None:
         """Test map catches exceptions as failure."""
+
         def _boom(_: int) -> int:
             msg = "map must catch"
             raise ZeroDivisionError(msg)
@@ -146,9 +150,11 @@ class TestResultCombinators:
 
 class TestResultAdvanced:
     """Define ``TestResultAdvanced``."""
+
     @staticmethod
     def test_flow_through() -> None:
         """Test flow through."""
+
         def add_one(x: int) -> p.Result[int]:
             return r[int].ok(x + 1)
 
@@ -217,6 +223,7 @@ class TestResultAdvanced:
     @staticmethod
     def test_from_validation() -> None:
         """Test from validation."""
+
         class User(BaseModel):
             name: str
             age: int
@@ -244,6 +251,7 @@ class TestResultAdvanced:
     @staticmethod
     def test_safe_decorator() -> None:
         """Test safe decorator."""
+
         @McbResult.safe
         def double(x: int) -> int:
             return x * 2
@@ -261,9 +269,11 @@ class TestResultAdvanced:
 
 class TestSettings:
     """Define ``TestSettings``."""
+
     @staticmethod
     def test_base_settings_read_env_with_prefix(
-        monkeypatch: pytest.MonkeyPatch, settings_factory: SettingsFactory,
+        monkeypatch: pytest.MonkeyPatch,
+        settings_factory: SettingsFactory,
     ) -> None:
         """Test base settings read env with prefix."""
         monkeypatch.setenv("MCB_LOG_LEVEL", "debug")
@@ -272,7 +282,8 @@ class TestSettings:
 
     @staticmethod
     def test_base_settings_ignore_extra_env(
-        monkeypatch: pytest.MonkeyPatch, settings_factory: SettingsFactory,
+        monkeypatch: pytest.MonkeyPatch,
+        settings_factory: SettingsFactory,
     ) -> None:
         """Test base settings ignore extra env."""
         monkeypatch.setenv("MCB_UNKNOWN_VAR", "ignored")
@@ -315,6 +326,7 @@ class TestSettings:
 
 class TestLogging:
     """Define ``TestLogging``."""
+
     @staticmethod
     def test_configure_logging_runs() -> None:
         """Test configure logging runs."""
@@ -333,9 +345,11 @@ class TestLogging:
 
 class TestService:
     """Define ``TestService``."""
+
     @staticmethod
     def test_service_singleton() -> None:
         """Test service singleton."""
+
         class DemoService(McbService):
             pass
 
@@ -348,6 +362,7 @@ class TestService:
     @staticmethod
     def test_service_execute_not_implemented() -> None:
         """Test service execute not implemented."""
+
         class DemoService(McbService):
             pass
 
@@ -360,6 +375,7 @@ class TestService:
     @staticmethod
     def test_service_alias() -> None:
         """Test service alias."""
+
         class SettingsService(s):
             pass
 

@@ -14,21 +14,22 @@ from pathlib import Path
 from flext_cli import cli
 
 from flext_core import m, p
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
+from mcb_scripts.core import McbScriptsBaseSettings, get_logger, r
 from mcb_scripts.docs import utils
-from mcb_scripts.settings import McbSettings
+from mcb_scripts.settings import McbScriptsSettings
 
 logger = get_logger(__name__)
 
 
-class CheckSourceRefsSettings(BaseMcbSettings):
+class CheckSourceRefsSettings(McbScriptsBaseSettings):
     """Settings for the broken source-reference documentation check."""
 
     root: Path = m.Field(default=Path(), description="Project root directory")
 
 
 def _check_files(
-    docs_dir: str, project_root: Path,
+    docs_dir: str,
+    project_root: Path,
 ) -> tuple[list[tuple[str, str]], int, list[str]]:
     issues: list[tuple[str, str]] = []
     checked = 0
@@ -74,7 +75,7 @@ def run(settings: CheckSourceRefsSettings) -> p.Result[int]:
     if settings.root == Path():
         project_root = utils.get_project_root()
 
-    docs_dir = os.path.join(project_root, str(McbSettings().docs_dir))
+    docs_dir = os.path.join(project_root, str(McbScriptsSettings().docs_dir))
 
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
@@ -100,7 +101,8 @@ def run(settings: CheckSourceRefsSettings) -> p.Result[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-source-refs", help_text="Check broken source references in docs.",
+        name="check-source-refs",
+        help_text="Check broken source references in docs.",
     )
     cli.register_result_command(
         app,

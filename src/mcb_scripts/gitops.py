@@ -26,8 +26,8 @@ from ruamel.yaml.error import YAMLError
 
 from flext_core import FlextResult, p
 from mcb_scripts.core import get_logger
-from mcb_scripts.qlty.model import SarifIssue, Severity
-from mcb_scripts.qlty.report import AnalysisReport, analyze_issues
+from mcb_scripts.qlty.model import McbScriptsSarifIssue, McbScriptsSeverity
+from mcb_scripts.qlty.report import McbScriptsAnalysisReport, analyze_issues
 
 logger = get_logger(__name__)
 
@@ -42,7 +42,7 @@ DEFAULT_KUBE_VERSION = "1.32.0"
 
 
 @dataclass(frozen=True, slots=True)
-class GitOpsTarget:
+class McbScriptsGitOpsTarget:
     """A Helm or Kustomize render target."""
 
     kind: str
@@ -50,17 +50,17 @@ class GitOpsTarget:
 
 
 @dataclass(frozen=True, slots=True)
-class GitOpsSummary:
+class McbScriptsGitOpsSummary:
     """Result of the lightweight GitOps discovery pass."""
 
     status: str
     message: str
-    targets: list[GitOpsTarget]
-    report: AnalysisReport
+    targets: list[McbScriptsGitOpsTarget]
+    report: McbScriptsAnalysisReport
 
 
 @dataclass(frozen=True, slots=True)
-class ImageReference:
+class McbScriptsImageReference:
     """Container image value with its YAML source line."""
 
     value: str
@@ -70,27 +70,27 @@ class ImageReference:
 YamlNode = CommentedMap | CommentedSeq | str | int | float | bool | None
 
 
-def discover_targets(root: Path) -> list[GitOpsTarget]:
+def discover_targets(root: Path) -> list[McbScriptsGitOpsTarget]:
     """Discover Helm and Kustomize render targets below ``root``.
 
     Returns:
-        The resulting ``list[GitOpsTarget]``.
+        The resulting ``list[McbScriptsGitOpsTarget]``.
     """
     if not root.exists():
         return []
 
-    targets: list[GitOpsTarget] = []
+    targets: list[McbScriptsGitOpsTarget] = []
     for path in sorted(root.rglob("*")):
         if not path.is_file():
             continue
         if path.name == "Chart.yaml":
-            targets.append(GitOpsTarget(kind="helm", path=path.parent))
+            targets.append(McbScriptsGitOpsTarget(kind="helm", path=path.parent))
             continue
         if path.name in KUSTOMIZE_FILES:
-            targets.append(GitOpsTarget(kind="kustomize", path=path.parent))
+            targets.append(McbScriptsGitOpsTarget(kind="kustomize", path=path.parent))
 
     seen: set[tuple[str, Path]] = set()
-    unique: list[GitOpsTarget] = []
+    unique: list[McbScriptsGitOpsTarget] = []
     for target in targets:
         key = (target.kind, target.path)
         if key in seen:
@@ -100,19 +100,19 @@ def discover_targets(root: Path) -> list[GitOpsTarget]:
     return unique
 
 
-def summarize(root: Path) -> p.Result[GitOpsSummary]:
+def summarize(root: Path) -> p.Result[McbScriptsGitOpsSummary]:
     """Return a discovery summary for GitOps targets below ``root``."""
     targets = discover_targets(root)
     report_result = analyze(root)
     if report_result.failure:
-        return FlextResult[GitOpsSummary].fail(
+        return FlextResult[McbScriptsGitOpsSummary].fail(
             report_result.error or "gitops analysis failed",
         )
     report = report_result.unwrap()
 
     if report.total_issues:
-        return FlextResult[GitOpsSummary].ok(
-            GitOpsSummary(
+        return FlextResult[McbScriptsGitOpsSummary].ok(
+            McbScriptsGitOpsSummary(
                 status="FAIL",
                 message=f"{root}: {report.total_issues} GitOps policy issue(s)",
                 targets=targets,
@@ -120,16 +120,16 @@ def summarize(root: Path) -> p.Result[GitOpsSummary]:
             ),
         )
     if not targets:
-        return FlextResult[GitOpsSummary].ok(
-            GitOpsSummary(
+        return FlextResult[McbScriptsGitOpsSummary].ok(
+            McbScriptsGitOpsSummary(
                 status="SKIP",
                 message=f"{root}: no Helm or Kustomize targets found",
                 targets=[],
                 report=report,
             ),
         )
-    return FlextResult[GitOpsSummary].ok(
-        GitOpsSummary(
+    return FlextResult[McbScriptsGitOpsSummary].ok(
+        McbScriptsGitOpsSummary(
             status="OK",
             message=f"{root}: discovered {len(targets)} GitOps target(s)",
             targets=targets,
@@ -138,19 +138,19 @@ def summarize(root: Path) -> p.Result[GitOpsSummary]:
     )
 
 
-def analyze(root: Path) -> p.Result[AnalysisReport]:
+def analyze(root: Path) -> p.Result[McbScriptsAnalysisReport]:
     """Analyze GitOps source manifests through the existing qlty report model.
 
     Returns:
-        The resulting ``p.Result[AnalysisReport]``.
+        The resulting ``p.Result[McbScriptsAnalysisReport]``.
     """
     issues = policy_issues(root) + rendered_issues(root)
     return analyze_issues(issues)
 
 
-def policy_issues(root: Path) -> list[SarifIssue]:
+def policy_issues(root: Path) -> list[McbScriptsSarifIssue]:
     """Return native GitOps policy issues discovered in source manifests."""
-    issues: list[SarifIssue] = []
+    issues: list[McbScriptsSarifIssue] = []
     for path in _yaml_files(root):
         try:
             documents = _load_yaml_documents(path)
@@ -174,17 +174,17 @@ def policy_issues(root: Path) -> list[SarifIssue]:
     return issues
 
 
-def rendered_issues(root: Path, threads: int = 4) -> list[SarifIssue]:
+def rendered_issues(root: Path, threads: int = 4) -> list[McbScriptsSarifIssue]:
     """Render Helm/Kustomize targets and validate emitted manifests.
 
     Returns:
-        The resulting ``list[SarifIssue]``.
+        The resulting ``list[McbScriptsSarifIssue]``.
     """
     targets = discover_targets(root)
     if not targets:
         return []
 
-    issues: list[SarifIssue] = []
+    issues: list[McbScriptsSarifIssue] = []
     with ThreadPoolExecutor(max_workers=threads) as pool:
         for target_issues in pool.map(_render_and_validate, targets):
             issues.extend(target_issues)
@@ -192,7 +192,7 @@ def rendered_issues(root: Path, threads: int = 4) -> list[SarifIssue]:
 
 
 @dataclass(frozen=True, slots=True)
-class RenderOutcome:
+class McbScriptsRenderOutcome:
     """One render attempt: rendered text, or the blocking failure issue.
 
     Law 14: a missing tool, a timeout, or a failed render is a RED gate, never
@@ -200,14 +200,14 @@ class RenderOutcome:
     """
 
     output: str | None
-    issue: SarifIssue | None
+    issue: McbScriptsSarifIssue | None
 
 
-def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
+def _render_and_validate(target: McbScriptsGitOpsTarget) -> list[McbScriptsSarifIssue]:
     """Render a single target and run schema validation on the output.
 
     Returns:
-        The resulting ``list[SarifIssue]``.
+        The resulting ``list[McbScriptsSarifIssue]``.
     """
     outcome = cached_render(target)
     if outcome.issue is not None:
@@ -218,7 +218,7 @@ def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
         return [
             _issue("gitops:render-failed", "Render produced no output", target.path, 1),
         ]
-    issues: list[SarifIssue] = []
+    issues: list[McbScriptsSarifIssue] = []
     parser = YAML(typ="safe")
     try:
         documents = list(parser.load_all(rendered))
@@ -257,18 +257,18 @@ def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
     return issues
 
 
-def cached_render(target: GitOpsTarget) -> RenderOutcome:
+def cached_render(target: McbScriptsGitOpsTarget) -> McbScriptsRenderOutcome:
     """Render a target, caching successful output by input content hash.
 
     Failures are never cached: the next run re-attempts the render.
 
     Returns:
-        The resulting ``RenderOutcome``.
+        The resulting ``McbScriptsRenderOutcome``.
     """
     cache_key = render_cache_key(target)
     cache_path = CACHE_DIR / f"{cache_key}.yaml"
     if cache_path.exists():
-        return RenderOutcome(cache_path.read_text(encoding="utf-8"), None)
+        return McbScriptsRenderOutcome(cache_path.read_text(encoding="utf-8"), None)
 
     outcome = _render_target(target)
     if outcome.output is None:
@@ -278,7 +278,7 @@ def cached_render(target: GitOpsTarget) -> RenderOutcome:
     return outcome
 
 
-def render_cache_key(target: GitOpsTarget) -> str:
+def render_cache_key(target: McbScriptsGitOpsTarget) -> str:
     """Return a stable hash for the target's inputs."""
     hasher = hashlib.sha256()
     hasher.update(target.kind.encode())
@@ -289,18 +289,18 @@ def render_cache_key(target: GitOpsTarget) -> str:
     return hasher.hexdigest()
 
 
-def _render_target(target: GitOpsTarget) -> RenderOutcome:
+def _render_target(target: McbScriptsGitOpsTarget) -> McbScriptsRenderOutcome:
     """Run helm template or kustomize build for a target.
 
     Returns:
-        The resulting ``RenderOutcome``.
+        The resulting ``McbScriptsRenderOutcome``.
     """
     if target.kind == "helm":
         tool, args = "helm", ["template", str(target.path)]
     elif target.kind == "kustomize":
         tool, args = "kustomize", ["build", str(target.path)]
     else:
-        return RenderOutcome(
+        return McbScriptsRenderOutcome(
             None,
             _issue(
                 "gitops:render-failed",
@@ -315,7 +315,7 @@ def _render_target(target: GitOpsTarget) -> RenderOutcome:
     # manifests than the ones this gate is meant to validate.
     executable = shutil.which(tool)
     if executable is None:
-        return RenderOutcome(
+        return McbScriptsRenderOutcome(
             None,
             _issue(
                 "gitops:tool-missing",
@@ -336,7 +336,7 @@ def _render_target(target: GitOpsTarget) -> RenderOutcome:
             shell=False,
         )
     except FileNotFoundError:
-        return RenderOutcome(
+        return McbScriptsRenderOutcome(
             None,
             _issue(
                 "gitops:tool-missing",
@@ -346,7 +346,7 @@ def _render_target(target: GitOpsTarget) -> RenderOutcome:
             ),
         )
     except subprocess.TimeoutExpired:
-        return RenderOutcome(
+        return McbScriptsRenderOutcome(
             None,
             _issue(
                 "gitops:render-timeout",
@@ -357,7 +357,7 @@ def _render_target(target: GitOpsTarget) -> RenderOutcome:
         )
 
     if result.returncode != 0:
-        return RenderOutcome(
+        return McbScriptsRenderOutcome(
             None,
             _issue(
                 "gitops:render-failed",
@@ -366,7 +366,7 @@ def _render_target(target: GitOpsTarget) -> RenderOutcome:
                 1,
             ),
         )
-    return RenderOutcome(result.stdout, None)
+    return McbScriptsRenderOutcome(result.stdout, None)
 
 
 def _yaml_files(root: Path) -> list[Path]:
@@ -384,13 +384,15 @@ def _load_yaml_documents(path: Path) -> list[YamlNode]:
     return cast("list[YamlNode]", list(parser.load_all(path)))
 
 
-def _image_references(node: YamlNode) -> list[ImageReference]:
-    references: list[ImageReference] = []
+def _image_references(node: YamlNode) -> list[McbScriptsImageReference]:
+    references: list[McbScriptsImageReference] = []
     if isinstance(node, CommentedMap):
         image = node.get("image")
         if isinstance(image, str):
             references.append(
-                ImageReference(value=image, line=_line_for_key(node, "image")),
+                McbScriptsImageReference(
+                    value=image, line=_line_for_key(node, "image"),
+                ),
             )
         for child in node.values():
             references.extend(_image_references(cast("YamlNode", child)))
@@ -405,10 +407,10 @@ def _line_for_key(node: CommentedMap, key: str) -> int:
     return line + 1
 
 
-def _issue(rule_id: str, message: str, path: Path, line: int) -> SarifIssue:
-    return SarifIssue(
+def _issue(rule_id: str, message: str, path: Path, line: int) -> McbScriptsSarifIssue:
+    return McbScriptsSarifIssue(
         rule_id=rule_id,
-        level=Severity.ERROR,
+        level=McbScriptsSeverity.ERROR,
         message=message,
         file_path=str(path),
         start_line=line,

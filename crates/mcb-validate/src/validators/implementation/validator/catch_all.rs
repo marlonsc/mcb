@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use super::super::violation::ImplementationViolation;
 use crate::Result;
 use crate::utils::source::{required_patterns, source_lines};
-use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::McbScriptsSeverity;
 
 /// Detects empty catch-all error handlers (`_ => {}`, `_ => Ok(())`, etc.) that
 /// silently swallow values and report each as an `EmptyCatchAll` violation.
@@ -37,7 +37,7 @@ pub fn validate_empty_catch_alls(
                         file: file_path.clone(),
                         line: line_num,
                         context: trimmed.to_owned(),
-                        severity: Severity::Warning,
+                        severity: McbScriptsSeverity::Warning,
                     });
                 }
             }

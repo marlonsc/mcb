@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use super::{CloneCandidate, DuplicationType};
 use derive_more::Display;
-use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
 
 /// A duplication violation representing a detected code clone
 #[derive(Debug, Clone, Display)]
@@ -35,8 +35,8 @@ pub struct DuplicationViolation {
     pub similarity: f64,
     /// Number of duplicated lines
     pub duplicated_lines: usize,
-    /// Severity of the violation
-    pub severity: Severity,
+    /// McbScriptsSeverity of the violation
+    pub severity: McbScriptsSeverity,
 }
 
 impl DuplicationViolation {
@@ -44,8 +44,8 @@ impl DuplicationViolation {
     #[must_use]
     pub fn from_candidate(candidate: &CloneCandidate) -> Self {
         let severity = match candidate.clone_type {
-            DuplicationType::ExactClone | DuplicationType::RenamedClone => Severity::Warning,
-            DuplicationType::GappedClone | DuplicationType::SemanticClone => Severity::Info,
+            DuplicationType::ExactClone | DuplicationType::RenamedClone => McbScriptsSeverity::Warning,
+            DuplicationType::GappedClone | DuplicationType::SemanticClone => McbScriptsSeverity::Info,
         };
         Self {
             file: candidate.file1.clone(),
@@ -75,7 +75,7 @@ impl Violation for DuplicationViolation {
         )
     }
 
-    fn severity(&self) -> Severity {
+    fn severity(&self) -> McbScriptsSeverity {
         self.severity
     }
 
