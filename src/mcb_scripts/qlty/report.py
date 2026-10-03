@@ -23,13 +23,17 @@ class McbScriptsAnalysisReport:
     """Statistical analysis of SARIF issues."""
 
     total_issues: int = 0
-    by_severity: Counter[McbScriptsSeverity] = field(default_factory=Counter)
-    by_rule: Counter[str] = field(default_factory=Counter)
-    by_category: Counter[str] = field(default_factory=Counter)
-    by_file: Counter[str] = field(default_factory=Counter)
-    top_files: list[tuple[str, int]] = field(default_factory=list)
-    top_rules: list[tuple[str, int]] = field(default_factory=list)
-    issues: list[McbScriptsSarifIssue] = field(default_factory=list)
+    by_severity: Counter[McbScriptsSeverity] = field(
+        default_factory=Counter[McbScriptsSeverity],
+    )
+    by_rule: Counter[str] = field(default_factory=Counter[str])
+    by_category: Counter[str] = field(default_factory=Counter[str])
+    by_file: Counter[str] = field(default_factory=Counter[str])
+    top_files: list[tuple[str, int]] = field(default_factory=list[tuple[str, int]])
+    top_rules: list[tuple[str, int]] = field(default_factory=list[tuple[str, int]])
+    issues: list[McbScriptsSarifIssue] = field(
+        default_factory=list[McbScriptsSarifIssue],
+    )
 
     def generate_summary(self) -> str:
         """Generate human-readable summary.

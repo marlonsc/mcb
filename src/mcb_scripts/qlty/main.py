@@ -49,13 +49,13 @@ class McbScriptsQltyParams(m.BaseModel):
     category: str | None = m.Field(default=None, description="Category filter")
     file: str | None = m.Field(default=None, description="File pattern filter")
     exclude_rule: tuple[str, ...] = m.Field(
-        default_factory=tuple, description="Rules to exclude",
+        default_factory=tuple[str, ...], description="Rules to exclude",
     )
     exclude_category: tuple[str, ...] = m.Field(
-        default_factory=tuple, description="Categories to exclude",
+        default_factory=tuple[str, ...], description="Categories to exclude",
     )
     exclude_file: tuple[str, ...] = m.Field(
-        default_factory=tuple, description="File patterns to exclude",
+        default_factory=tuple[str, ...], description="File patterns to exclude",
     )
     summary_only: bool = m.Field(
         default=False, description="Print only the summary",

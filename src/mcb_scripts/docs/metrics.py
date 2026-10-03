@@ -59,7 +59,8 @@ class McbScriptsMetricsCategory(m.BaseModel):
 
     root: str = m.Field(description="Declared source directory of the category")
     exclude: tuple[str, ...] = m.Field(
-        default_factory=tuple, description="File stems excluded from the category",
+        default_factory=tuple[str, ...],
+        description="File stems excluded from the category",
     )
     labels: Mapping[str, str] = m.Field(
         default_factory=_empty_str_mapping,
@@ -155,7 +156,14 @@ def _workspace_version(root: Path) -> str:
     with (root / "Cargo.toml").open("rb") as cargo_source:
         cargo: dict[str, object] = tomllib.load(cargo_source)
     workspace = cargo["workspace"]
-    version = workspace["package"]["version"]
+    if not isinstance(workspace, dict):
+        msg = "Workspace version must be a nonempty string"
+        raise TypeError(msg)
+    package = workspace.get("package")
+    if not isinstance(package, dict):
+        msg = "Workspace version must be a nonempty string"
+        raise TypeError(msg)
+    version = package.get("version")
     if not isinstance(version, str) or not version:
         msg = "Workspace version must be a nonempty string"
         raise TypeError(msg)

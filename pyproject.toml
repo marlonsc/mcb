@@ -190,6 +190,12 @@ follow_imports = "normal"
 module = ["rope.*"]
 follow_untyped_imports = true
 
+[[tool.mypy.overrides]]
+# flext-infra ships untyped and mypy 2.3.1 crashes (INTERNAL ERROR) while
+# following the pytest-plugin import chain into its sources; treat as untyped.
+module = ["flext_infra.*"]
+follow_untyped_imports = false
+
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
