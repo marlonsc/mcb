@@ -6,25 +6,34 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 from pydantic import BaseModel
 
-from flext_core import p
 from mcb_scripts.core import McbResult, McbService, configure_logging, get_logger, r, s
 from tests.python.scripts_lib._utilities.matchers import tm
-from tests.python.scripts_lib.conftest import SettingsFactory
+
+if TYPE_CHECKING:
+    from flext_core import p
+    from tests.python.scripts_lib.conftest import SettingsFactory
+
+_SEED = 21
+_OK = 42
+_THRESHOLD = 10
+_BOOM_LENGTH = 4
+_RECOVERED = 7
+_OR_ELSE = 4
 
 
-class TestResult:
-    """Define ``TestResult``."""
+class TestResultBasics:
+    """Define ``TestResultBasics``."""
     @staticmethod
     def test_ok_is_ok() -> None:
         """Test ok is ok."""
-        result: p.Result[int] = r[int].ok(42)
-        tm.ok(result, 42)
-        assert result.value == 42
+        result: p.Result[int] = r[int].ok(_OK)
+        tm.ok(result, _OK)
+        assert result.value == _OK
         assert bool(result)
         assert repr(result) == "r[T].ok(42)"
 
@@ -48,32 +57,35 @@ class TestResult:
     @staticmethod
     def test_or_operator() -> None:
         """Test or operator."""
-        assert (r[int].ok(42) | 0) == 42
+        assert (r[int].ok(_OK) | 0) == _OK
         assert (r[int].fail("boom") | 0) == 0
 
     @staticmethod
     def test_context_manager() -> None:
         """Test context manager."""
-        with r[int].ok(42) as value:
-            tm.ok(value, 42)
+        with r[int].ok(_OK) as value:
+            tm.ok(value, _OK)
 
     @staticmethod
     def test_unwrap_or() -> None:
         """Test unwrap or."""
         fallback = 0
-        assert r[int].ok(42).unwrap_or(fallback) == 42
+        assert r[int].ok(_OK).unwrap_or(fallback) == _OK
         assert r[int].fail("boom").unwrap_or(fallback) == fallback
 
     @staticmethod
     def test_unwrap_or_else() -> None:
         """Test unwrap or else."""
-        assert r[int].ok(42).unwrap_or_else(lambda: 0) == 42
-        assert r[int].fail("boom").unwrap_or_else(lambda: 4) == 4
+        assert r[int].ok(_OK).unwrap_or_else(lambda: 0) == _OK
+        assert r[int].fail("boom").unwrap_or_else(lambda: _OR_ELSE) == _OR_ELSE
 
+
+class TestResultCombinators:
+    """Define ``TestResultCombinators``."""
     @staticmethod
     def test_map() -> None:
         """Test map."""
-        assert r[int].ok(21).map(lambda x: x * 2).unwrap() == 42
+        assert r[int].ok(_SEED).map(lambda x: x * 2).unwrap() == _OK
         mapped = r[int].fail("boom").map(lambda x: x * 2)
         tm.fail(mapped)
 
@@ -83,8 +95,8 @@ class TestResult:
         def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
-        assert r[int].ok(21).flat_map(double).unwrap() == 42
-        chained = r[int].ok(21).flat_map(double).flat_map(double)
+        assert r[int].ok(_SEED).flat_map(double).unwrap() == _OK
+        chained = r[int].ok(_SEED).flat_map(double).flat_map(double)
         tm.ok(chained, 84)
 
         failed = r[int].fail("boom").flat_map(double)
@@ -97,40 +109,43 @@ class TestResult:
             msg = "map must catch"
             raise ZeroDivisionError(msg)
 
-        result = r[int].ok(21).map(_boom)
+        result = r[int].ok(_SEED).map(_boom)
         tm.fail(result)
         assert result.error == "map must catch"
 
     @staticmethod
     def test_fold() -> None:
         """Test fold."""
-        ok_result = r[int].ok(21)
-        assert ok_result.fold(lambda _: -1, lambda v: v * 2) == 42
+        ok_result = r[int].ok(_SEED)
+        assert ok_result.fold(lambda _: -1, lambda v: v * 2) == _OK
 
         err_result = r[int].fail("boom")
-        assert err_result.fold(len, lambda _: 0) == 4
+        assert err_result.fold(len, lambda _: 0) == _BOOM_LENGTH
 
     @staticmethod
     def test_recover() -> None:
         """Test recover."""
-        assert r[int].ok(42).recover(lambda _: 0).unwrap() == 42
-        assert r[int].fail("boom").recover(lambda _: 7).unwrap() == 7
+        assert r[int].ok(_OK).recover(lambda _: 0).unwrap() == _OK
+        assert r[int].fail("boom").recover(lambda _: _RECOVERED).unwrap() == _RECOVERED
 
     @staticmethod
     def test_lash() -> None:
         """Test lash."""
-        assert r[int].ok(42).lash(lambda _: r[int].ok(99)).unwrap() == 42
-        recovered = r[int].fail("boom").lash(lambda _: r[int].ok(7))
-        tm.ok(recovered, 7)
+        assert r[int].ok(_OK).lash(lambda _: r[int].ok(99)).unwrap() == _OK
+        recovered = r[int].fail("boom").lash(lambda _: r[int].ok(_RECOVERED))
+        tm.ok(recovered, _RECOVERED)
 
     @staticmethod
     def test_filter() -> None:
         """Test filter."""
-        assert r[int].ok(42).filter(lambda x: x > 10).unwrap() == 42
-        filtered = r[int].ok(5).filter(lambda x: x > 10)
+        assert r[int].ok(_OK).filter(lambda x: x > _THRESHOLD).unwrap() == _OK
+        filtered = r[int].ok(5).filter(lambda x: x > _THRESHOLD)
         tm.fail(filtered)
-        assert r[int].fail("boom").filter(lambda x: x > 10).failure
+        assert r[int].fail("boom").filter(lambda x: x > _THRESHOLD).failure
 
+
+class TestResultAdvanced:
+    """Define ``TestResultAdvanced``."""
     @staticmethod
     def test_flow_through() -> None:
         """Test flow through."""
@@ -150,12 +165,12 @@ class TestResult:
     def test_tap() -> None:
         """Test tap."""
         side_effect: list[int] = []
-        result = r[int].ok(42).tap(side_effect.append)
-        tm.ok(result, 42)
-        assert side_effect == [42]
+        result = r[int].ok(_OK).tap(side_effect.append)
+        tm.ok(result, _OK)
+        assert side_effect == [_OK]
 
         r[int].fail("boom").tap(side_effect.append)
-        assert side_effect == [42]
+        assert side_effect == [_OK]
 
     @staticmethod
     def test_tap_error() -> None:
@@ -165,7 +180,7 @@ class TestResult:
         tm.fail(result)
         assert side_effect == ["boom"]
 
-        r[int].ok(42).tap_error(side_effect.append)
+        r[int].ok(_OK).tap_error(side_effect.append)
         assert side_effect == ["boom"]
 
     @staticmethod
@@ -174,19 +189,19 @@ class TestResult:
         result = r[int].fail("boom").map_error(lambda e: e.upper())
         assert result.error == "BOOM"
 
-        unchanged = r[int].ok(42).map_error(lambda e: e.upper())
-        tm.ok(unchanged, 42)
+        unchanged = r[int].ok(_OK).map_error(lambda e: e.upper())
+        tm.ok(unchanged, _OK)
 
     @staticmethod
     def test_map_or() -> None:
         """Test map or."""
-        assert r[int].ok(42).map_or(0) == 42
+        assert r[int].ok(_OK).map_or(0) == _OK
         assert r[int].fail("boom").map_or(0) == 0
 
         def _double(value: int) -> int:
             return value * 2
 
-        assert r[int].ok(21).map_or(0, _double) == 42
+        assert r[int].ok(_SEED).map_or(0, _double) == _OK
         assert r[int].fail("boom").map_or(0, _double) == 0
 
     @staticmethod
@@ -233,7 +248,7 @@ class TestResult:
         def double(x: int) -> int:
             return x * 2
 
-        assert double(21).unwrap() == 42
+        assert double(_SEED).unwrap() == _OK
 
         @McbResult.safe
         def explode() -> int:

@@ -16,6 +16,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
 MCB_SH = ROOT / "scripts" / "lib" / "mcb.sh"
+_GUARD_EXIT_VIOLATION = 3
 
 
 def test_mcb_bin_prefers_workspace_binary_over_path_binary(temp_dir: Path) -> None:
@@ -70,7 +71,7 @@ def test_guard_scans_mcb_validate_production_source(temp_dir: Path) -> None:
         text=True,
     )
 
-    assert result.returncode == 3
+    assert result.returncode == _GUARD_EXIT_VIOLATION
     assert "todo!()" in result.stderr
 
 
@@ -189,7 +190,7 @@ def test_conflict_marker_guard_rejects_tracked_markers(temp_dir: Path) -> None:
         text=True,
     )
 
-    assert result.returncode == 3
+    assert result.returncode == _GUARD_EXIT_VIOLATION
     assert "conflicted.txt" in result.stderr
 
 

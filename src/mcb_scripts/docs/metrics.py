@@ -186,12 +186,6 @@ def render_metrics(root: Path) -> str:
 
     Returns:
         The resulting ``str``.
-
-    Raises:
-        TypeError: If Invalid docs metrics categories; or if Workspace version
-            must be a nonempty string.
-        ValueError: If No Rust source files under; or if No Rust tests found in
-            the declared source root.
     """
     categories, source_root, adr_dir, module_docs_dir = _metrics_inputs(root)
     source_files, test_files, test_count, source_lines = _rust_stats(source_root)

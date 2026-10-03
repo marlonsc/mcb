@@ -24,6 +24,7 @@ from mcb_scripts.gitops import (
 from tests.python.scripts_lib._utilities.matchers import tm
 
 ROOT = Path(__file__).resolve().parents[3]
+_VIOLATION_LINE = 10
 SCRIPTS = ROOT / "scripts"
 
 
@@ -114,7 +115,7 @@ spec:
     tm.ok(report_result)
     report = report_result.unwrap()
     assert report.total_issues == 1
-    assert report.issues[0].start_line == 10
+    assert report.issues[0].start_line == _VIOLATION_LINE
 
 
 def test_command_skips_without_using_cluster_clis() -> None:

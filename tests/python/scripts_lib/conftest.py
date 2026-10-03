@@ -20,19 +20,27 @@ SettingsFactory = Callable[..., BaseMcbSettings]
 """Factory that builds a fresh settings subclass instance per test."""
 
 
-@pytest.fixture(autouse=True)
-def reset_settings() -> Generator[None]:
-    """Reset the FLEXT settings singleton before and after every test."""
-    BaseMcbSettings.reset_for_testing()
-    yield
-    BaseMcbSettings.reset_for_testing()
+@pytest.fixture
+def reset_settings() -> Generator[Callable[[], None]]:
+    """Reset the FLEXT settings singleton before and after every test.
+
+    Yields:
+        Each ``Callable[[], None]``.
+    """
+    def _reset() -> None:
+        BaseMcbSettings.reset_for_testing()
+
+    _reset()
+    yield _reset
+    _reset()
 
 
 @pytest.fixture
-def settings_factory() -> SettingsFactory:
+def settings_factory(reset_settings: Callable[[], None]) -> SettingsFactory:
     """Return a factory that creates a fresh settings subclass instance."""
 
     def _make(**fields: object) -> BaseMcbSettings:
+        reset_settings()
         defs: dict[str, Any] = {
             name: (type(value), value) for name, value in fields.items()
         }

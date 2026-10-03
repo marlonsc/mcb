@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from collections.abc import Callable
 from pathlib import Path
 from typing import NotRequired, Required, TypedDict
 
@@ -100,6 +101,165 @@ def parse_entity_model_fields(entity_module: str) -> dict[str, str]:
     return fields
 
 
+_JSON_WARN_FROM_OPT = (
+    "                .as_deref()\n"
+    '                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok())\n'
+)
+
+_FIXED_CTYPE_TEST_VALUES: dict[str, str] = {
+    "bool": "1",
+    "bool_opt": "Some(1)",
+    "opt_bool": "Some(1)",
+    "int_cast": "2",
+    "opt_int_cast": "Some(3)",
+    "json_array": 'Some(r#"["tag1","tag2"]"#.into())',
+    "json_array_required": 'r#"["label-a"]"#.into()',
+    "json_object": 'Some(r#"{"key":"val"}"#.into())',
+    "json_object_opt": 'Some(r#"{"key":"val"}"#.into())',
+    "json_value": 'r#"{"test":true}"#.into()',
+    "unwrap_default": 'Some("test_unwrap".into())',
+    "computed": '"computed_skip".into()',
+}
+
+
+def _enum_variant(default: str) -> str:
+    """Extract the variant string, e.g. "AgentType::Sisyphus" -> "Sisyphus".
+
+    Returns:
+        The resulting ``str``.
+    """
+    return default.split("::")[-1] if default else "Default"
+
+
+def _converter_test_value(ctype: str, conv: ConverterConfig) -> str | None:
+    """Return the converter-driven test value, or ``None`` when type-based.
+
+    Returns:
+        The resulting ``str | None``.
+    """
+    if ctype == "enum":
+        return f'"{_enum_variant(conv.get("default", ""))}".into()'
+    if ctype == "enum_opt":
+        return f'Some("{_enum_variant(conv.get("default", ""))}".into())'
+    return _FIXED_CTYPE_TEST_VALUES.get(ctype)
+
+
+def _named_string_test_value(field_name: str, entity_name: str) -> str | None:
+    """Return the test value for exactly-named string fields.
+
+    Returns:
+        The resulting ``str | None``.
+    """
+    named = {
+        "id": f'"{entity_name}_test_001".into()',
+        "email": '"test@example.com".into()',
+        "url": '"https://example.com/repo".into()',
+        "slug": f'"test-{entity_name}".into()',
+        "path": '"/tmp/test-path".into()',
+        "local_path": '"/tmp/test-path".into()',
+    }
+    return named.get(field_name)
+
+
+def _suffix_string_test_value(field_name: str, entity_name: str) -> str | None:
+    """Return the test value for suffix-named string fields.
+
+    Returns:
+        The resulting ``str | None``.
+    """
+    suffixes = {
+        "_id": f'"ref_{field_name}_001".into()',
+        "_json": '"{}".into()',
+        "_hash": f'"hash_{entity_name}_001".into()',
+    }
+    for suffix, value in suffixes.items():
+        if field_name.endswith(suffix):
+            return value
+    return None
+
+
+def _string_test_value(field_name: str, entity_name: str) -> str:
+    """Return the test value for a non-optional string field.
+
+    Returns:
+        The resulting ``str``.
+    """
+    named = _named_string_test_value(field_name, entity_name)
+    if named is not None:
+        return named
+    suffix = _suffix_string_test_value(field_name, entity_name)
+    if suffix is not None:
+        return suffix
+    return f'"test_{field_name}".into()'
+
+
+def _i64_suffix_test_value(field_name: str) -> str | None:
+    """Return the test value for suffix-named i64 fields.
+
+    Returns:
+        The resulting ``str | None``.
+    """
+    if field_name.endswith("_at"):
+        return "1_700_000_000"
+    if field_name.endswith("_ms"):
+        return "1500"
+    if field_name.endswith("_count"):
+        return "5"
+    return None
+
+
+def _i64_test_value(field_name: str) -> str:
+    """Return the test value for a non-optional i64 field.
+
+    Returns:
+        The resulting ``str``.
+    """
+    suffix = _i64_suffix_test_value(field_name)
+    if suffix is not None:
+        return suffix
+    named = {"confidence": "85", "priority": "2", "version_number": "1"}
+    return named.get(field_name, "1")
+
+
+def _option_int_test_value(field_name: str) -> str:
+    """Return the test value for an optional i64 field.
+
+    Returns:
+        The resulting ``str``.
+    """
+    if field_name.endswith("_at"):
+        return "Some(1_700_000_000)"
+    if field_name.endswith("_ms"):
+        return "Some(1500)"
+    return "Some(1)"
+
+
+def _option_test_value(field_name: str, inner: str) -> str:
+    """Return the test value for an optional field by inner type.
+
+    Returns:
+        The resulting ``str``.
+    """
+    if inner == "i64":
+        return _option_int_test_value(field_name)
+    return f'Some("test_{field_name}".into())'
+
+
+def _type_test_value(field_name: str, db_type: str, entity_name: str) -> str:
+    """Return the type-based default test value for a direct field.
+
+    Returns:
+        The resulting ``str``.
+    """
+    if db_type.startswith("Option<"):
+        return _option_test_value(field_name, db_type[len("Option<") : -1])
+    if db_type == "String":
+        return _string_test_value(field_name, entity_name)
+    if db_type == "i64":
+        return _i64_test_value(field_name)
+    return f'"test_{field_name}".into()'
+
+
 def _test_value_for_field(
     field_name: str,
     db_type: str,
@@ -112,114 +272,121 @@ def _test_value_for_field(
     Returns:
         The resulting ``str``.
     """
-    conv = convert.get(field_name) or {"type": ""}
-    ctype = conv.get("type", "")
-
-    # not_set fields: use None (they're always Option)
     if field_name in not_set:
         return "None"
 
-    is_option = db_type.startswith("Option<")
+    conv = convert.get(field_name) or {"type": ""}
+    converter_value = _converter_test_value(conv.get("type", ""), conv)
+    if converter_value is not None:
+        return converter_value
 
-    # --- Converter-aware values ---
-    if ctype == "enum":
-        default = conv.get("default", "")
-        # Extract the variant string, e.g. "AgentType::Sisyphus" -> "Sisyphus"
-        variant_str = default.split("::")[-1] if default else "Default"
-        return f'"{variant_str}".into()'
+    return _type_test_value(field_name, db_type, entity_name)
 
-    if ctype == "enum_opt":
-        default = conv.get("default", "")
-        variant_str = default.split("::")[-1] if default else "Default"
-        return f'Some("{variant_str}".into())'
 
-    if ctype == "bool":
-        return "1"
+def _from_model_enum(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    if conv.get("default"):
+        return f"            {domain_field}: m.{field}.parse::<{conv.get('enum_type', '')}>().unwrap_or({conv.get('default', '')}),"
+    return f"            {domain_field}: m.{field}.parse::<{conv.get('enum_type', '')}>().unwrap_or_default(),"
 
-    if ctype == "bool_opt":
-        return "Some(1)"
 
-    if ctype == "opt_bool":
-        return "Some(1)"
+def _from_model_enum_opt(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return (
+        f"            {domain_field}: m\n"
+        f"                .{field}\n"
+        f"                .as_deref()\n"
+        f"                .and_then(|s| s.parse::<{conv.get('enum_type', '')}>().ok())\n"
+        f"                .unwrap_or({conv.get('default', '')}),"
+    )
 
-    if ctype == "int_cast":
-        return "2"
 
-    if ctype == "opt_int_cast":
-        return "Some(3)"
+def _from_model_bool(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return f"            {domain_field}: m.{field} != 0,"
 
-    if ctype == "json_array":
-        return 'Some(r#"["tag1","tag2"]"#.into())'
 
-    if ctype == "json_array_required":
-        return 'r#"["label-a"]"#.into()'
+def _from_model_bool_opt(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return f"            {domain_field}: m.{field}.is_some_and(|v| v != 0),"
 
-    if ctype == "json_object":
-        return 'Some(r#"{"key":"val"}"#.into())'
 
-    if ctype == "json_object_opt":
-        return 'Some(r#"{"key":"val"}"#.into())'
+def _from_model_opt_bool(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return f"            {domain_field}: m.{field}.map(|v| v != 0),"
 
-    if ctype == "json_value":
-        return 'r#"{"test":true}"#.into()'
 
-    if ctype == "unwrap_default":
-        return 'Some("test_unwrap".into())'
+def _from_model_int_cast(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return f"            {domain_field}: m.{field} as i32,"
 
-    if ctype == "computed":
-        # Computed fields are NOT in the Model — should not be called
-        return '"computed_skip".into()'
 
-    # --- Type-based defaults for direct fields ---
-    if is_option:
-        inner = db_type[len("Option<") : -1]
-        if inner == "String":
-            return f'Some("test_{field_name}".into())'
-        if inner == "i64":
-            if field_name.endswith("_at"):
-                return "Some(1_700_000_000)"
-            if field_name.endswith("_ms"):
-                return "Some(1500)"
-            return "Some(1)"
-        return f'Some("test_{field_name}".into())'
+def _from_model_opt_int_cast(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return f"            {domain_field}: m.{field}.map(|v| v as i32),"
 
-    # Non-optional types
-    if db_type == "String":
-        if field_name == "id":
-            return f'"{entity_name}_test_001".into()'
-        if field_name.endswith("_id"):
-            return f'"ref_{field_name}_001".into()'
-        if field_name.endswith("_json"):
-            return '"{}".into()'
-        if field_name.endswith("_hash"):
-            return f'"hash_{entity_name}_001".into()'
-        if field_name == "email":
-            return '"test@example.com".into()'
-        if field_name == "url":
-            return '"https://example.com/repo".into()'
-        if field_name == "slug":
-            return f'"test-{entity_name}".into()'
-        if field_name in {"path", "local_path"}:
-            return '"/tmp/test-path".into()'
-        return f'"test_{field_name}".into()'
 
-    if db_type == "i64":
-        if field_name.endswith("_at"):
-            return "1_700_000_000"
-        if field_name.endswith("_ms"):
-            return "1500"
-        if field_name.endswith("_count"):
-            return "5"
-        if field_name == "confidence":
-            return "85"
-        if field_name == "priority":
-            return "2"
-        if field_name == "version_number":
-            return "1"
-        return "1"
+def _from_model_json_opt_deser(field: str, domain_field: str) -> str:
+    return (
+        f"            {domain_field}: m\n"
+        f"                .{field}\n"
+        + _JSON_WARN_FROM_OPT.replace("{field}", field)
+        + "                .unwrap_or_default(),"
+    )
 
-    # Fallback
-    return f'"test_{field_name}".into()'
+
+def _from_model_json_array(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return _from_model_json_opt_deser(field, domain_field)
+
+
+def _from_model_json_object(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return _from_model_json_opt_deser(field, domain_field)
+
+
+def _from_model_json_array_required(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return (
+        f"            {domain_field}: serde_json::from_str(&m.{field})\n"
+        f'                .map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column"))\n'
+        f"                .unwrap_or_default(),"
+    )
+
+
+def _from_model_json_object_opt(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    obj_type = conv.get("object_type", "")
+    return (
+        f"            {domain_field}: m\n"
+        f"                .{field}\n"
+        f"                .as_deref()\n"
+        f'                .and_then(|s| serde_json::from_str::<{obj_type}>(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok()),'
+    )
+
+
+def _from_model_json_value(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return (
+        f"            {domain_field}: serde_json::from_str(&m.{field})"
+        f".unwrap_or(serde_json::Value::Null),"
+    )
+
+
+def _from_model_unwrap_default(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return f"            {domain_field}: m.{field}.unwrap_or_default(),"
+
+
+def _from_model_computed(field: str, domain_field: str, conv: ConverterConfig) -> str:
+    return f"            {domain_field}: {conv.get('from_model', '')},"
+
+
+_FROM_MODEL_GENERATORS: dict[
+    str, Callable[[str, str, ConverterConfig], str],
+] = {
+    "enum": _from_model_enum,
+    "enum_opt": _from_model_enum_opt,
+    "bool": _from_model_bool,
+    "bool_opt": _from_model_bool_opt,
+    "opt_bool": _from_model_opt_bool,
+    "int_cast": _from_model_int_cast,
+    "opt_int_cast": _from_model_opt_int_cast,
+    "json_array": _from_model_json_array,
+    "json_array_required": _from_model_json_array_required,
+    "json_object": _from_model_json_object,
+    "json_object_opt": _from_model_json_object_opt,
+    "json_value": _from_model_json_value,
+    "unwrap_default": _from_model_unwrap_default,
+    "computed": _from_model_computed,
+}
 
 
 def gen_from_model_field(field: str, convert: dict[str, ConverterConfig]) -> str:
@@ -229,87 +396,111 @@ def gen_from_model_field(field: str, convert: dict[str, ConverterConfig]) -> str
 
     domain_field = conv.get("domain_field", field)
     ctype = conv["type"]
+    generator = _FROM_MODEL_GENERATORS.get(ctype)
+    if generator is None:
+        raise ValueError(f"Unknown converter type: {ctype} for field {field}")
+    return generator(field, domain_field, conv)
 
-    if ctype == "enum":
-        default = conv.get("default", "")
-        enum_type = conv.get("enum_type", "")
-        if default:
-            return f"            {domain_field}: m.{field}.parse::<{enum_type}>().unwrap_or({default}),"
-        return f"            {domain_field}: m.{field}.parse::<{enum_type}>().unwrap_or_default(),"
 
-    if ctype == "enum_opt":
-        enum_type = conv.get("enum_type", "")
-        default = conv.get("default", "")
-        return (
-            f"            {domain_field}: m\n"
-            f"                .{field}\n"
-            f"                .as_deref()\n"
-            f"                .and_then(|s| s.parse::<{enum_type}>().ok())\n"
-            f"                .unwrap_or({default}),"
-        )
+def _to_active_enum(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(e.{domain_field}.to_string()),"
 
-    if ctype == "bool":
-        return f"            {domain_field}: m.{field} != 0,"
 
-    if ctype == "bool_opt":
-        return f"            {domain_field}: m.{field}.is_some_and(|v| v != 0),"
+def _to_active_enum_opt(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(Some(e.{domain_field}.to_string())),"
 
-    if ctype == "opt_bool":
-        return f"            {domain_field}: m.{field}.map(|v| v != 0),"
 
-    if ctype == "int_cast":
-        return f"            {domain_field}: m.{field} as i32,"
+def _to_active_bool(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(i64::from(e.{domain_field})),"
 
-    if ctype == "opt_int_cast":
-        return f"            {domain_field}: m.{field}.map(|v| v as i32),"
 
-    if ctype == "json_array":
-        return (
-            f"            {domain_field}: m\n"
-            f"                .{field}\n"
-            f"                .as_deref()\n"
-            f'                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok())\n'
-            f"                .unwrap_or_default(),"
-        )
+def _to_active_bool_opt(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(Some(i64::from(e.{domain_field}))),"
 
-    if ctype == "json_array_required":
-        return (
-            f"            {domain_field}: serde_json::from_str(&m.{field})\n"
-            f'                .map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column"))\n'
-            f"                .unwrap_or_default(),"
-        )
 
-    if ctype == "json_object":
-        return (
-            f"            {domain_field}: m\n"
-            f"                .{field}\n"
-            f"                .as_deref()\n"
-            f'                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok())\n'
-            f"                .unwrap_or_default(),"
-        )
+def _to_active_opt_bool(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(e.{domain_field}.map(i64::from)),"
 
-    if ctype == "json_object_opt":
-        obj_type = conv.get("object_type", "")
-        return (
-            f"            {domain_field}: m\n"
-            f"                .{field}\n"
-            f"                .as_deref()\n"
-            f'                .and_then(|s| serde_json::from_str::<{obj_type}>(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok()),'
-        )
 
-    if ctype == "json_value":
-        return (
-            f"            {domain_field}: serde_json::from_str(&m.{field})"
-            f".unwrap_or(serde_json::Value::Null),"
-        )
+def _to_active_int_cast(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(i64::from(e.{domain_field})),"
 
-    if ctype == "unwrap_default":
-        return f"            {domain_field}: m.{field}.unwrap_or_default(),"
 
-    if ctype == "computed":
-        return f"            {domain_field}: {conv.get('from_model', '')},"
+def _to_active_opt_int_cast(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(e.{domain_field}.map(i64::from)),"
 
-    raise ValueError(f"Unknown converter type: {ctype} for field {field}")
+
+def _to_active_json_serialize(
+    field: str, domain_field: str, fallback: str,
+) -> str:
+    return (
+        f"            {field}: ActiveValue::Set(Some(\n"
+        f"                serde_json::to_string(&e.{domain_field})"
+        f'.unwrap_or_else(|_| "{fallback}".into()),\n'
+        f"            )),"
+    )
+
+
+def _to_active_json_array(field: str, domain_field: str) -> str:
+    return _to_active_json_serialize(field, domain_field, "[]")
+
+
+def _to_active_json_object(field: str, domain_field: str) -> str:
+    return _to_active_json_serialize(field, domain_field, "{}")
+
+
+def _to_active_json_array_required(field: str, domain_field: str) -> str:
+    return (
+        f"            {field}: ActiveValue::Set(\n"
+        f"                serde_json::to_string(&e.{domain_field})"
+        f'.unwrap_or_else(|_| "[]".into()),\n'
+        f"            ),"
+    )
+
+
+def _to_active_json_object_opt(field: str, domain_field: str) -> str:
+    return (
+        f"            {field}: ActiveValue::Set(\n"
+        f"                e.{domain_field}\n"
+        f"                    .as_ref()\n"
+        f"                    .and_then(|oc| serde_json::to_string(oc).ok()),\n"
+        f"            ),"
+    )
+
+
+def _to_active_json_value(field: str, domain_field: str) -> str:
+    return (
+        f"            {field}: ActiveValue::Set(\n"
+        f"                serde_json::to_string(&e.{domain_field}).unwrap_or_default(),\n"
+        f"            ),"
+    )
+
+
+def _to_active_unwrap_default(field: str, domain_field: str) -> str:
+    return f"            {field}: ActiveValue::Set(Some(e.{domain_field})),"
+
+
+def _to_active_computed(field: str, domain_field: str) -> str | None:
+    del field, domain_field
+    return None
+
+
+_TO_ACTIVE_GENERATORS: dict[str, Callable[[str, str], str | None]] = {
+    "enum": _to_active_enum,
+    "enum_opt": _to_active_enum_opt,
+    "bool": _to_active_bool,
+    "bool_opt": _to_active_bool_opt,
+    "opt_bool": _to_active_opt_bool,
+    "int_cast": _to_active_int_cast,
+    "opt_int_cast": _to_active_opt_int_cast,
+    "json_array": _to_active_json_array,
+    "json_array_required": _to_active_json_array_required,
+    "json_object": _to_active_json_object,
+    "json_object_opt": _to_active_json_object_opt,
+    "json_value": _to_active_json_value,
+    "unwrap_default": _to_active_unwrap_default,
+    "computed": _to_active_computed,
+}
 
 
 def gen_to_active_field(field: str, convert: dict[str, ConverterConfig]) -> str | None:
@@ -319,80 +510,10 @@ def gen_to_active_field(field: str, convert: dict[str, ConverterConfig]) -> str 
 
     domain_field = conv.get("domain_field", field)
     ctype = conv["type"]
-
-    if ctype in {"enum", "enum_opt"}:
-        if ctype == "enum_opt":
-            return f"            {field}: ActiveValue::Set(Some(e.{domain_field}.to_string())),"
-        return f"            {field}: ActiveValue::Set(e.{domain_field}.to_string()),"
-
-    if ctype == "bool":
-        return f"            {field}: ActiveValue::Set(i64::from(e.{domain_field})),"
-
-    if ctype == "bool_opt":
-        return (
-            f"            {field}: ActiveValue::Set(Some(i64::from(e.{domain_field}))),"
-        )
-
-    if ctype == "opt_bool":
-        return (
-            f"            {field}: ActiveValue::Set(e.{domain_field}.map(i64::from)),"
-        )
-
-    if ctype == "int_cast":
-        return f"            {field}: ActiveValue::Set(i64::from(e.{domain_field})),"
-
-    if ctype == "opt_int_cast":
-        return (
-            f"            {field}: ActiveValue::Set(e.{domain_field}.map(i64::from)),"
-        )
-
-    if ctype == "json_array":
-        return (
-            f"            {field}: ActiveValue::Set(Some(\n"
-            f"                serde_json::to_string(&e.{domain_field})"
-            f'.unwrap_or_else(|_| "[]".into()),\n'
-            f"            )),"
-        )
-
-    if ctype == "json_array_required":
-        return (
-            f"            {field}: ActiveValue::Set(\n"
-            f"                serde_json::to_string(&e.{domain_field})"
-            f'.unwrap_or_else(|_| "[]".into()),\n'
-            f"            ),"
-        )
-
-    if ctype == "json_object":
-        return (
-            f"            {field}: ActiveValue::Set(Some(\n"
-            f"                serde_json::to_string(&e.{domain_field})"
-            f'.unwrap_or_else(|_| "{{}}".into()),\n'
-            f"            )),"
-        )
-
-    if ctype == "json_object_opt":
-        return (
-            f"            {field}: ActiveValue::Set(\n"
-            f"                e.{domain_field}\n"
-            f"                    .as_ref()\n"
-            f"                    .and_then(|oc| serde_json::to_string(oc).ok()),\n"
-            f"            ),"
-        )
-
-    if ctype == "json_value":
-        return (
-            f"            {field}: ActiveValue::Set(\n"
-            f"                serde_json::to_string(&e.{domain_field}).unwrap_or_default(),\n"
-            f"            ),"
-        )
-
-    if ctype == "unwrap_default":
-        return f"            {field}: ActiveValue::Set(Some(e.{domain_field})),"
-
-    if ctype == "computed":
-        return None
-
-    raise ValueError(f"Unknown converter type: {ctype} for field {field}")
+    generator = _TO_ACTIVE_GENERATORS.get(ctype)
+    if generator is None:
+        raise ValueError(f"Unknown converter type: {ctype} for field {field}")
+    return generator(field, domain_field)
 
 
 def needs_serde_json(convert: dict[str, ConverterConfig]) -> bool:

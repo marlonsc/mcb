@@ -109,7 +109,8 @@ def _assert_make_fails(command: list[str], *, expect_unsupported: bool) -> None:
     )
     if expect_unsupported:
         assert "unsupported" in combined, (
-            f"{' '.join(command)}: missing dispatcher rejection marker\n{combined[-1500:]}"
+            f"{' '.join(command)}: missing dispatcher rejection marker"
+            f"\n{combined[-1500:]}"
         )
 
 

@@ -53,8 +53,11 @@ def test_optimizer_reports_and_selects_only_project_owned_processes(
         "pgrep",
         """printf 'pgrep %s\\n' "$*" >> "$COMMAND_LOG"
 case "$*" in
-  *rust.analyzer*) printf '%s\\n' '101 rust-analyzer' '102 rust-analyzer' '201 rust-analyzer' ;;
-  *serena*) printf '%s\n' '111 serena start-mcp-server' '112 serena start-mcp-server' '211 serena start-mcp-server' ;;
+  *rust.analyzer*) printf '%s\\n' \
+    '101 rust-analyzer' '102 rust-analyzer' '201 rust-analyzer' ;;
+  *serena*) printf '%s\n' \
+    '111 serena start-mcp-server' '112 serena start-mcp-server' \
+    '211 serena start-mcp-server' ;;
   *) exit 1 ;;
 esac""",
     )

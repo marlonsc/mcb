@@ -171,7 +171,9 @@ def _apply_category_filter(
 ) -> list[SarifIssue]:
     if category:
         filtered = [i for i in filtered if category in i.rule_category]
-        logger.info("🔍 Filtered to %s issues in category '%s'", len(filtered), category)
+        logger.info(
+            "🔍 Filtered to %s issues in category '%s'", len(filtered), category,
+        )
     return filtered
 
 
