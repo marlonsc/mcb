@@ -7,7 +7,7 @@
       {
         "hooks": [
           {
-            "command": "export PATH=\"$HOME/go/bin:$HOME/.local/bin:$PATH\" && gc hook run --when-managed-session -- handoff --auto \"context cycle\"",
+            "command": "export PATH=\"$HOME/go/bin:$HOME/.local/bin:$PATH\" && gc handoff --auto \"context cycle\"",
             "type": "command"
           }
         ],
@@ -18,7 +18,7 @@
       {
         "hooks": [
           {
-            "command": "export PATH=\"$HOME/go/bin:$HOME/.local/bin:$PATH\" && GC_MANAGED_SESSION_HOOK=1 GC_HOOK_EVENT_NAME=SessionStart gc prime --hook --hook-format claude",
+            "command": "export PATH=\"$HOME/go/bin:$HOME/.local/bin:$PATH\" && GC_MANAGED_SESSION_HOOK=1 GC_HOOK_EVENT_NAME=SessionStart gc prime --hook --hook-format codex",
             "type": "command"
           }
         ],
@@ -39,6 +39,17 @@
         ],
         "matcher": ""
       }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -f:*)",
+      "Bash(sed -i:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)"
     ]
   },
   "skipDangerousModePermissionPrompt": true
