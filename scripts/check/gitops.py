@@ -57,18 +57,18 @@ def run(settings: GitopsSettings) -> p.Result[str]:
     if not k8s_root.is_dir():
         # A missing root is a configuration error, not a legitimate skip:
         # a wrong k8s_dir must fail the gate, never pass it vacuously.
-        logger.error("GitOps root does not exist: %s", k8s_root)
+        logger.error("gitops root missing", root=str(k8s_root))
         return r[str].fail(f"GitOps root does not exist: {k8s_root}")
     summary_result = summarize(k8s_root)
     if summary_result.failure:
         logger.error(summary_result.error or "gitops discovery failed")
         return r[str].from_failure(summary_result)
     summary = summary_result.unwrap()
-    logger.info(f"GITOPS {summary.status}: {summary.message}")
+    logger.info("GITOPS summary", status=summary.status, message=summary.message)
     if summary.report.total_issues:
         logger.info(summary.report.generate_summary())
     for target in summary.targets:
-        logger.info(f"{target.kind}\t{target.path}")
+        logger.info("gitops target", kind=target.kind, path=str(target.path))
     if summary.status not in {"OK", "SKIP"}:
         return r[str].fail(summary.message)
     return r[str].ok(summary.status)

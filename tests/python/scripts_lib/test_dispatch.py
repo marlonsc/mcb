@@ -74,4 +74,5 @@ def test_gitops_all_selector_runs_the_registered_handler() -> None:
     result = _run("gitops", "all")
     combined = result.stdout + result.stderr
     assert result.returncode == 0, combined
-    assert "GITOPS SKIP" in combined
+    assert "GITOPS summary" in combined, combined
+    assert "✅ SKIP" in combined, combined
