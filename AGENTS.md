@@ -25,20 +25,19 @@
     operator-authorized, never as satisfied.
 13. Root Make only: diagnostics, validation, generation, tests, Waza,
     publication, and deployment run only through selector-free verbs in the
-    repository root Makefile; bare verbs perform their declared operation. A full
-    suite has its own verb, first runs the incremental verb, and uses the same
-    persistent external testmon database.
+    repository root Makefile; bare verbs perform their declared operation. Test
+    verbs: `rules/workflow/canonical-commands.md`.
 14. Red means red: a warning, skip, empty output, missing tool, missing report,
     zero collection, caught exception, retry, or normalized failure is RED. The
-    only acceptable zero-execution test result is a typed incremental testmon
-    cache hit with an integrity-checked database and complete deselection
+    only acceptable zero-execution test result is a typed `make test` cache hit
+    with an integrity-checked database and complete deselection
     accounting; it is never reported as tests passed. The first exception and
     raw traceback escape unchanged.
 <!-- /AIHUB-INVIOLABLE-LAW-PRELUDE -->
 
 # AGENTS.md — mcb
 
-> Packaged governance `agents-governance` `0.5.0` owns the capability indexes: 71 agents, 107 rules, 140 skills. Consume them through `GovernanceBundle`; do not copy their bodies here.
+> Packaged governance `agents-governance` `0.6.3` owns the capability indexes: 71 agents, 112 rules, 141 skills. Consume them through `GovernanceBundle`; do not copy their bodies here.
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-BEGIN -->
 ## AGENTS.md — mcb
