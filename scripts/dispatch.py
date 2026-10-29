@@ -24,7 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-_NAME: re.Pattern[str] = re.compile(r"^[a-z0-9_-]+$")
+_NAME: t.RegexPattern = re.compile(r"^[a-z0-9_-]+$")
 
 
 def _repo_root() -> Path:
