@@ -12,7 +12,7 @@ import subprocess  # ruff: ignore [suspicious-subprocess-import] -- tool runner:
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import Protocol, cast
 
 from kubernetes_validate import (
     InvalidSchemaError,
@@ -30,6 +30,56 @@ from mcb_scripts.qlty.model import McbScriptsSarifIssue, McbScriptsSeverity
 from mcb_scripts.qlty.report import McbScriptsAnalysisReport, analyze_issues
 
 logger = get_logger(__name__)
+
+
+class _YamlParser(Protocol):
+    """Typed view over the ruamel parser surface used by this module."""
+
+    def load_all(self, stream: str | Path) -> list[YamlNode]:
+        """Load every YAML document in ``stream``."""
+        ...
+
+
+class _LineColumnIndex(Protocol):
+    """Typed view over ruamel's line/column index."""
+
+    def key(self, key: str) -> tuple[int, int]:
+        """Return the (line, column) of ``key``."""
+        ...
+
+
+class _CommentedMapView(Protocol):
+    """Typed view over the CommentedMap members consumed here."""
+
+    def get(self, key: str) -> YamlNode | None:
+        """Return the value at ``key``."""
+        ...
+
+    def values(self) -> list[YamlNode]:
+        """Return the mapped values."""
+        ...
+
+    @property
+    def lc(self) -> _LineColumnIndex:
+        """Return the line/column index."""
+        ...
+
+
+class _ResourceValidator(Protocol):
+    """Typed view over ``kubernetes_validate.validate_resource``."""
+
+    def __call__(
+        self,
+        resource: object,
+        filename: str,
+        version: str,
+        *,
+        strict: bool,
+        quiet: bool,
+        no_warn: bool,
+    ) -> int:
+        """Validate one rendered manifest against the Kubernetes schema."""
+        ...
 
 KUSTOMIZE_FILES = frozenset({
     "kustomization.yaml",
@@ -221,7 +271,7 @@ def _render_and_validate(target: McbScriptsGitOpsTarget) -> list[McbScriptsSarif
     issues: list[McbScriptsSarifIssue] = []
     parser = YAML(typ="safe")
     try:
-        documents = list(parser.load_all(rendered))
+        documents = list(cast("_YamlParser", parser).load_all(rendered))
     except YAMLError as exc:
         return [
             _issue(
@@ -235,12 +285,14 @@ def _render_and_validate(target: McbScriptsGitOpsTarget) -> list[McbScriptsSarif
     for idx, document in enumerate(documents):
         if not isinstance(document, dict):
             continue
-        line = document.get("__line__", idx + 1)
+        mapping = cast("dict[str, YamlNode]", document)
+        line_value = mapping.get("__line__")
+        line = line_value if isinstance(line_value, int) else idx + 1
         try:
-            validate_resource(
+            cast("_ResourceValidator", validate_resource)(
                 document,
-                filename=str(target.path),
-                version=DEFAULT_KUBE_VERSION,
+                str(target.path),
+                DEFAULT_KUBE_VERSION,
                 strict=False,
                 quiet=True,
                 no_warn=True,
@@ -381,29 +433,30 @@ def _yaml_files(root: Path) -> list[Path]:
 
 def _load_yaml_documents(path: Path) -> list[YamlNode]:
     parser = YAML(typ="rt")
-    return cast("list[YamlNode]", list(parser.load_all(path)))
+    return list(cast("_YamlParser", parser).load_all(path))
 
 
 def _image_references(node: YamlNode) -> list[McbScriptsImageReference]:
     references: list[McbScriptsImageReference] = []
     if isinstance(node, CommentedMap):
-        image = node.get("image")
+        view = cast("_CommentedMapView", node)
+        image = view.get("image")
         if isinstance(image, str):
             references.append(
                 McbScriptsImageReference(
                     value=image, line=_line_for_key(node, "image"),
                 ),
             )
-        for child in node.values():
-            references.extend(_image_references(cast("YamlNode", child)))
+        for child in view.values():
+            references.extend(_image_references(child))
     elif isinstance(node, CommentedSeq):
-        for child in node:
-            references.extend(_image_references(cast("YamlNode", child)))
+        for child in cast("list[YamlNode]", list(node)):
+            references.extend(_image_references(child))
     return references
 
 
 def _line_for_key(node: CommentedMap, key: str) -> int:
-    line, _column = cast("tuple[int, int]", node.lc.key(key))
+    line, _column = cast("_CommentedMapView", node).lc.key(key)
     return line + 1
 
 

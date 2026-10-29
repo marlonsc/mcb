@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "ai-hub": {
+      "command": "ai-hub",
+      "args": [
+        "mcp",
+        "--action",
+        "client",
+        "--agent",
+        "cursor"
+      ],
+      "env": {
+        "AIHUB_PROJECT_ROOT": "${workspaceFolder}",
+        "AI_HUB_MCP_SOCKET": "/run/user/1000/ai-hub/mcp.sock"
+      }
+    }
+  }
+}

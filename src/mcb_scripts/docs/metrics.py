@@ -13,10 +13,19 @@ import tomllib
 from collections.abc import Mapping
 from pathlib import Path
 from types import MappingProxyType
+from typing import Protocol, cast
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from flext_core import m
+
+
+class _RenderableTemplate(Protocol):
+    """Typed view over the jinja template surface used here."""
+
+    def render(self, **context: str) -> str:
+        """Render the template with string context values."""
+        ...
 
 
 def _empty_str_mapping() -> Mapping[str, str]:
@@ -155,14 +164,8 @@ def _workspace_version(root: Path) -> str:
     """
     with (root / "Cargo.toml").open("rb") as cargo_source:
         cargo: dict[str, object] = tomllib.load(cargo_source)
-    workspace = cargo["workspace"]
-    if not isinstance(workspace, dict):
-        msg = "Workspace version must be a nonempty string"
-        raise TypeError(msg)
-    package = workspace.get("package")
-    if not isinstance(package, dict):
-        msg = "Workspace version must be a nonempty string"
-        raise TypeError(msg)
+    workspace = cast("dict[str, object]", cargo["workspace"])
+    package = cast("dict[str, object]", workspace.get("package"))
     version = package.get("version")
     if not isinstance(version, str) or not version:
         msg = "Workspace version must be a nonempty string"
@@ -232,7 +235,7 @@ def render_metrics(root: Path) -> str:
         ("Test Files", str(len(test_files))),
         ("Module Docs", str(len(tuple(module_docs_dir.glob("*.md"))))),
     )
-    content = template.render(
+    content = cast("_RenderableTemplate", template).render(
         version=version,
         version_anchor="v" + re.sub(r"[^a-z0-9]", "", version.lower()),
         table="\n".join(_metric_table_lines(values)),

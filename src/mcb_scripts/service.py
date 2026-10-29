@@ -16,7 +16,7 @@ class McbScriptsService(FlextService):
     """Per-class singleton service base wired to MCB settings."""
 
     settings_type: Annotated[
-        type | None,
+        type[McbScriptsBaseSettings] | None,
         m.Field(
             exclude=True,
             description="Settings class used to initialize the service.",
