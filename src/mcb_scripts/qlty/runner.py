@@ -11,7 +11,7 @@ import subprocess  # ruff: ignore [suspicious-subprocess-import] -- pinned-binar
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from mcb_scripts.core import get_logger, r
+from mcb_scripts import get_logger, r
 from mcb_scripts.qlty.model import McbScriptsQltyCategory, McbScriptsSarifIssue
 from mcb_scripts.qlty.parser import parse_sarif_file
 from mcb_scripts.settings import McbScriptsSettings

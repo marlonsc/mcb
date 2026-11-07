@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from mcb_scripts.core import r
+from mcb_scripts import r
 from mcb_scripts.qlty.model import McbScriptsSarifIssue, McbScriptsSeverity
 from mcb_scripts.qlty.strategies import get_strategy
 

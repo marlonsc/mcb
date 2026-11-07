@@ -13,7 +13,7 @@ from pathlib import Path
 from flext_cli import cli
 
 from flext_core import m, p
-from mcb_scripts.core import McbScriptsBaseSettings, get_logger, r
+from mcb_scripts import McbScriptsBaseSettings, get_logger, r
 from mcb_scripts.docs import utils
 from mcb_scripts.settings import McbScriptsSettings
 

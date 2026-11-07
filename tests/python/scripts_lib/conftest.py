@@ -14,7 +14,7 @@ import pytest
 from pydantic import create_model
 from structlog.testing import capture_logs
 
-from mcb_scripts.core import McbScriptsBaseSettings
+from mcb_scripts import McbScriptsBaseSettings
 
 SettingsFactory = Callable[..., McbScriptsBaseSettings]
 """Factory that builds a fresh settings subclass instance per test."""
