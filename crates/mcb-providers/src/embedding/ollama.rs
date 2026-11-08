@@ -97,7 +97,6 @@ impl OllamaEmbeddingProvider {
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
-            retry: None,
         })
         .await
         .map_err(|e| {

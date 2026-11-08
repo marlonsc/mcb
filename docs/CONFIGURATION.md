@@ -1,5 +1,14 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Configuration Index
+
+<!-- TOC START -->
+
+- [Primary References](#primary-references)
+- [Notes](#notes)
+  - [Updated 2026-02-12 - consolidated from duplicate configuration docs](#updated-2026-02-12-consolidated-from-duplicate-configuration-docs)
+
+<!-- TOC END -->
 
 Canonical configuration docs now live under `docs/configuration/`.
 

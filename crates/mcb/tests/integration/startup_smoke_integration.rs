@@ -26,6 +26,10 @@ fn acquire_process_lock() -> crate::process_lock::ProcessLock {
 ///
 /// Panics if the binary cannot be found in any expected location.
 fn get_mcb_path() -> PathBuf {
+    // Why: CARGO_BIN_EXE_mcb is cargo's canonical binary path; the target-dir
+    // sweep below is declared test-support resolution for direct
+    // `cargo test -p mcb --test ...` invocations where the env var is unset.
+    // All three sources are checked in order and absence fails loudly.
     if let Ok(path) = std::env::var("CARGO_BIN_EXE_mcb") {
         return PathBuf::from(path);
     }

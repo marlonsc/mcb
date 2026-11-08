@@ -1,11 +1,50 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Architecture Boundaries - Layer Rules and Module Ownership
 
-**Version**: v0.2.1
-**Status**: Baseline Documentation
-**Last Updated**: 2026-02-14
+<!-- TOC START -->
 
-This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 7 workspace crates.
+- [Table of Contents](#table-of-contents)
+- [v0.2.1 Standardization Contract](#v021-standardization-contract)
+  - [Scope Guardrails](#scope-guardrails)
+  - [Canonical Ownership](#canonical-ownership)
+  - [Fast-Fail Rules](#fast-fail-rules)
+- [Crate Structure](#crate-structure)
+  - [Dependency Direction (Inward Only)](#dependency-direction-inward-only)
+  - [Layer 0: mcb-utils (Utilities)](#layer-0-mcb-utils-utilities)
+- [Layer Dependency Rules](#layer-dependency-rules)
+  - [Layer 1: mcb-domain (Core)](#layer-1-mcb-domain-core)
+  - [Layer 2: mcb-providers (Adapters)](#layer-2-mcb-providers-adapters)
+  - [Registration Pattern](#registration-pattern)
+  - [Layer 3: mcb-infrastructure (Infrastructure)](#layer-3-mcb-infrastructure-infrastructure)
+  - [Layer 4: mcb-server (Server/Transport)](#layer-4-mcb-server-servertransport)
+  - [Facade: mcb (Public API)](#facade-mcb-public-api)
+  - [Tooling: mcb-validate (Development)](#tooling-mcb-validate-development)
+  - [Prohibited in Production](#prohibited-in-production)
+- [Port/Adapter Pattern](#portadapter-pattern)
+  - [Port Definition (mcb-domain)](#port-definition-mcb-domain)
+  - [Adapter Implementation (mcb-providers)](#adapter-implementation-mcb-providers)
+  - [Usage via DI (mcb-infrastructure)](#usage-via-di-mcb-infrastructure)
+- [Module Ownership](#module-ownership)
+  - [Ownership Rules](#ownership-rules)
+  - [Ownership Map](#ownership-map)
+- [Boundary Violations](#boundary-violations)
+  - [Common Violations Detected by mcb-validate](#common-violations-detected-by-mcb-validate)
+- [Validation Rules](#validation-rules)
+  - [Automated Checks (mcb-validate)](#automated-checks-mcb-validate)
+- [Phase-Based Validation](#phase-based-validation)
+- [Enforcement](#enforcement)
+  - [CI/CD Pipeline](#cicd-pipeline)
+- [Quality Gate](#quality-gate)
+- [References](#references)
+- [Version History](#version-history)
+
+<!-- TOC END -->
+
+**Version**: v0.2.1 **Status**: Baseline Documentation **Last Updated**: 2026-02-14
+
+This document defines the strict architectural boundaries for the MCB (Memory Context
+Browser) project following Clean Architecture principles with 7 workspace crates.
 
 ---
 
@@ -39,8 +78,10 @@ This release applies architecture optimization only (no net-new features).
 
 - IDs: `mcb-domain/src/value_objects/ids.rs` via `define_id!`.
 - Port traits: `mcb-domain/src/ports/**` only.
-- Domain entities/value objects: `mcb-domain/src/entities/**`, `mcb-domain/src/value_objects/**`.
-- DTO-to-domain mapping: boundary layers only (`mcb-server`, provider adapters), never in domain.
+- Domain entities/value objects: `mcb-domain/src/entities/**`,
+  `mcb-domain/src/value_objects/**`.
+- DTO-to-domain mapping: boundary layers only (`mcb-server`, provider adapters), never
+  in domain.
 
 ### Fast-Fail Rules
 
@@ -73,7 +114,8 @@ crates/
 mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 ```
 
-**Critical Rule**: Dependencies ALWAYS point inward. Outer layers depend on inner layers, never the reverse.
+**Critical Rule**: Dependencies ALWAYS point inward. Outer layers depend on inner
+layers, never the reverse.
 
 ---
 
@@ -90,12 +132,14 @@ mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 
 #### Prohibited Dependencies
 
-- NO dependencies on ANY mcb-* crate (enforced by CA015)
+- NO dependencies on ANY mcb-\* crate (enforced by CA015)
 - NO domain knowledge (entities, ports, value objects)
 
 #### Exports
 
-- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display,
+  embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases,
+  validate, values, vcs, vector_store)
 - Utils: fs, id, naming, path, sensitivity, time, vcs_context
 - Errors: `UtilsError`
 
@@ -141,7 +185,8 @@ mcb-utils/src/
 
 - Entities: `CodeChunk`, `Embedding`, `SearchResult`, `ChunkMetadata`
 - Value objects: `Vector`, `Distance`, `Score`
-- Port traits: `EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`, `LanguageChunkingProvider`
+- Port traits: `EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`,
+  `LanguageChunkingProvider`
 - Domain errors: `DomainError`, `ValidationError`
 
 #### Module Structure
@@ -175,8 +220,12 @@ mcb-domain/src/
 
 #### Exports
 
-- Embedding providers: `FastEmbedProvider` (default), `OllamaEmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageAIEmbeddingProvider`, `GeminiEmbeddingProvider`, `AnthropicEmbeddingProvider`
-- Vector store providers: `EdgeVecVectorStoreProvider` (default), `QdrantVectorStoreProvider`, `MilvusVectorStoreProvider`, `PineconeVectorStoreProvider`, `EncryptedVectorStoreProvider`
+- Embedding providers: `FastEmbedProvider` (default), `OllamaEmbeddingProvider`,
+  `OpenAIEmbeddingProvider`, `VoyageAIEmbeddingProvider`, `GeminiEmbeddingProvider`,
+  `AnthropicEmbeddingProvider`
+- Vector store providers: `EdgeVecVectorStoreProvider` (default),
+  `QdrantVectorStoreProvider`, `MilvusVectorStoreProvider`,
+  `PineconeVectorStoreProvider`, `EncryptedVectorStoreProvider`
 - Cache providers: `MokaCacheProvider` (default), `RedisCacheProvider`
 - Event bus providers: `TokioEventBusProvider` (default), `NatsEventBusProvider`
 - Language parsers: 12 AST-based language processors
@@ -219,7 +268,8 @@ mcb-providers/src/
 - `mcb-domain` (port traits for DI)
 - `mcb-providers` (concrete implementations for DI)
 - `mcb-utils` (shared constants and utilities)
-- manual composition root via `AppContext` + `init_app()` with `linkme` discovery (ADR-050)
+- manual composition root via `AppContext` + `init_app()` with `linkme` discovery
+  (ADR-050)
 - `figment` for configuration (ADR-025)
 - Infrastructure libraries (tracing, metrics, etc.)
 
@@ -291,7 +341,8 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
 - MCP server: `MCPServer`
 - Transport: `HttpTransport`, `StdioTransport`
-- Handlers: `index (action=start)`, `search (resource=code)`, `index (action=status)`, `index (action=clear)`
+- Handlers: `index (action=start)`, `search (resource=code)`, `index (action=status)`,
+  `index (action=clear)`
 
 #### Module Structure
 
@@ -407,15 +458,15 @@ impl ContextService {
 
 ### Ownership Map
 
-| Concept | Owner | Importers |
-|---------|-------|-----------|
-| Port traits | `mcb-domain` | `mcb-providers`, `mcb-infrastructure` |
-| Domain entities | `mcb-domain` | All layers |
-| Services | `mcb-infrastructure` | `mcb-server` |
-| Providers | `mcb-providers` | `mcb-infrastructure` (via DI) |
-| AppContext composition root | `mcb-infrastructure` | `mcb-server` |
-| Config types | `mcb-infrastructure` | `mcb-server` |
-| MCP handlers | `mcb-server` | None (entry point) |
+| Concept                     | Owner                | Importers                             |
+| --------------------------- | -------------------- | ------------------------------------- |
+| Port traits                 | `mcb-domain`         | `mcb-providers`, `mcb-infrastructure` |
+| Domain entities             | `mcb-domain`         | All layers                            |
+| Services                    | `mcb-infrastructure` | `mcb-server`                          |
+| Providers                   | `mcb-providers`      | `mcb-infrastructure` (via DI)         |
+| AppContext composition root | `mcb-infrastructure` | `mcb-server`                          |
+| Config types                | `mcb-infrastructure` | `mcb-server`                          |
+| MCP handlers                | `mcb-server`         | None (entry point)                    |
 
 ---
 
@@ -475,7 +526,6 @@ impl ContextService {
 ### Automated Checks (mcb-validate)
 
 ```bash
-
 # Run architecture validation
 make check WHAT=validate
 
@@ -540,12 +590,15 @@ Architecture validation: 0 violations
 # Fails if any violations detected
 ```
 
-## Pre-Commit Hook
-
 ```bash
+# Installed git hooks are managed by beads:
+#   bd hooks install
 
-# .git/hooks/pre-commit
-make check WHAT=validate QUICK=1  # Fast validation
+# The pre-commit shim delegates to `bd hooks run pre-commit`, which runs
+# the project's registered validation (lint/validate/guard). flext_infra
+# codegen conform still generates .pre-commit-config.yaml and its hooks call
+# make verbs directly, so the file is kept generated, untracked and never
+# installed. No copied script is used.
 ```
 
 ## Quality Gate
@@ -560,7 +613,8 @@ make check WHAT=validate QUICK=1  # Fast validation
 - **ADR-002**: Async-First Architecture
 - **ADR-013**: Clean Architecture Crate Separation
 - **ADR-023**: Inventory to Linkme Migration
-- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029, superseded by ADR-050)
+- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029, superseded by
+  ADR-050)
 - **ADR-025**: Figment Configuration Loading (archived, superseded by ADR-051 Loco YAML)
 - **ADR-027**: Architecture Evolution v0.1.3
 - **ADR-029**: Hexagonal Architecture (superseded by ADR-050)
@@ -569,13 +623,12 @@ make check WHAT=validate QUICK=1  # Fast validation
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
-| v0.2.1 | 2026-02-15 | Fixed crate count to 6, removed non-existent mcb-ast-utils and mcb-language-support |
+| Version | Date       | Changes                                                                             |
+| ------- | ---------- | ----------------------------------------------------------------------------------- |
+| v0.2.0  | 2026-01-28 | Baseline documentation for architecture boundaries                                  |
+| v0.2.1  | 2026-02-15 | Fixed crate count to 6, removed non-existent mcb-ast-utils and mcb-language-support |
 
 ---
 
-**Maintained by**: Architecture Team
-**Review Cycle**: Each major version release
+**Maintained by**: Architecture Team **Review Cycle**: Each major version release
 **Validation Tool**: `mcb-validate` crate

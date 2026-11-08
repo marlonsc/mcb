@@ -3,11 +3,16 @@
 
 Parses execute_unprepared("...") calls and outputs each SQL statement
 terminated with a semicolon, suitable for piping into sqlite3.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
+import pathlib
 import re
 import sys
-import pathlib
 
 
 def extract_sql(migration_file: str) -> list[str]:

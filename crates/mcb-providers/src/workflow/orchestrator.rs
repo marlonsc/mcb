@@ -17,42 +17,11 @@ use mcb_domain::entities::{Transition, TransitionTrigger, WorkflowSession, Workf
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{EventBusProvider, TransitionRepository, WorkflowSessionRepository};
-use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::debug;
 use uuid::Uuid;
 
 use crate::workflow::transitions::apply_transition;
-
-// ---------------------------------------------------------------------------
-// WorkflowEvent — lightweight local enum kept for backward compatibility
-// ---------------------------------------------------------------------------
-
-/// Internal workflow event type (kept for serialization compatibility).
-///
-/// New code should prefer [`WorkflowEventPublisher`] which publishes
-/// [`DomainEvent`] variants directly to the event bus.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum WorkflowEvent {
-    /// A new workflow session was created.
-    SessionCreated {
-        /// Unique session identifier.
-        session_id: String,
-        /// Project the session belongs to.
-        project_id: String,
-    },
-    /// A state transition was applied to a session.
-    TransitionApplied {
-        /// Unique session identifier.
-        session_id: String,
-        /// State before the transition.
-        from_state: WorkflowState,
-        /// State after the transition.
-        to_state: WorkflowState,
-        /// Trigger that caused the transition.
-        trigger: TransitionTrigger,
-    },
-}
 
 // ---------------------------------------------------------------------------
 // WorkflowEventPublisher — bridges workflow → DomainEvent system

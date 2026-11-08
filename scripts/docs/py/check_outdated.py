@@ -11,13 +11,12 @@ import os
 import re
 from pathlib import Path
 
-
 from flext_cli import cli
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
-from mcb_scripts.settings import McbSettings
-from pydantic import Field
 
+from flext_core import m, p
+from mcb_scripts.core import McbScriptsBaseSettings, get_logger, r
 from mcb_scripts.docs import utils
+from mcb_scripts.settings import McbScriptsSettings
 
 logger = get_logger(__name__)
 
@@ -40,16 +39,10 @@ SUPPRESS_RE = re.compile(
 )
 
 
-class CheckOutdatedSettings(BaseMcbSettings):
+class CheckOutdatedSettings(McbScriptsBaseSettings):
     """Settings for the outdated-content documentation check."""
 
-    root: Path = Field(default=Path(), description="Project root directory")
-
-
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-CheckOutdatedSettings.model_rebuild()
+    root: Path = m.Field(default=Path(), description="Project root directory")
 
 
 def _is_suppressed(line: str) -> bool:
@@ -57,7 +50,9 @@ def _is_suppressed(line: str) -> bool:
 
 
 def _process_lines(
-    lines: list[str], rel_filepath: str, outdated_patterns: list[tuple[str, str]]
+    lines: list[str],
+    rel_filepath: str,
+    outdated_patterns: list[tuple[str, str]],
 ) -> list[tuple[str, int, str, str]]:
     issues_in_file: list[tuple[str, int, str, str]] = []
     for i, line in enumerate(lines, 1):
@@ -73,13 +68,16 @@ def _process_lines(
 
 
 def _check_files(
-    docs_dir: str, project_root: Path
-) -> tuple[list[tuple[str, int, str, str]], int]:
+    docs_dir: str,
+    project_root: Path,
+) -> tuple[list[tuple[str, int, str, str]], int, list[str]]:
     issues: list[tuple[str, int, str, str]] = []
     checked = 0
+    unreadable: list[str] = []
 
     md_files = utils.find_md_files(
-        docs_dir, exclude_dirs={".git", "fixtures", "archive"}
+        docs_dir,
+        exclude_dirs={".git", "fixtures", "archive"},
     )
 
     for filepath in md_files:
@@ -89,35 +87,45 @@ def _check_files(
         try:
             with Path(filepath).open(encoding="utf-8") as fh:
                 lines = fh.readlines()
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Error reading {rel_filepath}: {e}")
+        except OSError as e:
+            # An unreadable doc must fail the check, never vanish from it.
+            unreadable.append(f"{rel_filepath}: {e}")
             continue
 
         file_issues = _process_lines(lines, rel_filepath, OUTDATED_PATTERNS)
         issues.extend(file_issues)
 
-    return issues, checked
+    return issues, checked, unreadable
 
 
-def run(settings: CheckOutdatedSettings) -> r[int]:
-    """Check outdated content in documentation."""
+def run(settings: CheckOutdatedSettings) -> p.Result[int]:
+    """Check outdated content in documentation.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+    """
     project_root = Path(settings.root).resolve()
     if settings.root == Path():
         project_root = utils.get_project_root()
 
-    docs_dir = os.path.join(project_root, str(McbSettings().docs_dir))
+    docs_dir = os.path.join(project_root, str(McbScriptsSettings().docs_dir))
 
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
-    issues, checked = _check_files(docs_dir, project_root)
+    issues, checked, unreadable = _check_files(docs_dir, project_root)
 
-    logger.info(f"Checked {checked} files for outdated content.")
+    logger.info("Checked %s files for outdated content.", checked)
+
+    if unreadable:
+        for entry in sorted(unreadable):
+            logger.error("Unreadable documentation file: %s", entry)
+        return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if issues:
-        logger.info(f"Found {len(issues)} potential outdated references:")
+        logger.info("Found %s potential outdated references:", len(issues))
         for fp, lineno, desc, content in sorted(issues):
-            logger.info(f"  {fp}:{lineno} [{desc}] {content}")
+            logger.info("  %s:%s [%s] %s", fp, lineno, desc, content)
         # Return 0 for now as these are often false positives or acceptable history
         return r[int].ok(len(issues))
 
@@ -127,7 +135,8 @@ def run(settings: CheckOutdatedSettings) -> r[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-outdated", help_text="Check outdated content in docs."
+        name="check-outdated",
+        help_text="Check outdated content in docs.",
     )
     cli.register_result_command(
         app,
@@ -136,9 +145,7 @@ def main() -> None:
         model_cls=CheckOutdatedSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-outdated")
-    if result.failure:
-        raise SystemExit(1)
+    cli.finalize_result(cli.execute_app(app, prog_name="check-outdated"))
 
 
 if __name__ == "__main__":

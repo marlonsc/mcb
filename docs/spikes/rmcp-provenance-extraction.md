@@ -1,20 +1,41 @@
 # Spike: rmcp HTTP provenance extraction via Extensions
 
+<!-- TOC START -->
+
+- [Goal](#goal)
+- [Decision](#decision)
+- [Evidence](#evidence)
+  - [1) rmcp transport docs explicitly describe request-part injection](#1-rmcp-transport-docs-explicitly-describe-request-part-injection)
+  - [2) rmcp source confirms insertion of Parts](#2-rmcp-source-confirms-insertion-of-parts)
+  - [3) rmcp source confirms handler-side extraction from request context](#3-rmcp-source-confirms-handler-side-extraction-from-request-context)
+- [Minimal working example](#minimal-working-example)
+  - [A) HTTP request with custom provenance headers](#a-http-request-with-custom-provenance-headers)
+  - [B) rmcp handler access via Extensions](#b-rmcp-handler-access-via-extensions)
+  - [C) Applying this to MCB build_execution_context()](#c-applying-this-to-mcb-build_execution_context)
+- [Notes and caveats](#notes-and-caveats)
+
+<!-- TOC END -->
+
 ## Goal
 
-Validate whether `rmcp::transport::http::StreamableHttpService` can expose incoming HTTP headers so MCB can pass provenance fields (`X-Machine-Id`, `X-Session-Id`, etc.) into `build_execution_context()`.
+Validate whether `rmcp::transport::http::StreamableHttpService` can expose incoming HTTP
+headers so MCB can pass provenance fields (`X-Machine-Id`, `X-Session-Id`, etc.) into
+`build_execution_context()`.
 
 ## Decision
 
 **CAN extract headers via Extensions.**
 
-`StreamableHttpService` inserts `http::request::Parts` into MCP request extensions, and handlers can read it through `RequestContext.extensions` (or extractor `Extension<Parts>` in macro-based handlers).
+`StreamableHttpService` inserts `http::request::Parts` into MCP request extensions, and
+handlers can read it through `RequestContext.extensions` (or extractor
+`Extension<Parts>` in macro-based handlers).
 
 ## Evidence
 
 ### 1) rmcp transport docs explicitly describe request-part injection
 
-- `StreamableHttpService` docs include: "rest part will remain and injected into Extensions".
+- `StreamableHttpService` docs include: "rest part will remain and injected into
+  Extensions".
 - Example shown by rmcp: `Extension(parts): Extension<http::request::Parts>`.
 
 Source:
@@ -72,7 +93,8 @@ X-Operator-Id: alice
 use http::request::Parts;
 use rmcp::service::{RequestContext, RoleServer};
 
-fn provenance_from_context(ctx: &RequestContext<RoleServer>) -> (Option<String>, Option<String>) {
+fn provenance_from_context(ctx: &RequestContext<RoleServer>) -> (Option<String>,
+  Option<String>) {
     let Some(parts) = ctx.extensions.get::<Parts>() else {
         return (None, None);
     };
@@ -95,7 +117,8 @@ fn provenance_from_context(ctx: &RequestContext<RoleServer>) -> (Option<String>,
 
 ### C) Applying this to MCB `build_execution_context()`
 
-Current MCB logic reads `request.meta` and `context.meta` in `crates/mcb-server/src/mcp_server.rs`.
+Current MCB logic reads `request.meta` and `context.meta` in
+`crates/mcb-server/src/mcp_server.rs`.
 
 To include transport headers, add a fallback from `context.extensions`:
 
@@ -124,4 +147,5 @@ let machine_id = value_or_env(
 
 - Header names are case-insensitive; `HeaderMap::get("x-session-id")` works.
 - This works only on HTTP transport path where `StreamableHttpService` is used.
-- Keep current meta-based extraction first, then use header fallback to preserve compatibility with non-HTTP transports (stdio, child process).
+- Keep current meta-based extraction first, then use header fallback to preserve
+  compatibility with non-HTTP transports (stdio, child process).

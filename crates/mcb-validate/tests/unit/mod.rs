@@ -17,4 +17,5 @@ mod config_tests;
 mod declarative_validator_tests;
 mod embedded_rules_tests;
 mod lib_tests;
+mod pattern_registry_tests;
 mod run_context_tests;

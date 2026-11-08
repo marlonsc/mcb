@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 This module re-exports the canonical FLEXT primitives wired for MCB:
 
 - ``McbResult[T]`` (alias ``r``) — explicit fallible results.
-- ``BaseMcbSettings`` — Pydantic ``BaseSettings`` with singleton lifecycle.
+- ``McbScriptsBaseSettings`` — Pydantic ``BaseSettings`` with singleton lifecycle.
 - ``McbService`` (alias ``s``) — per-class singleton service base.
 - ``get_logger`` / ``configure_logging`` — structured logging.
 
@@ -16,17 +16,17 @@ public abstraction (``result``, ``settings``, ``logger``, ``service``).
 
 from __future__ import annotations
 
-from mcb_scripts.constants import McbConstants, c
+from mcb_scripts.constants import McbScriptsConstants, c
 from mcb_scripts.logger import configure_logging, get_logger
 from mcb_scripts.result import McbResult, r
 from mcb_scripts.service import McbScriptsService, McbService, s
-from mcb_scripts.settings import BaseCommandSettings, BaseMcbSettings
+from mcb_scripts.settings import McbScriptsBaseCommandSettings, McbScriptsBaseSettings
 
 __all__ = [
-    "BaseCommandSettings",
-    "BaseMcbSettings",
-    "McbConstants",
     "McbResult",
+    "McbScriptsBaseCommandSettings",
+    "McbScriptsBaseSettings",
+    "McbScriptsConstants",
     "McbScriptsService",
     "McbService",
     "c",

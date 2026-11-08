@@ -6,7 +6,7 @@ use std::sync::Arc;
 use mcb_domain::entities::memory::MemorySearchResult;
 use mcb_domain::error;
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_utils::utils::vcs_context::capture_vcs_context;
+use mcb_utils::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
@@ -55,13 +55,13 @@ fn build_injected_context(
 #[tracing::instrument(skip_all)]
 pub async fn inject_context(
     memory_service: &Arc<dyn MemoryServiceInterface>,
+    vcs_context: &VcsContext,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, None);
     let org_id = resolve_org_id(args.org_id.as_deref());
     let limit = resolve_limit(args.limit, DEFAULT_MEMORY_LIST_LIMIT as u32);
     let max_tokens = args.inject.max_tokens.unwrap_or(DEFAULT_MAX_CONTEXT_TOKENS);
-    let vcs_context = capture_vcs_context();
     match memory_service
         .search_memories(&org_id, "", Some(filter), limit)
         .await
@@ -75,8 +75,8 @@ pub async fn inject_context(
                 "context": injected.context,
                 "estimated_tokens": estimated_tokens,
                 "vcs_context": {
-                    "branch": vcs_context.branch,
-                    "commit": vcs_context.commit,
+                    "branch": vcs_context.branch.clone(),
+                    "commit": vcs_context.commit.clone(),
                 }
             }))
         }

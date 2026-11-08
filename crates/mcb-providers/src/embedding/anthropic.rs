@@ -16,16 +16,13 @@ use mcb_utils::constants::embedding::{
 use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 use mcb_utils::constants::embedding::{
     ANTHROPIC_MAX_INPUT_TOKENS, EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME,
     EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
 };
 use mcb_utils::constants::http::CONTENT_TYPE_JSON;
-use mcb_utils::constants::http::{
-    HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS,
-    PROVIDER_RETRY_COUNT,
-};
+use mcb_utils::constants::http::{HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE};
 
 define_http_embedding_provider!(
     /// Anthropic embedding provider
@@ -76,10 +73,6 @@ impl AnthropicEmbeddingProvider {
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
-            retry: Some(RetryConfig::new(
-                PROVIDER_RETRY_COUNT,
-                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
-            )),
         })
         .await
     }

@@ -1,14 +1,42 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Incremental Refactoring](#alternative-1-incremental-refactoring)
+  - [Alternative 2: Complete Rewrite](#alternative-2-complete-rewrite)
+  - [Alternative 3: Minimal Fixes Only](#alternative-3-minimal-fixes-only)
+- [Implementation Notes](#implementation-notes)
+  - [Phase 1: Foundation (Weeks 1-2)](#phase-1-foundation-weeks-1-2)
+  - [Phase 2: Design Patterns (Weeks 3-4)](#phase-2-design-patterns-weeks-3-4)
+  - [Phase 3: Quality Assurance (Weeks 5-6)](#phase-3-quality-assurance-weeks-5-6)
+  - [Phase 4: Validation and Release (Weeks 7-8)](#phase-4-validation-and-release-weeks-7-8)
+  - [Dependencies to Add](#dependencies-to-add)
+- [Success Metrics](#success-metrics)
+- [Update for v0.3.0: Multi-Domain Architecture Preparation](#update-for-v030-multi-domain-architecture-preparation)
+  - [New Domains (to be implemented)](#new-domains-to-be-implemented)
+  - [Organizational Changes (v0.3.0)](#organizational-changes-v030)
+  - [Quality Implications](#quality-implications)
+  - [No Functional Changes](#no-functional-changes)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 6
-title: Code Audit and Architecture Improvements
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [1, 2, 3, 12, 13]
-supersedes: []
-superseded_by: []
+
+adr: 6 title: Code Audit and Architecture Improvements status: IMPLEMENTED created:
+updated: 2026-02-05 related: [1, 2, 3, 12, 13] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,7 +45,8 @@ implementation_status: Complete
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 Accepted
 
@@ -32,7 +61,7 @@ Accepted
 > **v0.1.1 Modular Architecture Updates:**
 >
 > - ✅ **Seven-crate Clean Architecture** implemented (see [ADR-013]
-(013-clean-architecture-crate-separation.md))
+>   (013-clean-architecture-crate-separation.md))
 > - ✅ **20+ port traits** in `crates/mcb-domain/src/ports/`
 > - ✅ **Two-layer DI strategy** (linkme + handles; see ADR-050, ADR-029 superseded)
 > - ✅ **All traits use `Send + Sync`** bounds for async DI compatibility
@@ -42,22 +71,19 @@ Accepted
 
 The Memory Context Browser codebase has grown organically and accumulated several
 anti-patterns and technical debt that impact maintainability, reliability, and
-development velocity. A comprehensive code audit identified critical issues that
-need addressing before stable release.
+development velocity. A comprehensive code audit identified critical issues that need
+addressing before stable release.
 
 Key problems identified:
 
-- **Giant structures**: Files with 1000+ lines violating Single Responsibility
-  Principle
-- **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing
-  potential runtime crashes
+- **Giant structures**: Files with 1000+ lines violating Single Responsibility Principle
+- **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing potential
+  runtime crashes
 - **Tight coupling**: Direct concrete type dependencies instead of trait-based
   abstractions
-- **Missing input validation**: Lack of robust validation leading to runtime
-  errors
+- **Missing input validation**: Lack of robust validation leading to runtime errors
 - **Inadequate error handling**: Generic error types without proper context
-- **Missing design patterns**: No Builder, Strategy, or Repository patterns
-  implemented
+- **Missing design patterns**: No Builder, Strategy, or Repository patterns implemented
 - **Poor testability**: High coupling making unit testing difficult
 
 Current state analysis:
@@ -70,9 +96,9 @@ Current state analysis:
 
 ## Decision
 
-Implement comprehensive architectural improvements following SOLID principles,
-modern Rust best practices, and established design patterns to eliminate
-anti-patterns and establish a maintainable codebase foundation.
+Implement comprehensive architectural improvements following SOLID principles, modern
+Rust best practices, and established design patterns to eliminate anti-patterns and
+establish a maintainable codebase foundation.
 
 Key architectural decisions:
 
@@ -88,16 +114,15 @@ Key architectural decisions:
 
 ### Consequences
 
-These architectural improvements will significantly enhance code quality but
-require substantial refactoring effort.
+These architectural improvements will significantly enhance code quality but require
+substantial refactoring effort.
 
 ### Positive Consequences
 
 - **Maintainability**: Smaller, focused modules easier to understand and modify
 - **Reliability**: Proper error handling eliminates unexpected crashes
 - **Testability**: Dependency injection enables comprehensive unit testing
-- **Extensibility**: Design patterns allow easy addition of new
-  providers/features
+- **Extensibility**: Design patterns allow easy addition of new providers/features
 - **Performance**: Better resource management and optimization opportunities
 - **Security**: Input validation prevents malicious or malformed data
 - **Developer Experience**: Clearer APIs and better error messages
@@ -119,21 +144,18 @@ require substantial refactoring effort.
 - **Description**: Address anti-patterns gradually over multiple releases
 - **Pros**: Less disruptive, allows feature development in parallel
 - **Cons**: Accumulates more technical debt, inconsistent codebase
-- **Rejection Reason**: Current issues are critical and blocking quality
-  improvements
+- **Rejection Reason**: Current issues are critical and blocking quality improvements
 
 ### Alternative 2: Complete Rewrite
 
 - **Description**: Rewrite entire codebase with clean architecture from scratch
 - **Pros**: Clean slate, no legacy constraints, modern patterns throughout
 - **Cons**: Extremely high risk, long development time, potential feature loss
-- **Rejection Reason**: Too risky for production system, better to evolve
-  existing code
+- **Rejection Reason**: Too risky for production system, better to evolve existing code
 
 ### Alternative 3: Minimal Fixes Only
 
-- **Description**: Only fix critical unwrap/expect issues, leave architecture
-  as-is
+- **Description**: Only fix critical unwrap/expect issues, leave architecture as-is
 - **Pros**: Quick implementation, minimal disruption
 - **Cons**: Doesn't address root causes, technical debt continues growing
 - **Rejection Reason**: Doesn't solve systemic architectural problems
@@ -298,17 +320,18 @@ config = "0.13"
 
 ## Success Metrics
 
-| Metric | Before | Target v0.1.0 | Measurement |
-| :--- | :--- | :--- | :--- |
-| Lines per file | >1000 | <500 | Static analysis |
-| unwrap/expect count | 157 | 0 | Code search |
-| Test coverage | ~60% | >85% | Cargo-tarpaulin |
-| Compilation time | ~45s | <30s | Cargo build --timings |
-| Cyclomatic complexity | >15 | <10 | Cargo +nightly rustc -- -Zunpretty=hir |
-| Memory usage | Baseline | <10% increase | Valgrind massif |
-| Error handling coverage | Partial | Complete | Manual review |
+| Metric                  | Before   | Target v0.1.0 | Measurement                            |
+| :---------------------- | :------- | :------------ | :------------------------------------- |
+| Lines per file          | >1000    | <500          | Static analysis                        |
+| unwrap/expect count     | 157      | 0             | Code search                            |
+| Test coverage           | ~60%     | >85%          | Cargo-tarpaulin                        |
+| Compilation time        | ~45s     | <30s          | Cargo build --timings                  |
+| Cyclomatic complexity   | >15      | <10           | Cargo +nightly rustc -- -Zunpretty=hir |
+| Memory usage            | Baseline | <10% increase | Valgrind massif                        |
+| Error handling coverage | Partial  | Complete      | Manual review                          |
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 &nbsp;
 
 ## Update for v0.3.0: Multi-Domain Architecture Preparation
@@ -356,6 +379,7 @@ libs/
 **Provider Integration** (current structure):
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 ```text
 crates/mcb-providers/src/
 ├── embedding/        # 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, Anthropic, FastEmbed)
@@ -386,28 +410,25 @@ v0.2.0 is purely architectural:
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture]
-(001-modular-crates-architecture.md) - Trait-based DI patterns
-- [ADR-002: Async-First Architecture]
-(002-async-first-architecture.md) - Async provider execution
-- [ADR-003: Unified Provider Architecture]
-(003-unified-provider-architecture.md) - Architecture visualization
+- [ADR-001: Modular Crates Architecture] (001-modular-crates-architecture.md) -
+  Trait-based DI patterns
+- [ADR-002: Async-First Architecture] (002-async-first-architecture.md) - Async provider
+  execution
+- [ADR-003: Unified Provider Architecture] (003-unified-provider-architecture.md) -
+  Architecture visualization
 - [ADR-003: Unified Provider Architecture & Routing]
-(003-unified-provider-architecture.md) - Provider routing and failover
-- [ADR-012: Two-Layer DI Strategy]
-(012-di-strategy-two-layer-approach.md) - DI patterns
+  (003-unified-provider-architecture.md) - Provider routing and failover
+- [ADR-012: Two-Layer DI Strategy] (012-di-strategy-two-layer-approach.md) - DI patterns
 - [ADR-013: Clean Architecture Crate Separation]
-(013-clean-architecture-crate-separation.md) - Seven-crate organization
+  (013-clean-architecture-crate-separation.md) - Seven-crate organization
 
 ## References
 
 - [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
-- [SOLID Principles in Rust]
-(<https://www.fpcomplete.com/blog/solid-principles-rust/>)
-- [Error Handling in Rust]
-(<https://blog.yoshuawuyts.com/error-handling-survey/>)
+- [SOLID Principles in Rust] (<https://www.fpcomplete.com/blog/solid-principles-rust/>)
+- [Error Handling in Rust] (<https://blog.yoshuawuyts.com/error-handling-survey/>)
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
 - [Builder Pattern](https://refactoring.guru/design-patterns/builder)
 - [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
-- [linkme Documentation]
-(<https://docs.rs/linkme>) (compile-time discovery in current DI; see ADR-050)
+- [linkme Documentation] (<https://docs.rs/linkme>) (compile-time discovery in current
+  DI; see ADR-050)

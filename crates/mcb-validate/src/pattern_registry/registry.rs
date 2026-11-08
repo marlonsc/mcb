@@ -48,7 +48,31 @@ impl PatternRegistry {
         let mut registry = Self::new();
 
         let rule_files = crate::utils::fs::collect_yaml_files(rules_dir)?;
+        // Path-containment hardening (mcb-7ttu): the rules directory may come
+        // from an operator environment override, so every loaded file must
+        // resolve inside the canonical directory — a symlink or `..` escape
+        // is skipped with a warning instead of being read.
+        let canonical_rules_dir = rules_dir.canonicalize()?;
         for path in rule_files.into_iter().filter(|p| !is_template_path(p)) {
+            let resolved = match path.canonicalize() {
+                Ok(resolved) => resolved,
+                Err(e) => {
+                    mcb_domain::warn!(
+                        "pattern_registry",
+                        "Rule file unreachable, skipping",
+                        &format!("path={} error={}", path.display(), e)
+                    );
+                    continue;
+                }
+            };
+            if !resolved.starts_with(&canonical_rules_dir) {
+                mcb_domain::warn!(
+                    "pattern_registry",
+                    "Rule file escapes rules directory, skipping (path containment)",
+                    &format!("path={} resolved={}", path.display(), resolved.display())
+                );
+                continue;
+            }
             if let Err(e) = registry.load_rule_file(&path, naming_config, project_prefix) {
                 mcb_domain::warn!(
                     "pattern_registry",
@@ -85,7 +109,7 @@ impl PatternRegistry {
         let rule_id = yaml
             .get(YAML_FIELD_ID)
             .and_then(|v| v.as_str())
-            .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN)
+            .unwrap_or(crate::sentinels::UNKNOWN_PROVENANCE)
             .to_owned();
 
         self.register_yaml_patterns(&yaml, &rule_id)?;

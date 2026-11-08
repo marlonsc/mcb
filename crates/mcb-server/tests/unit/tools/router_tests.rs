@@ -13,7 +13,6 @@ use mcb_domain::value_objects::RepositoryId;
 use mcb_server::tools::{
     ExecutionFlow, RuntimeDefaults, ToolExecutionContext, validate_execution_context,
 };
-use mcb_utils::constants::FALLBACK_UNKNOWN;
 use mcb_utils::constants::ide::KNOWN_IDE_PROGRAMS;
 use rstest::{fixture, rstest};
 
@@ -187,7 +186,7 @@ async fn boot_discovers_workspace_from_nested_path() {
     assert_eq!(defaults.repo_path.as_deref(), root.to_str());
     assert!(defaults.repo_id.is_some());
     assert!(defaults.session_id.is_some());
-    assert_eq!(defaults.model_id.as_deref(), Some(FALLBACK_UNKNOWN));
+    assert!(defaults.model_id.is_none());
     assert_eq!(defaults.execution_flow, Some(ExecutionFlow::StdioOnly));
     assert!(
         defaults

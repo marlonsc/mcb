@@ -1,27 +1,44 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Infrastructure Layer
 
-**Source**: `crates/mcb-infrastructure/src/`
-**Crate**: `mcb-infrastructure`
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Dependency Injection](#dependency-injection)
+  - [Architecture](#architecture)
+- [Configuration](#configuration)
+  - [Configuration Structure](#configuration-structure)
+- [Shared Technical Areas](#shared-technical-areas)
+- [File Structure](#file-structure)
+  - [Updated 2026-02-20 - Consolidated di.md and config.md for SSOT adherence](#updated-2026-02-20-consolidated-dimd-and-configmd-for-ssot-adherence)
+
+<!-- TOC END -->
+
+**Source**: `crates/mcb-infrastructure/src/` **Crate**: `mcb-infrastructure`
 
 ## ↔ Code ↔ Docs cross-reference
 
-| Direction | Link |
-| --------- | ---- |
-| Code → Docs | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) links here |
-| Docs → Code | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) — crate root |
+| Direction    | Link                                                                                                                                                                              |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code → Docs  | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) links here                                                                                   |
+| Docs → Code  | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) — crate root                                                                                 |
 | Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-050`](../adr/050-manual-composition-root-dill-removal.md) · [`ADR-023`](../adr/023-inventory-to-linkme-migration.md) |
-| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
+| Roadmap      | [`ROADMAP.md`](../developer/ROADMAP.md)                                                                                                                                           |
 
 ## Overview
 
-The infrastructure module contains the technical plumbing of the system: DI bootstrap, configuration management, logging, caching, and shared technical services.
+The infrastructure module contains the technical plumbing of the system: DI bootstrap,
+configuration management, logging, caching, and shared technical services.
 
 ---
 
 ## Dependency Injection
 
-Dependency injection system using a **manual composition root (`AppContext` + `init_app()`)** with linkme registry for provider discovery and handle-based runtime switching.
+Dependency injection system using a **manual composition root (`AppContext` +
+`init_app()`)** with linkme registry for provider discovery and handle-based runtime
+switching.
 
 ### Architecture
 
@@ -34,9 +51,12 @@ EMBEDDING_PROVIDERS  →    Resolver → init_app() →    Handle (RwLock)
                                                    (switch via API)
 ```
 
-- **Bootstrap** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)): Application initialization.
-- **Handles** ([`handles.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)): RwLock wrappers for runtime switching.
-- **Composition Root** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)): AppContext manual composition root configuration.
+- **Bootstrap**
+  ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)):
+  Application initialization.
+- **Composition Root**
+  ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)):
+  AppContext manual composition root configuration.
 
 ---
 
@@ -46,19 +66,26 @@ Type-safe, layered configuration management with environment variable overrides.
 
 ### Configuration Structure
 
-- **Types** ([`types.rs`](../../crates/mcb-infrastructure/src/config/app.rs)): Hierarchical structures (`AppConfig`, `ServerConfig`, `AuthConfig`).
-- **Loader** ([`loader.rs`](../../crates/mcb-infrastructure/src/config/loader.rs)): Multi-source loading (Environment + `.toml`).
+- **Types** ([`types.rs`](../../crates/mcb-infrastructure/src/config/app.rs)):
+  Hierarchical structures (`AppConfig`, `ServerConfig`, `AuthConfig`).
+- **Loader** ([`loader.rs`](../../crates/mcb-infrastructure/src/config/loader.rs)):
+  Multi-source loading (Environment + `.toml`).
 
-👉 **Canonical Env Var Matrix**: [`ENVIRONMENT_VARIABLES.md`](../configuration/ENVIRONMENT_VARIABLES.md)
+👉 **Canonical Env Var Matrix**:
+[`ENVIRONMENT_VARIABLES.md`](../configuration/ENVIRONMENT_VARIABLES.md)
 
 ---
 
 ## Shared Technical Areas
 
-- [`cache/`](../../crates/mcb-infrastructure/src/crypto/) - Shared caching infrastructure.
-- [`logging/`](../../crates/mcb-infrastructure/src/logging.rs) - Contextual logging (Tracing/OpenTelemetry).
-- [`crypto/`](../../crates/mcb-infrastructure/src/crypto/) - AES-256 and SHA-256 utilities.
-- [`health.rs`](../../crates/mcb-infrastructure/src/routing/health.rs) - System health check orchestration.
+- [`cache/`](../../crates/mcb-infrastructure/src/crypto/) - Shared caching
+  infrastructure.
+- [`logging/`](../../crates/mcb-infrastructure/src/logging.rs) - Contextual logging
+  (Tracing/OpenTelemetry).
+- [`crypto/`](../../crates/mcb-infrastructure/src/crypto/) - AES-256 and SHA-256
+  utilities.
+- [`health.rs`](../../crates/mcb-infrastructure/src/routing/health.rs) - System health
+  check orchestration.
 
 ## File Structure
 

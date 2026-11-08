@@ -31,6 +31,8 @@ fn datum(key: String, val: i64) -> Datum {
 /// # Errors
 ///
 /// Fails when config cannot be loaded or serialized, or when auth fails.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn config(
     State(ctx): State<AppContext>,
     headers: HeaderMap,
@@ -51,6 +53,8 @@ pub async fn config(
 /// # Errors
 ///
 /// Fails when the dashboard port fails or graph is unknown, or when auth fails.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn dashboard(
     State(ctx): State<AppContext>,
     headers: HeaderMap,
@@ -72,6 +76,8 @@ pub async fn dashboard(
 }
 
 /// Resolve the dashboard series for a named graph, mapping port errors to Loco errors.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 async fn dashboard_series(state: &McbState, graph: &str, limit: usize) -> Result<Vec<Datum>> {
     let data = match graph {
         "observations_by_month" => state
@@ -130,6 +136,8 @@ fn map_auth_error(err: crate::auth::AuthError) -> loco_rs::errors::Error {
 /// # Errors
 ///
 /// Fails when config cannot be loaded or serialized.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn config_via_middleware(Extension(_state): Extension<McbState>) -> Result<Response> {
     format::json(load_admin_config().map_err(|e| *e)?)
 }

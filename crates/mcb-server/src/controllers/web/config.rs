@@ -35,6 +35,8 @@ fn cfg_i64(config: &serde_json::Value, path: &[&str]) -> String {
 /// # Errors
 ///
 /// Fails when config cannot be loaded.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn config_page(Extension(state): Extension<McbState>) -> Result<Response> {
     let provider = state.embedding_provider.provider_name();
     let dims = state.embedding_provider.dimensions();

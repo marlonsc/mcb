@@ -20,7 +20,7 @@
 //! ```
 
 use std::path::Path;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex};
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
 
@@ -29,14 +29,16 @@ struct CompiledPatternSets {
     excludes: GlobSet,
 }
 
-static PATTERN_SET_CACHE: OnceLock<
-    Mutex<std::collections::HashMap<String, Arc<CompiledPatternSets>>>,
-> = OnceLock::new();
+/// Per-instance cache of compiled pattern sets, keyed by the pattern list.
+type PatternSetCache = Mutex<std::collections::HashMap<String, Arc<CompiledPatternSets>>>;
 
 /// Matcher for file patterns using glob syntax
 pub struct FilePatternMatcher {
     includes: GlobSet,
     excludes: GlobSet,
+    /// Injected state: compiled-set cache owned by this matcher instead of a
+    /// process-wide static.
+    cache: PatternSetCache,
 }
 
 impl FilePatternMatcher {
@@ -66,6 +68,7 @@ impl FilePatternMatcher {
         Ok(Self {
             includes: include_builder.build()?,
             excludes: exclude_builder.build()?,
+            cache: Mutex::new(std::collections::HashMap::new()),
         })
     }
 
@@ -79,7 +82,7 @@ impl FilePatternMatcher {
     /// true if the path matches any of the patterns
     #[must_use]
     pub fn matches_any(&self, path: &Path, patterns: &[String]) -> bool {
-        let Some(compiled) = Self::compiled_patterns(patterns) else {
+        let Some(compiled) = self.compiled_patterns(patterns) else {
             return false;
         };
 
@@ -90,14 +93,14 @@ impl FilePatternMatcher {
         compiled.includes.is_match(path)
     }
 
-    fn compiled_patterns(patterns: &[String]) -> Option<Arc<CompiledPatternSets>> {
+    fn compiled_patterns(&self, patterns: &[String]) -> Option<Arc<CompiledPatternSets>> {
         let (includes, excludes) = Self::parse_patterns(patterns);
         let key = format!(
             "i:{}|e:{}",
             includes.join("\u{1f}"),
             excludes.join("\u{1f}")
         );
-        let cache = PATTERN_SET_CACHE.get_or_init(|| Mutex::new(std::collections::HashMap::new()));
+        let cache = &self.cache;
 
         if let Ok(cache_guard) = cache.lock()
             && let Some(hit) = cache_guard.get(&key)
@@ -191,6 +194,7 @@ impl Default for FilePatternMatcher {
         Self {
             includes: GlobSet::empty(),
             excludes: GlobSet::empty(),
+            cache: Mutex::new(std::collections::HashMap::new()),
         }
     }
 }

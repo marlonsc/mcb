@@ -249,12 +249,6 @@ macro_rules! define_standard_embedding_provider {
                     kind: $crate::utils::http::RequestErrorKind::Embedding,
                     headers: &headers,
                     body: Some(&payload),
-                    retry: Some($crate::utils::http::RetryConfig::new(
-                        mcb_utils::constants::http::PROVIDER_RETRY_COUNT,
-                        std::time::Duration::from_millis(
-                            mcb_utils::constants::http::PROVIDER_RETRY_BACKOFF_MS,
-                        ),
-                    )),
                 })
                 .await
             }

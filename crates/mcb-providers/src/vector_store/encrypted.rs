@@ -26,8 +26,7 @@ use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInf
 use serde_json::Value;
 
 use mcb_utils::constants::vector_store::{
-    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER,
-    VECTOR_FIELD_START_LINE,
+    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_START_LINE,
 };
 
 /// Encrypted vector store provider
@@ -103,10 +102,7 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
                 processed.insert(key.to_owned(), val.clone());
             }
         }
-        if let Some(val) = meta
-            .get(VECTOR_FIELD_START_LINE)
-            .or_else(|| meta.get(VECTOR_FIELD_LINE_NUMBER))
-        {
+        if let Some(val) = meta.get(VECTOR_FIELD_START_LINE) {
             processed.insert(VECTOR_FIELD_START_LINE.to_owned(), val.clone());
         }
 

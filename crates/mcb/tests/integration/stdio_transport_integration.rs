@@ -60,12 +60,14 @@ fn cleanup_temp_dbs() {
 ///
 /// Panics if the binary cannot be found in any expected location.
 fn get_mcb_path() -> PathBuf {
-    // cargo test sets this environment variable when the binary is part of the workspace
+    // Why: CARGO_BIN_EXE_mcb is cargo's canonical binary path; the target-dir
+    // sweep below is declared test-support resolution for direct
+    // `cargo test -p mcb --test ...` invocations where the env var is unset.
+    // All three sources are checked in order and absence fails loudly.
     if let Ok(path) = std::env::var("CARGO_BIN_EXE_mcb") {
         return PathBuf::from(path);
     }
 
-    // Fallback: look in target directory relative to manifest
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let bin = format!("mcb{}", std::env::consts::EXE_SUFFIX);
     let debug_path = PathBuf::from(manifest_dir).join(format!("../../target/debug/{bin}"));
@@ -291,11 +293,12 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
             "protocolVersion has Debug format leak"
         );
 
-        // Verify serverInfo
-        assert!(
-            !peer_info.server_info.name.is_empty(),
-            "Should have server name"
-        );
+        // Verify serverInfo (rmcp 3.x: `server_info` is Option<Implementation>)
+        let server_info = peer_info
+            .server_info
+            .as_ref()
+            .ok_or("peer_info should carry server_info")?;
+        assert!(!server_info.name.is_empty(), "Should have server name");
 
         let _ = client.cancel().await;
         cleanup_temp_dbs();

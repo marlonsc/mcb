@@ -36,7 +36,7 @@ use mcb_domain::utils::tests::utils::{create_temp_codebase, create_test_indexing
 use mcb_utils::constants::testing::{TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID};
 
 // -----------------------------------------------------------------------------
-// Golden test helpers (shared by tests/golden and integration)
+// Golden test helpers (shared by e2e and integration)
 // -----------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------

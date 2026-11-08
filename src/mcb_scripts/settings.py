@@ -8,51 +8,60 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, override
 
-from flext_core import FlextSettings
-from pydantic import Field
-from pydantic_settings import SettingsConfigDict
-
+from flext_core import FlextSettings, m
 from mcb_scripts.constants import c
 
 
-class BaseMcbSettings(FlextSettings):
+class McbScriptsBaseSettings(FlextSettings):
     """Base settings for MCB scripts with per-class singleton lifecycle.
 
     Environment variables are read with the ``MCB_`` prefix, e.g.
     ``MCB_LOG_LEVEL`` maps to ``log_level``.
     """
 
-    model_config: ClassVar[SettingsConfigDict] = FlextSettings.model_config.copy()
+    model_config = FlextSettings.model_config.copy()
     model_config["env_prefix"] = c.ENV_PREFIX
     model_config["extra"] = "ignore"
     model_config["validate_assignment"] = True
 
-    @classmethod
-    def resolve_env_file(cls, namespace: str | None = None) -> str:
+    @override
+    @staticmethod
+    def resolve_env_file(namespace: str | None = None) -> str:
         """Centralised ``.env`` discovery for MCB.
 
         Honours ``MCB_ENV_FILE``; otherwise prefers ``.env.mcb-{namespace}``
         when ``namespace`` is given and the file exists, falling back to ``.env``.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises:
+            ValueError: If ``not custom_path.is_file()``.
         """
         custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
         if custom_env_file:
             custom_path = Path(custom_env_file)
-            if custom_path.exists():
-                return str(custom_path.resolve())
-            return custom_env_file
+            if not custom_path.is_file():
+                # An explicitly configured env file that does not exist is a
+                # configuration error, never silently ignored.
+                msg = (
+                    f"{c.ENV_FILE_ENV_VAR} points to a missing file: {custom_env_file}"
+                )
+                raise ValueError(msg)
+            return str(custom_path.resolve())
         if namespace:
             scoped = Path.cwd() / f".env.mcb-{namespace}"
             if scoped.exists():
                 return str(scoped.resolve())
-        default_path = Path.cwd() / ".env"
+        default_path = Path.cwd() / c.ENV_FILE_DEFAULT
         if default_path.exists():
             return str(default_path.resolve())
         return c.ENV_FILE_DEFAULT
 
 
-class BaseCommandSettings(BaseMcbSettings):
+class McbScriptsBaseCommandSettings(McbScriptsBaseSettings):
     """Base settings for cosmos-command scripts using unprefixed env vars.
 
     The cosmos-command dispatcher exposes ``WHAT``, ``ACT``, ``APPLY`` and
@@ -60,11 +69,13 @@ class BaseCommandSettings(BaseMcbSettings):
     ``MCB_`` prefix while keeping the rest of the FLEXT settings lifecycle.
     """
 
-    model_config: ClassVar[SettingsConfigDict] = BaseMcbSettings.model_config.copy()
-    model_config["env_prefix"] = ""
+    model_config: ClassVar[m.SettingsConfigDict] = {
+        **McbScriptsBaseSettings.model_config,
+        "env_prefix": "",
+    }
 
 
-class McbSettings(BaseMcbSettings):
+class McbScriptsSettings(McbScriptsBaseSettings):
     """Shared MCB settings with configurable project paths.
 
     These fields are intentionally overridable through ``MCB_*`` environment
@@ -72,23 +83,31 @@ class McbSettings(BaseMcbSettings):
     inputs/outputs without editing source.
     """
 
-    project_root: Path = Field(default=Path(), description="Project root directory")
-    k8s_dir: Path = Field(
-        default=Path("k8s"), description="Kubernetes manifests directory"
+    project_root: Path = m.Field(default=Path(), description="Project root directory")
+    k8s_dir: Path = m.Field(
+        default=Path("k8s"),
+        description="Kubernetes manifests directory",
     )
-    docs_dir: Path = Field(default=Path("docs"), description="Documentation directory")
-    qlty_check_sarif: Path = Field(
+    docs_dir: Path = m.Field(
+        default=Path("docs"),
+        description="Documentation directory",
+    )
+    qlty_check_sarif: Path = m.Field(
         default=Path("qlty.check.current.sarif"),
         description="SARIF output path for qlty check",
     )
-    qlty_smells_sarif: Path = Field(
+    qlty_smells_sarif: Path = m.Field(
         default=Path("qlty.smells.sarif"),
         description="SARIF output path for qlty smells",
     )
-    qlty_report_md: Path = Field(
+    qlty_report_md: Path = m.Field(
         default=Path("QUALITY_REPORT.md"),
         description="Markdown quality report output path",
     )
 
 
-__all__ = ["BaseCommandSettings", "BaseMcbSettings", "McbSettings"]
+__all__ = [
+    "McbScriptsBaseCommandSettings",
+    "McbScriptsBaseSettings",
+    "McbScriptsSettings",
+]

@@ -31,10 +31,15 @@ pub enum WorkflowState {
         phase_id: String,
     },
     /// State when executing tasks within a phase.
+    ///
+    /// The phase id is optional because session recovery (`Recover` from
+    /// `Failed`) re-enters execution without a declared phase: an absent id
+    /// is the honest record, and transitions that require a phase reject a
+    /// phase-less execution instead of fabricating one (mcb-v8a6).
     #[display("executing")]
     Executing {
-        /// Identifier of the phase being executed.
-        phase_id: String,
+        /// Identifier of the phase being executed, when one is declared.
+        phase_id: Option<String>,
         /// Optional identifier of the task currently being worked on.
         task_id: Option<String>,
     },

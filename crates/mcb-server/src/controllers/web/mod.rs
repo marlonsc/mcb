@@ -118,6 +118,8 @@ pub(crate) fn html_escape(s: &str) -> String {
 /// # Errors
 ///
 /// Returns a 404 HTML response.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn not_found_page() -> Result<Response> {
     let body = r#"<h1>404</h1><p>Not Found</p><a href="/ui/">Return to Dashboard</a>"#;
     format::html(&page_layout("Not Found", "", body))

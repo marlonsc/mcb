@@ -27,7 +27,7 @@ use mcb_domain::ports::{
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
-    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
+    CallToolResponse, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
     ServerCapabilities, ServerInfo,
 };
 
@@ -107,16 +107,19 @@ pub struct McpServices {
 }
 
 impl McpServer {
-    /// Create a new MCP server with injected dependencies
+    /// Create a new MCP server with injected dependencies.
+    ///
+    /// Handlers are pre-wired by the composition root ([`crate::composition`])
+    /// and injected fully built, keeping `Arc` construction out of the server.
     #[must_use]
     pub fn new(
         services: McpServices,
+        handlers: ToolHandlers,
         vcs: &Arc<dyn VcsProvider>,
         execution_flow: Option<ExecutionFlow>,
     ) -> Self {
         let runtime_defaults =
             futures::executor::block_on(RuntimeDefaults::discover(vcs.as_ref(), execution_flow));
-        let handlers = build_tool_handlers(&services);
 
         Self {
             services,
@@ -238,11 +241,7 @@ tools:
         _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
         let tools = create_tool_list()?;
-        Ok(ListToolsResult {
-            tools,
-            meta: Default::default(),
-            next_cursor: None,
-        })
+        Ok(ListToolsResult::with_all_items(tools))
     }
 
     /// Call a tool
@@ -250,10 +249,10 @@ tools:
         &self,
         mut request: rmcp::model::CallToolRequestParams,
         context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> Result<CallToolResponse, McpError> {
         let mut overrides = std::collections::HashMap::new();
         merge_meta_overrides(Some(&context.meta), &mut overrides);
-        merge_meta_overrides(request.meta.as_ref(), &mut overrides);
+        merge_meta_overrides(request.meta.as_ref().map(|meta| &meta.0), &mut overrides);
 
         // HTTP transport injects the raw request parts as an extension; use any
         // execution-flow header sent by HTTP clients as an override so the
@@ -292,49 +291,9 @@ tools:
         )
         .await?;
 
-        route_tool_call(request, &self.handlers, execution_context).await
-    }
-}
-
-/// Build the full set of tool handlers from resolved services.
-fn build_tool_handlers(services: &McpServices) -> ToolHandlers {
-    let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
-    let vcs_entity_handler = Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));
-    let plan_entity_handler = Arc::new(PlanEntityHandler::new(Arc::clone(&services.entities.plan)));
-    let issue_entity_handler = Arc::new(IssueEntityHandler::new(Arc::clone(
-        &services.entities.issue,
-    )));
-    let org_entity_handler = Arc::new(OrgEntityHandler::new(Arc::clone(&services.entities.org)));
-    let entity_handler = Arc::new(EntityHandler::new(
-        Arc::clone(&vcs_entity_handler),
-        Arc::clone(&plan_entity_handler),
-        Arc::clone(&issue_entity_handler),
-        Arc::clone(&org_entity_handler),
-    ));
-
-    ToolHandlers {
-        index: Arc::new(IndexHandler::new(Arc::clone(&services.indexing))),
-        search: Arc::new(SearchHandler::new(
-            Arc::clone(&services.search),
-            Arc::clone(&services.memory),
-            Arc::clone(&services.hybrid_search),
-            Arc::clone(&services.indexing),
-        )),
-        validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
-        memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
-        session: Arc::new(SessionHandler::new(
-            Arc::clone(&services.agent_session),
-            Arc::clone(&services.memory),
-        )),
-        agent: Arc::new(AgentHandler::new(Arc::clone(&services.agent_session))),
-        project: Arc::new(ProjectHandler::new(Arc::clone(&services.project_workflow))),
-        vcs: Arc::new(VcsHandler::new(Arc::clone(&services.vcs))),
-        vcs_entity: vcs_entity_handler,
-        plan_entity: plan_entity_handler,
-        issue_entity: issue_entity_handler,
-        org_entity: org_entity_handler,
-        entity: entity_handler,
-        hook_processor: Arc::new(hook_processor),
+        route_tool_call(request, &self.handlers, execution_context)
+            .await
+            .map(CallToolResponse::Complete)
     }
 }
 
@@ -351,7 +310,7 @@ fn meta_value_to_string(value: &serde_json::Value) -> Option<String> {
 
 /// Merge string/bool/number entries from a meta map into the overrides map.
 fn merge_meta_overrides(
-    meta: Option<&rmcp::model::Meta>,
+    meta: Option<&rmcp::model::MetaObject>,
     map: &mut std::collections::HashMap<String, String>,
 ) {
     let Some(meta) = meta else {

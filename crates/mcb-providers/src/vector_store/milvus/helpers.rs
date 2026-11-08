@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use mcb_utils::constants::vector_store::{
     MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_METADATA_VARCHAR_MAX_LENGTH, VECTOR_FIELD_CONTENT,
-    VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LINE_NUMBER, VECTOR_FIELD_START_LINE, VECTOR_FIELD_VECTOR,
+    VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_START_LINE, VECTOR_FIELD_VECTOR,
 };
 
 #[derive(Debug)]
@@ -73,10 +73,6 @@ pub(super) fn prepare_insert_data(
         payload.start_lines.push(
             meta.get(VECTOR_FIELD_START_LINE)
                 .and_then(serde_json::Value::as_i64)
-                .or_else(|| {
-                    meta.get(VECTOR_FIELD_LINE_NUMBER)
-                        .and_then(serde_json::Value::as_i64)
-                })
                 .unwrap_or(0),
         );
         payload.contents.push(

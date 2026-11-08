@@ -282,7 +282,7 @@ async fn golden_session_summary() -> TestResult {
         "topics": ["architecture", "testing"],
         "decisions": ["Use golden tests for session lifecycle"],
         "next_steps": ["Add more coverage"],
-        "key_files": ["tests/golden/test_session_lifecycle.rs"],
+        "key_files": ["crates/mcb-server/tests/e2e/test_session_lifecycle.rs"],
         "project_id": "test-project-session"
     }));
 

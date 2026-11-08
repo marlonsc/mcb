@@ -1,20 +1,61 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Phase 9 Roadmap: Integrated Context System (v0.4.0)
+
+<!-- TOC START -->
+
+- [Overview](#overview)
+- [Timeline](#timeline)
+- [Week 1: Context Architecture & Graph (Feb 17-23)](#week-1-context-architecture-graph-feb-17-23)
+  - [Goals](#goals)
+  - [ADR-041: Context Architecture](#adr-041-context-architecture)
+  - [ADR-042: Knowledge Graph](#adr-042-knowledge-graph)
+  - [Beads Issues](#beads-issues)
+- [Week 2: Hybrid Search & Versioning (Feb 24-Mar 2)](#week-2-hybrid-search-versioning-feb-24-mar-2)
+  - [Goals](#goals_1)
+  - [ADR-043: Hybrid Search](#adr-043-hybrid-search)
+  - [ADR-044: Model Selection](#adr-044-model-selection)
+  - [Beads Issues](#beads-issues_1)
+- [Week 3: Integration & Policies (Mar 3-9)](#week-3-integration-policies-mar-3-9)
+  - [Goals](#goals_2)
+  - [ADR-045: Context Versioning](#adr-045-context-versioning)
+  - [ADR-046: Integration Patterns](#adr-046-integration-patterns)
+  - [Beads Issues](#beads-issues_2)
+- [Week 4: Testing & Documentation (Mar 10-16)](#week-4-testing-documentation-mar-10-16)
+  - [Goals](#goals_3)
+  - [Testing](#testing)
+  - [Documentation](#documentation)
+  - [Release](#release)
+  - [Beads Issues](#beads-issues_3)
+- [Test Coverage](#test-coverage)
+  - [Unit Tests (50+)](#unit-tests-50)
+  - [Integration Tests (15+)](#integration-tests-15)
+  - [MCP Tools](#mcp-tools)
+  - [FSM Integration](#fsm-integration)
+  - [End-to-End Tests (5+)](#end-to-end-tests-5)
+  - [Workflows](#workflows)
+- [Success Criteria](#success-criteria)
+- [Related Documentation](#related-documentation)
+- [Next Steps](#next-steps)
+
+<!-- TOC END -->
 
 ## Overview
 
-**Phase 9** implements the Integrated Context System with knowledge graphs, freshness tracking, and time-travel queries. This is a 4-week execution plan (Feb 17 - Mar 16, 2026) with 70+ tests and 6 ADRs (ADR-041-046).
+**Phase 9** implements the Integrated Context System with knowledge graphs, freshness
+tracking, and time-travel queries. This is a 4-week execution plan (Feb 17 - Mar
+16, 2026) with 70+ tests and 6 ADRs (ADR-041-046).
 
 **Builds on**: Phase 8 (Workflow FSM, Freshness Policies, Compensation)
 
 ## Timeline
 
-| Week | Dates | Focus | Deliverables |
-| ------ | ------- | ------- | -------------- |
-| 1 | Feb 17-23 | Context Architecture & Graph | ADR-041, ADR-042, CodeGraph implementation |
-| 2 | Feb 24-Mar 2 | Hybrid Search & Versioning | ADR-043, ADR-044, HybridSearchEngine, ContextSnapshot |
-| 3 | Mar 3-9 | Integration & Policies | ADR-045, ADR-046, MCP tools, policy enforcement |
-| 4 | Mar 10-16 | Testing & Documentation | 70+ tests, docs, migration guide, release |
+| Week | Dates        | Focus                        | Deliverables                                          |
+| ---- | ------------ | ---------------------------- | ----------------------------------------------------- |
+| 1    | Feb 17-23    | Context Architecture & Graph | ADR-041, ADR-042, CodeGraph implementation            |
+| 2    | Feb 24-Mar 2 | Hybrid Search & Versioning   | ADR-043, ADR-044, HybridSearchEngine, ContextSnapshot |
+| 3    | Mar 3-9      | Integration & Policies       | ADR-045, ADR-046, MCP tools, policy enforcement       |
+| 4    | Mar 10-16    | Testing & Documentation      | 70+ tests, docs, migration guide, release             |
 
 ## Week 1: Context Architecture & Graph (Feb 17-23)
 
@@ -331,9 +372,11 @@ bd create "Release v0.4.0" -t task -p 1
 - **ADR-036**: Policies & Validation – Policy framework
 - **ADR-037**: Compensation & Orchestration – Rollback patterns
 - **ADR-041-046**: Phase 9 implementation details
-- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
+- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md)
+  – Feature overview
 - [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
-- [`docs/architecture/CLEAN_ARCHITECTURE.md`](../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
+- [`docs/architecture/CLEAN_ARCHITECTURE.md`](../architecture/CLEAN_ARCHITECTURE.md) –
+  Architecture patterns
 
 ## Next Steps
 

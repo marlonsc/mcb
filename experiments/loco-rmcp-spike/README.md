@@ -1,6 +1,7 @@
 # loco-rmcp-spike
 
-Throwaway spike that runs a Loco HTTP server and an rmcp stdio MCP server in the same Tokio runtime.
+Throwaway spike that runs a Loco HTTP server and an rmcp stdio MCP server in the same
+Tokio runtime.
 
 ## What this validates
 
@@ -29,13 +30,15 @@ MCP tool:
 1. `main()` builds Loco config and starts app in `StartMode::ServerOnly`.
 2. During boot, `after_routes()` clones `ctx.db` and `tokio::spawn`s MCP stdio server.
 3. Loco HTTP server runs in foreground; MCP server waits on stdio in background task.
-4. Shutdown currently follows Loco server lifecycle. MCP task is not explicitly joined; it stops when process exits.
+4. Shutdown currently follows Loco server lifecycle. MCP task is not explicitly joined;
+   it stops when process exits.
 
 ## Shutdown ordering (current spike behavior)
 
 - Primary shutdown driver is Loco's HTTP graceful shutdown.
 - MCP task is detached and exits when process exits or stdio closes.
-- For production integration, use a shared cancellation token + `JoinHandle` tracking to explicitly stop MCP before process exit.
+- For production integration, use a shared cancellation token + `JoinHandle` tracking to
+  explicitly stop MCP before process exit.
 
 ## Config merging approach
 
@@ -53,9 +56,11 @@ Recommended production approach:
 
 ## Important version caveat
 
-Loco `0.16.4` currently depends on SeaORM `1.1.x`. This spike therefore compiles with SeaORM `1.1.19` to keep the DB connection type shared across Loco and custom code.
+Loco `0.16.4` currently depends on SeaORM `1.1.x`. This spike therefore compiles with
+SeaORM `1.1.19` to keep the DB connection type shared across Loco and custom code.
 
 If your target branch requires SeaORM `=2.0.0-rc.34`, options are:
 
 1. Move to a Loco version that supports SeaORM 2.x.
-2. Keep this integration pattern but run the spike in an isolated crate/workspace and pin versions per executable.
+2. Keep this integration pattern but run the spike in an isolated crate/workspace and
+   pin versions per executable.

@@ -20,6 +20,8 @@ pub struct BrowseQuery {
 /// # Errors
 ///
 /// Fails when collection data cannot be loaded.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn browse_page(
     Extension(state): Extension<McbState>,
     Query(query): Query<BrowseQuery>,

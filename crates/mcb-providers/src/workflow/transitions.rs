@@ -7,7 +7,6 @@
 //! and side effects for the 8-state workflow model.
 
 use mcb_domain::entities::{TransitionTrigger, WorkflowSession, WorkflowState};
-use mcb_utils::constants::FALLBACK_UNKNOWN;
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -61,11 +60,17 @@ fn resolve_transition(state: &WorkflowState, trigger: &TransitionTrigger) -> Res
             Ok(resolve_executing_state(state, trigger))
         }
 
-        // Executing → Verifying
+        // Executing → Verifying (requires a declared phase)
         (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::StartVerification) => {
-            Ok(WorkflowState::Verifying {
-                phase_id: phase_id.clone(),
-            })
+            match phase_id {
+                Some(phase_id) => Ok(WorkflowState::Verifying {
+                    phase_id: phase_id.clone(),
+                }),
+                None => Err(
+                    "Invalid FSM transition: StartVerification requires a declared phase, but execution carries none"
+                        .to_owned(),
+                ),
+            }
         }
 
         _ => resolve_verification_transition(state, trigger),
@@ -91,10 +96,11 @@ fn resolve_verification_transition(
             TransitionTrigger::EndSession,
         ) => Ok(WorkflowState::Completed),
 
-        // Failed → Executing (recovery)
+        // Failed → Executing (recovery): phase-less until a phase-carrying
+        // trigger declares one (mcb-v8a6 — no fabricated identity).
         (WorkflowState::Failed { .. }, TransitionTrigger::Recover) => {
             Ok(WorkflowState::Executing {
-                phase_id: FALLBACK_UNKNOWN.to_owned(),
+                phase_id: None,
                 task_id: None,
             })
         }
@@ -130,16 +136,18 @@ fn is_executing_transition(state: &WorkflowState, trigger: &TransitionTrigger) -
 }
 
 /// Resolve the specific `Executing` variant based on the trigger.
+///
+/// The phase id is only ever a declared one: supplied by `StartExecution`,
+/// carried over from a phase-bearing state, or kept absent from a phase-less
+/// execution — never fabricated (mcb-v8a6).
 fn resolve_executing_state(state: &WorkflowState, trigger: &TransitionTrigger) -> WorkflowState {
     let phase_id = match (state, trigger) {
-        (_, TransitionTrigger::StartExecution { phase_id })
-        | (
-            WorkflowState::Executing { phase_id, .. }
-            | WorkflowState::Planning { phase_id }
-            | WorkflowState::Verifying { phase_id },
-            _,
-        ) => phase_id.clone(),
-        _ => FALLBACK_UNKNOWN.to_owned(),
+        (_, TransitionTrigger::StartExecution { phase_id }) => Some(phase_id.clone()),
+        (WorkflowState::Planning { phase_id } | WorkflowState::Verifying { phase_id }, _) => {
+            Some(phase_id.clone())
+        }
+        (WorkflowState::Executing { phase_id, .. }, _) => phase_id.clone(),
+        _ => None,
     };
 
     let task_id = if let TransitionTrigger::ClaimTask { task_id } = trigger {

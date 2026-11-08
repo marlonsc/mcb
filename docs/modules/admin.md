@@ -1,14 +1,28 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # admin Module
 
-**Source**: `crates/mcb-server/src/admin/`
-**Crate**: `mcb-server`
-**Files**: 22
+<!-- TOC START -->
+
+- [Overview](#overview)
+  - [Key Components](#key-components)
+  - [API and Lifecycle](#api-and-lifecycle)
+  - [Configuration and Registry](#configuration-and-registry)
+  - [Transport and Streaming](#transport-and-streaming)
+  - [Web Admin Surface](#web-admin-surface)
+- [File Structure](#file-structure)
+- [Cross-References](#cross-references)
+  - [Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)](#updated-2026-02-12-reflects-modular-crate-architecture-v021)
+
+<!-- TOC END -->
+
+**Source**: `crates/mcb-server/src/controllers/` **Crate**: `mcb-server` **Files**: 22
 **Lines of Code**: ~6,456
 
 ## Overview
 
-The admin module provides configuration, lifecycle, browse, and web admin surfaces for server operations.
+The admin module provides configuration, lifecycle, browse, and web admin surfaces for
+server operations.
 
 ### Key Components
 
@@ -45,7 +59,7 @@ The admin module provides configuration, lifecycle, browse, and web admin surfac
 ## File Structure
 
 ```text
-crates/mcb-server/src/admin/
+crates/mcb-server/src/controllers/
 ├── api.rs
 ├── auth.rs
 ├── browse_handlers.rs

@@ -20,7 +20,11 @@ def configure_logging(*, json_format: bool = False) -> None:
 
 
 def get_logger(name: str) -> p.Logger:
-    """Fetch a structured logger for the given module name."""
+    """Fetch a structured logger for the given module name.
+
+    Returns:
+        The resulting ``p.Logger``.
+    """
     return u.fetch_logger(name)
 
 

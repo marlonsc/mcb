@@ -1,0 +1,12 @@
+{
+  "name": "mise-npm-install",
+  "private": true,
+  "aube": {
+    "allowBuilds": {
+      "@ast-grep/cli": true
+    }
+  },
+  "dependencies": {
+    "@ast-grep/cli": "0.45.3"
+  }
+}

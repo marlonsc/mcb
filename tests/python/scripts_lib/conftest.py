@@ -14,30 +14,40 @@ import pytest
 from pydantic import create_model
 from structlog.testing import capture_logs
 
-from mcb_scripts.core import BaseMcbSettings
+from mcb_scripts.core import McbScriptsBaseSettings
 
-
-SettingsFactory = Callable[..., BaseMcbSettings]
+SettingsFactory = Callable[..., McbScriptsBaseSettings]
 """Factory that builds a fresh settings subclass instance per test."""
 
 
-@pytest.fixture(autouse=True)
-def reset_settings() -> Generator[None]:
-    """Reset the FLEXT settings singleton before and after every test."""
-    BaseMcbSettings.reset_for_testing()
-    yield
-    BaseMcbSettings.reset_for_testing()
+@pytest.fixture
+def reset_settings() -> Generator[Callable[[], None]]:
+    """Reset the FLEXT settings singleton before and after every test.
+
+    Yields:
+        Each ``Callable[[], None]``.
+    """
+
+    def _reset() -> None:
+        McbScriptsBaseSettings.reset_for_testing()
+
+    _reset()
+    yield _reset
+    _reset()
 
 
 @pytest.fixture
-def settings_factory() -> SettingsFactory:
+def settings_factory(reset_settings: Callable[[], None]) -> SettingsFactory:
     """Return a factory that creates a fresh settings subclass instance."""
 
-    def _make(**fields: object) -> BaseMcbSettings:
+    def _make(**fields: object) -> McbScriptsBaseSettings:
+        reset_settings()
         defs: dict[str, Any] = {
             name: (type(value), value) for name, value in fields.items()
         }
-        settings_cls = create_model("_Settings", __base__=BaseMcbSettings, **defs)
+        settings_cls = create_model(
+            "_Settings", __base__=McbScriptsBaseSettings, **defs,
+        )
         settings_cls.model_rebuild()
         return settings_cls.fetch_global()
 
@@ -46,7 +56,11 @@ def settings_factory() -> SettingsFactory:
 
 @pytest.fixture
 def temp_dir(tmp_path: Path) -> Path:
-    """Provide a temporary directory for the current test."""
+    """Provide a temporary directory for the current test.
+
+    Returns:
+        The resulting ``Path``.
+    """
     return tmp_path
 
 
@@ -65,6 +79,10 @@ def temp_file(temp_dir: Path) -> Callable[[str, str], Path]:
 
 @pytest.fixture
 def capture_logs_fixture() -> Generator[list[MutableMapping[str, Any]]]:
-    """Capture structlog emissions during a test."""
+    """Capture structlog emissions during a test.
+
+    Yields:
+        Each ``list[MutableMapping[str, Any]]``.
+    """
     with capture_logs() as logs:
         yield logs

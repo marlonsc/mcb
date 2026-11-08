@@ -266,18 +266,6 @@ run_or_echo() {
 }
 
 # =============================================================================
-# Metrics (source from extract-metrics.sh)
-# =============================================================================
-
-source_metrics() {
-    local metrics_script="$SCRIPT_DIR/extract-metrics.sh"
-    if [[ -x "$metrics_script" ]]; then
-        # shellcheck source=/dev/null
-        source <("$metrics_script" --env 2>/dev/null) || true
-    fi
-}
-
-# =============================================================================
 # Auto-initialize when sourced
 # =============================================================================
 

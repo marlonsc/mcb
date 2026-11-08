@@ -1,0 +1,46 @@
+# Org config layer for this governed checkout (last word on org data).
+#
+# Loaded by the installed generator AFTER the packaged fleet layers, through
+# the same typed SSOT — entries here must pass full model validation.
+# Why this file exists: mcb is a hybrid Rust + GitOps + Python-scripts
+# repository, so its root carries distribution and operations entries the
+# fleet-wide canonical lists do not name. Declaring them here keeps the
+# layout gate authoritative (every allowed entry is explicit) without
+# weakening the fleet rule set.
+Infra:
+  codegen:
+    layout:
+      project_overrides:
+        mcb-scripts:
+          keep_root_files:
+            # Agent/skill pointers (mirrors of AGENTS.md for other tools).
+            - CODEBUDDY.md
+            - QODER.md
+            - codex.md
+            # Repository engineering conventions.
+            - CONVENTIONS.md
+            - ONBOARDING.md
+            # Rust workspace: manifest, lockfile, toolchain and linter pins.
+            - Cargo.toml
+            - Cargo.lock
+            - rust-toolchain.toml
+            - rustfmt.toml
+            - clippy.toml
+            - deny.toml
+            - nextest.toml
+            - typos.toml
+            # Rust workspace sources and the mdBook user guide built from them.
+            - crates
+            - book.toml
+            # Operations surfaces: containers, GitOps delivery targets,
+            # monitoring stack, and scanner/release policies.
+            - Dockerfile
+            - k8s
+            - monitoring
+            - systemd
+            - osv-scanner.toml
+            # Local operator tooling entrypoints and scratch outputs.
+            - opencode.jsonc
+            - assets
+            - experiments
+            - reports

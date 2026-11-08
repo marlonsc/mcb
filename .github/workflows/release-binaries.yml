@@ -68,7 +68,7 @@ jobs:
 
       - uses: ./.github/actions/native-deps
 
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 # v1
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
@@ -154,32 +154,24 @@ jobs:
 
       - name: Generate changelog
         env:
-          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
+          RELEASE_TAG: ${{ steps.extract_version.outputs.version }}
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
 
-          # Extract version section from CHANGELOG.md (preferred)
+          # Release notes come from the curated CHANGELOG section only; a
+          # missing or empty section fails the workflow instead of degrading
+          # to a git log dump.
           if [ -f "docs/operations/CHANGELOG.md" ]; then
             sed -n "/^## \\[$VERSION\\]/,/^## \\[/p" docs/operations/CHANGELOG.md | sed '$d' > RELEASE_NOTES.md
           fi
 
-          # Fallback to git log if CHANGELOG section not found or empty
           if [ ! -s RELEASE_NOTES.md ]; then
-            PREV_TAG=$(
-              git tag --list 'v*' --sort=-version:refname |
-              grep -v "^${RELEASE_TAG}$" |
-              head -1
-            )
-            if [ -z "$PREV_TAG" ]; then
-              git log --oneline --reverse "$RELEASE_TAG" > RELEASE_NOTES.md
-            else
-              git log "$PREV_TAG..$RELEASE_TAG" --oneline > RELEASE_NOTES.md
-            fi
-            sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
+            echo "No CHANGELOG.md section found for version [$VERSION] - add the release section before tagging." >&2
+            exit 1
           fi
 
       - name: Create Release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ steps.extract_version.outputs.tag }}
           name: Release ${{ steps.extract_version.outputs.version }}
@@ -259,7 +251,7 @@ jobs:
           fi
       - uses: ./.github/actions/native-deps
         if: steps.check_token.outputs.skip != 'true'
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 # v1
         if: steps.check_token.outputs.skip != 'true'
         with:
           toolchain: stable

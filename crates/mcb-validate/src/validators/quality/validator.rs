@@ -5,7 +5,6 @@ use std::path::PathBuf;
 
 use super::violations::QualityViolation;
 use super::{comments, dead_code, metrics, panic, unwrap};
-use crate::thresholds::thresholds;
 use crate::{Result, ValidationConfig};
 
 /// Validator for code quality metrics and safety checks
@@ -26,9 +25,10 @@ impl QualityValidator {
     pub fn with_config(config: ValidationConfig) -> Self {
         // Load file configuration to get quality rules
         let file_config = crate::config::FileConfig::load(&config.workspace_root);
+        let max_file_lines = config.thresholds.max_file_lines;
         Self {
             config,
-            max_file_lines: thresholds().max_file_lines,
+            max_file_lines,
             excluded_paths: file_config.rules.quality.excluded_paths,
         }
     }

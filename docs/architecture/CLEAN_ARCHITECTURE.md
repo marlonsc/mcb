@@ -1,5 +1,12 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Clean Architecture in MCB
+
+<!-- TOC START -->
+
+- [Quick Reference](#quick-reference)
+
+<!-- TOC END -->
 
 > **SSOT**: The full architecture specification lives in
 > [ARCHITECTURE.md](./ARCHITECTURE.md). Implementation patterns are in
@@ -7,12 +14,12 @@
 
 ## Quick Reference
 
-| Topic | Document |
-| --- | --- |
-| Layer definitions (Domain → Server) | [ARCHITECTURE.md § Layers](./ARCHITECTURE.md#clean-architecture--dependency-injection) |
-| Dependency direction & crate graph | [ARCHITECTURE.md § Dependency Rules](./ARCHITECTURE.md#dependency-validation-rules) |
-| Port categories & trait locations | [ARCHITECTURE.md § Port Categories](./ARCHITECTURE.md#port-categories) |
-| Extension patterns (new providers) | [ARCHITECTURE.md § Extensibility](./ARCHITECTURE.md#extensibility---adding-new-providers) |
-| Two-layer DI (linkme → Handle) | [PATTERNS.md § Two-Layer DI](./PATTERNS.md#two-layer-di-linkme--handle-adr-050) |
-| Error factory pattern | [PATTERNS.md § Error Handling](./PATTERNS.md#error-handling) |
-| Boundary enforcement rules | [ARCHITECTURE_BOUNDARIES.md](./ARCHITECTURE_BOUNDARIES.md) |
+| Topic                               | Document                                                                                  |
+| ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| Layer definitions (Domain → Server) | [ARCHITECTURE.md § Layers](./ARCHITECTURE.md#clean-architecture--dependency-injection)    |
+| Dependency direction & crate graph  | [ARCHITECTURE.md § Dependency Rules](./ARCHITECTURE.md#dependency-validation-rules)       |
+| Port categories & trait locations   | [ARCHITECTURE.md § Port Categories](./ARCHITECTURE.md#port-categories)                    |
+| Extension patterns (new providers)  | [ARCHITECTURE.md § Extensibility](./ARCHITECTURE.md#extensibility---adding-new-providers) |
+| Two-layer DI (linkme → Handle)      | [PATTERNS.md § Two-Layer DI](./PATTERNS.md#two-layer-di-linkme--handle-adr-050)           |
+| Error factory pattern               | [PATTERNS.md § Error Handling](./PATTERNS.md#error-handling)                              |
+| Boundary enforcement rules          | [ARCHITECTURE_BOUNDARIES.md](./ARCHITECTURE_BOUNDARIES.md)                                |

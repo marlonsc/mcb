@@ -10,6 +10,8 @@ use loco_rs::prelude::*;
 /// # Errors
 ///
 /// Fails when health checks cannot be performed.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn health_page(Extension(state): Extension<McbState>) -> Result<Response> {
     let emb_ok = state.embedding_provider.health_check().await.is_ok();
     let vec_ok = state.vector_store.health_check().await.is_ok();

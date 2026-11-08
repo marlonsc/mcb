@@ -14,10 +14,6 @@ use serde_json::Value;
 
 use super::http_response::HttpResponseUtils;
 pub(crate) use mcb_utils::constants::http::{DEFAULT_HTTP_TIMEOUT, ERROR_MSG_REQUEST_TIMEOUT};
-use mcb_utils::utils::retry::retry_with_backoff;
-
-// Re-export so callers of `send_json_request` can build `JsonRequestParams.retry`.
-pub(crate) use mcb_utils::utils::retry::RetryConfig;
 
 #[derive(Debug, Clone, Copy)]
 /// Classification used to map HTTP request failures to domain errors.
@@ -199,20 +195,12 @@ pub(crate) struct JsonRequestParams<'a> {
     pub headers: &'a [(&'a str, String)],
     /// Optional JSON body.
     pub body: Option<&'a Value>,
-    /// Optional retry configuration for transient errors (rate limits, 5xx, timeouts).
-    pub retry: Option<RetryConfig>,
 }
 
-/// Check whether a domain error represents a transient HTTP failure worth retrying.
-fn is_retryable_error(error: &Error) -> bool {
-    let msg = error.to_string();
-    msg.contains("rate limit exceeded")
-        || msg.contains("server error (5")
-        || msg.contains("timed out")
-        || msg.contains("timeout")
-}
-
-/// Send a JSON request with configurable parameters and optional retry.
+/// Send a JSON request with configurable parameters.
+///
+/// No retry machinery: a failed request fails the operation visibly, and the
+/// operator decides whether to rerun.
 pub(crate) async fn send_json_request(
     params: JsonRequestParams<'_>,
 ) -> mcb_domain::error::Result<Value> {
@@ -226,32 +214,24 @@ pub(crate) async fn send_json_request(
         kind,
         headers,
         body,
-        retry,
     } = params;
 
-    let execute = || async {
-        let mut builder = client.request(method.clone(), &url).timeout(timeout);
+    let mut builder = client.request(method.clone(), &url).timeout(timeout);
 
-        for (key, value) in headers {
-            builder = builder.header(*key, value);
-        }
-
-        if let Some(payload) = body {
-            builder = builder.json(payload);
-        }
-
-        let response = builder
-            .send()
-            .await
-            .map_err(|e| handle_request_error_with_kind(&e, timeout, provider, operation, kind))?;
-
-        HttpResponseUtils::check_and_parse(response, provider).await
-    };
-
-    match retry {
-        None => execute().await,
-        Some(config) => retry_with_backoff(config, |_| execute(), is_retryable_error).await,
+    for (key, value) in headers {
+        builder = builder.header(*key, value);
     }
+
+    if let Some(payload) = body {
+        builder = builder.json(payload);
+    }
+
+    let response = builder
+        .send()
+        .await
+        .map_err(|e| handle_request_error_with_kind(&e, timeout, provider, operation, kind))?;
+
+    HttpResponseUtils::check_and_parse(response, provider).await
 }
 
 pub(crate) struct VectorDbRequestParams<'a> {
@@ -263,8 +243,6 @@ pub(crate) struct VectorDbRequestParams<'a> {
     pub operation: &'a str,
     pub headers: &'a [(&'a str, String)],
     pub body: Option<&'a Value>,
-    pub retry_attempts: usize,
-    pub retry_backoff_ms: u64,
 }
 
 pub(crate) async fn send_vector_db_request(
@@ -279,8 +257,6 @@ pub(crate) async fn send_vector_db_request(
         operation,
         headers,
         body,
-        retry_attempts,
-        retry_backoff_ms,
     } = params;
 
     send_json_request(JsonRequestParams {
@@ -293,10 +269,6 @@ pub(crate) async fn send_vector_db_request(
         kind: RequestErrorKind::VectorDb,
         headers,
         body,
-        retry: Some(RetryConfig::new(
-            retry_attempts,
-            Duration::from_millis(retry_backoff_ms),
-        )),
     })
     .await
 }

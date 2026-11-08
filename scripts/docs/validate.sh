@@ -247,8 +247,14 @@ validate_external_links() {
 			if check_executable curl; then
 				local status
 				status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$link" 2>/dev/null || echo "000")
-				if [[ "$status" =~ ^[45][0-9][0-9]$ ]]; then
-					log_warning "External link may be broken: $link (status: $status)"
+				if [[ "$status" == "000" ]]; then
+					# 000 = curl failed (missing feature/timeout/network): the
+					# link's health is UNKNOWN, which is a failure, not a pass.
+					log_error "External link could not be checked: $link (status: $status)"
+					inc_errors
+				elif [[ "$status" =~ ^[45][0-9][0-9]$ ]]; then
+					log_error "External link is broken: $link (status: $status)"
+					inc_errors
 				fi
 			fi
 		done
@@ -297,7 +303,7 @@ validate_doc_structure() {
 validate_permissions() {
 	log_info "Validating file permissions..."
 
-	local scripts=("generate-diagrams.sh" "validate.sh" "create-adr.sh" "mdbook-sync.sh" "markdown.sh" "extract-metrics.sh" "inject-metrics.sh" "generate-module-docs.sh")
+	local scripts=("generate-diagrams.sh" "validate.sh" "mdbook-sync.sh" "markdown.sh" "generate-module-docs.sh")
 
 	for script in "${scripts[@]}"; do
 		local script_path="$SCRIPT_DIR/$script"
@@ -360,7 +366,7 @@ run_structure_validation() {
 validate_outdated_content() {
 	log_info "Scanning for outdated content patterns..."
 	if check_executable python3; then
-		PYTHONPATH="$PROJECT_ROOT" python3 "$SCRIPT_DIR/py/check_outdated.py" --root "$PROJECT_ROOT" || true
+		PYTHONPATH="$PROJECT_ROOT" python3 "$SCRIPT_DIR/py/check_outdated.py" run --root "$PROJECT_ROOT"
 	fi
 }
 
@@ -378,7 +384,9 @@ run_link_validation() {
 	elif check_executable curl; then
 		validate_external_links
 	else
-		log_warning "curl not available - skipping external link validation"
+		# Law 14: a missing tool is RED, never a silent skip.
+		log_error "curl not available - external link validation cannot run"
+		inc_errors
 	fi
 
 	print_summary "Link Validation"
@@ -428,9 +436,8 @@ EXAMPLES:
     $0 adrs              # Quick ADR check
     $0 structure links   # Multiple specific checks
 
-MAKE TARGETS:
-    make build WHAT=docs ACT=check      # Runs this script with 'all'
-    make build WHAT=docs ACT=validate   # Runs this script with 'adrs'
+CANONICAL LIFECYCLE:
+    make docs                         # Generate, format, validate, and audit docs
 
 EOF
 }

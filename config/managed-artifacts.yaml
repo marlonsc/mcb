@@ -11,82 +11,50 @@
 # shipped library code. Its CLI entrypoints print to stdout, drive subprocesses,
 # and use `os.path`; the `sys.path` bootstrap they need forces module-level
 # imports to follow executable code.
+#
+# Why `Gitignore.patterns`: `.gitignore` is a generated projection and the
+# generator renders project-owned rules only from this surface (the
+# "Project ignore patterns" section). PR #178 merged 619 files of machine
+# config and session residue into develop as if they were source; PR #201
+# removed them and declared these rules as the barrier against a repeat.
 ManagedArtifacts:
-  Ruff:
-    per_file_ignores:
-      "scripts/**":
-        - ANN401
-        - ARG001
-        - D101
-        - D102
-        - D103
-        - D107
-        - D200
-        - D202
-        - D205
-        - D212
-        - EM101
-        - EM102
-        - EXE001
-        - FBT001
-        - FBT002
-        - FURB101
-        - FURB103
-        - FURB110
-        - FURB113
-        - G003
-        - N806
-        - N999
-        - PERF401
-        - PERF402
-        - PIE810
-        - PLC0207
-        - PLC2701
-        - PLR2004
-        - PLR6201
-        - PLW1514
-        - PTH100
-        - PTH110
-        - PTH118
-        - PTH120
-        - PTH123
-        - PTH201
-        - Q003
-        - RUF022
-        - RUF052
-        - RUF100
-        - RUF105
-        - S404
-        - S603
-        - S607
-        - T201
-        - TC006
-        - TID251
-        - TID252
-        - TRY400
-        - TRY401
-      # The `# /// cosmos-command` header is a DATA contract consumed by the
-      # command registry, not disabled code.
-      "scripts/check/gitops.py":
-        - ERA001
-      "src/mcb_scripts/qlty/runner.py":
-        # Runs the qlty CLI with a fixed argv; the executable is resolved to an
-        # absolute path first, so PATH order cannot select a different binary.
-        - S404
-        - S603
-      "src/mcb_scripts/gitops.py":
-        # Renders manifests through helm/kustomize, both resolved absolutely.
-        - S404
-        - S603
-      "src/mcb_scripts/agent_pointers.py":
-        - TRY003
-      # Tests drive the real CLIs and shell entrypoints on purpose: asserting
-      # observable behaviour is the contract, and a mocked subprocess would
-      # assert the mock instead of the program.
-      "tests/python/**":
-        - S404
-        - S603
-        - S607
-        - TRY003
-      "scripts/codegen-conversions.py":
-        - TRY003
+  Gitignore:
+    patterns:
+      # Recovery archive written by the archive-not-delete rule. It preserves
+      # superseded files so a removal stays reversible; it is never source, and
+      # versioning it would resurrect exactly what the removal took out.
+      - "/.archive/"
+      # Machine-local build/editor configuration. These encode one workstation
+      # (linker, job counts, cache sizes, editor state) and break every other
+      # environment when versioned. The leading slash anchors each rule to the
+      # repository root, so test fixtures that legitimately ship their own
+      # .cargo/ or editor files stay tracked.
+      - "/.cargo/"
+      - "/.vscode/"
+      - "/.waza.yaml"
+      - "/opencode.jsonc"
+      # Tool output. A report is produced by a gate, never authored; regenerate
+      # it with the owning make verb instead of committing a snapshot.
+      - "*.sarif"
+      - "*violations*.txt"
+      - "build_err.txt"
+      - "clippy_output.txt"
+      - "validate_output.txt"
+      - "test_003_warnings.txt"
+      - "staged_files.txt"
+      - "pr[0-9]*_comments.txt"
+      - "coverage/"
+      # Compiled and captured test artifacts.
+      - "*.rlib"
+      - "/data/vectors/"
+      - "/crates/mcb-providers/src/database/sqlite/test_file.txt"
+      # Captured runtime logs. tests/mcb.<date> is server stdout, not a test.
+      - "tests/mcb.[0-9]*"
+      # Agent and session scratch.
+      - "tmp_*.txt"
+      - ".beads.gate.lock"
+      # Parallel documentation tree. docs/ is the single documentation owner;
+      # context/ duplicated it and described dill and figment, both removed by
+      # ADR-050 and ADR-051.
+      - "/context/"
+      - "/.zcode/"

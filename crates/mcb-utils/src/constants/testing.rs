@@ -74,7 +74,12 @@ pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
 // ============================================================================
 
 /// Default timeout for integration/e2e tests (seconds).
-pub const TEST_TIMEOUT_SECS: u64 = 30;
+///
+/// Sized for a real indexing/search cycle under nextest's full parallel
+/// load, not for an idle machine: the golden e2e waits on a live index that
+/// competes with every other test binary. The nextest outer kill (60s x 3)
+/// still bounds a genuine hang.
+pub const TEST_TIMEOUT_SECS: u64 = 120;
 
 /// Startup timeout for MCP server integration tests (seconds).
 pub const TEST_STARTUP_TIMEOUT_SECS: u64 = 120;

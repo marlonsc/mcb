@@ -1,25 +1,134 @@
 # Project & Issue Management Module
 
-**Source**: `crates/mcb-domain/src/entities/project.rs` and `crates/mcb-domain/src/entities/issue.rs`
-**Crate**: `mcb-domain` / `mcb-server`
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Directory Structure (.mcp-project/)](#directory-structure-mcp-project)
+  - [Git Tracking](#git-tracking)
+- [2. Issue Data Model](#2-issue-data-model)
+  - [2.1 Core Issue Fields (SQLite issues Table)](#21-core-issue-fields-sqlite-issues-table)
+  - [2.2 Status Values](#22-status-values)
+  - [2.3 Issue Types](#23-issue-types)
+  - [2.4 Priority Levels](#24-priority-levels)
+- [3. Related Tables](#3-related-tables)
+  - [3.1 Labels Table](#31-labels-table)
+  - [3.2 Dependencies Table](#32-dependencies-table)
+  - [Dependency Types](#dependency-types)
+  - [Example](#example)
+  - [3.3 Comments Table](#33-comments-table)
+  - [3.4 Events Table](#34-events-table)
+  - [3.5 Configuration Table](#35-configuration-table)
+  - [3.6 Metadata Table](#36-metadata-table)
+  - [3.7 Dirty Issues Table](#37-dirty-issues-table)
+  - [3.8 Export Hashes Table](#38-export-hashes-table)
+  - [3.9 Issue Snapshots Table](#39-issue-snapshots-table)
+  - [3.10 Compaction Snapshots Table](#310-compaction-snapshots-table)
+  - [3.11 Repository MTimes Table](#311-repository-mtimes-table)
+- [4. Views](#4-views)
+  - [4.1 ready_issues View](#41-ready_issues-view)
+  - [4.2 blocked_issues View](#42-blocked_issues-view)
+- [5. JSONL Export Format](#5-jsonl-export-format)
+  - [5.1 File Structure](#51-file-structure)
+  - [5.2 JSONL Issue Record Example](#52-jsonl-issue-record-example)
+  - [5.3 JSONL Fields](#53-jsonl-fields)
+- [6. Configuration File (config.yaml)](#6-configuration-file-configyaml)
+- [7. Metadata Files](#7-metadata-files)
+  - [7.1 metadata.JSON](#71-metadatajson)
+  - [7.2 backup-state.JSON](#72-backup-statejson)
+- [8. Git Integration](#8-git-integration)
+  - [8.1 Sync Workflow](#81-sync-workflow)
+  - [8.2 Worktrees](#82-worktrees)
+  - [8.3 Hooks](#83-hooks)
+- [9. CLI Commands and Data Requirements](#9-cli-commands-and-data-requirements)
+  - [9.1 Create Issue](#91-create-issue)
+  - [Data Requirements](#data-requirements)
+  - [9.2 Update Issue](#92-update-issue)
+  - [Data Requirements (1)](#data-requirements-1)
+  - [9.3 List Issues](#93-list-issues)
+  - [Filter Options](#filter-options)
+  - [Output Options](#output-options)
+  - [9.4 Show Issue](#94-show-issue)
+  - [Options](#options)
+  - [9.5 Dependency Management](#95-dependency-management)
+  - [Data Requirements (2)](#data-requirements-2)
+  - [9.6 Close Issue](#96-close-issue)
+  - [Data Requirements (3)](#data-requirements-3)
+  - [9.7 Sync and Backup](#97-sync-and-backup)
+- [10. Indexes](#10-indexes)
+- [11. Storage Architecture](#11-storage-architecture)
+  - [11.1 Hybrid Storage Model](#111-hybrid-storage-model)
+  - [Dolt Shared-Server (Primary)](#dolt-shared-server-primary)
+  - [Backup / JSONL (Recovery And Interchange)](#backup-jsonl-recovery-and-interchange)
+  - [11.2 Sync Flow](#112-sync-flow)
+  - [11.3 Import Flow](#113-import-flow)
+- [12. Key Constraints and Rules](#12-key-constraints-and-rules)
+  - [12.1 Issue ID Format](#121-issue-id-format)
+  - [12.2 Status Transitions](#122-status-transitions)
+  - [12.3 Dependency Constraints](#123-dependency-constraints)
+  - [12.4 Closed Issue Constraint](#124-closed-issue-constraint)
+- [13. Migration Considerations for Relational Database](#13-migration-considerations-for-relational-database)
+  - [13.1 Key Tables to Create](#131-key-tables-to-create)
+  - [13.2 Relationships](#132-relationships)
+  - [13.3 Data Types](#133-data-types)
+  - [13.4 Indexes to Maintain](#134-indexes-to-maintain)
+- [14. Example Queries](#14-example-queries)
+  - [14.1 Find Ready Issues](#141-find-ready-issues)
+  - [14.2 Find Blocked Issues](#142-find-blocked-issues)
+  - [14.3 Find Issues by Label](#143-find-issues-by-label)
+  - [14.4 Find Dependency Chain](#144-find-dependency-chain)
+  - [14.5 Find Overdue Issues](#145-find-overdue-issues)
+- [15. Performance Characteristics](#15-performance-characteristics)
+  - [15.1 Typical Query Times](#151-typical-query-times)
+  - [15.2 Database Size](#152-database-size)
+  - [15.3 Sync Performance](#153-sync-performance)
+- [16. Security Considerations](#16-security-considerations)
+  - [16.1 File Permissions](#161-file-permissions)
+  - [16.2 Sensitive Data](#162-sensitive-data)
+  - [16.3 Access Control](#163-access-control)
+- [17. Daemon Architecture](#17-daemon-architecture)
+  - [17.1 Daemon Files](#171-daemon-files)
+  - [17.2 Daemon Functions](#172-daemon-functions)
+  - [17.3 Dolt Modes](#173-dolt-modes)
+- [18. Advanced Features](#18-advanced-features)
+  - [18.1 Compaction](#181-compaction)
+  - [18.2 Federation](#182-federation)
+  - [18.3 Molecules](#183-molecules)
+  - [18.4 Gates](#184-gates)
+  - [18.5 Templates](#185-templates)
+- [19. Troubleshooting](#19-troubleshooting)
+  - [19.1 Common Issues](#191-common-issues)
+  - [Database locked](#database-locked)
+  - [Sync conflicts](#sync-conflicts)
+  - [Stale data](#stale-data)
+  - [Corrupted database](#corrupted-database)
+  - [19.2 Diagnostic Commands](#192-diagnostic-commands)
+- [20. References](#20-references)
+
+<!-- TOC END -->
+
+**Source**: `crates/mcb-domain/src/entities/project.rs` and
+`crates/mcb-domain/src/entities/issue.rs` **Crate**: `mcb-domain` / `mcb-server`
 
 ## ↔ Code ↔ Docs cross-reference
 
-|Direction|Link|
-|---------|----|
-|Entity (Project)|[`crates/mcb-domain/src/entities/project.rs`](../../crates/mcb-domain/src/entities/project.rs)|
-|Entity (Issue)|[`crates/mcb-domain/src/entities/issue.rs`](../../crates/mcb-domain/src/entities/issue.rs)|
-|Repository (Project)|[`crates/mcb-providers/src/database/sqlite/project_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs)|
-|Repository (Issue)|[`crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs)|
-|ADR|[`ADR-047`](../adr/047-project-architecture.md)|
-|CLI Guide|[`project-cli.md`](./project-cli.md)|
+| Direction            | Link                                                                                                                                    |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity (Project)     | [`crates/mcb-domain/src/entities/project.rs`](../../crates/mcb-domain/src/entities/project.rs)                                          |
+| Entity (Issue)       | [`crates/mcb-domain/src/entities/issue.rs`](../../crates/mcb-domain/src/entities/issue.rs)                                              |
+| Repository (Project) | [`crates/mcb-providers/src/database/seaorm/repos/project.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs)          |
+| Repository (Issue)   | [`crates/mcb-providers/src/database/seaorm/repos/entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs) |
+| ADR                  | [`ADR-047`](../adr/047-project-architecture.md)                                                                                         |
+| CLI Guide            | [`project-cli.md`](./project-cli.md)                                                                                                    |
 
 ## Overview
 
-MCB implements an AI-native issue tracking and project coordination system (internally known as **Beads**). This module
-documents MCB's internal project/issue domain and historical storage contracts. The repository's active agent
-coordination uses the external `bd` CLI (`bd` 1.0.5) with Dolt shared-server mode; `.beads/issues.jsonl` is an
-export/import artifact, not the live source of truth. Use `AGENTS.md` for the operational `bd` protocol.
+MCB implements an AI-native issue tracking and project coordination system (internally
+known as **Beads**). This module documents MCB's internal project/issue domain and
+historical storage contracts. The repository's active agent coordination uses the
+external `bd` CLI (`bd` 1.0.5) with Dolt shared-server mode; `.beads/issues.jsonl` is an
+export/import artifact, not the live source of truth. Use `AGENTS.md` for the
+operational `bd` protocol.
 
 ---
 
@@ -40,7 +149,8 @@ export/import artifact, not the live source of truth. Use `AGENTS.md` for the op
 
 ### Git Tracking
 
-- **Tracked**: `issues.jsonl`, `interactions.jsonl`, `config.yaml`, `README.md`, `.gitignore`
+- **Tracked**: `issues.jsonl`, `interactions.jsonl`, `config.yaml`, `README.md`,
+  `.gitignore`
 - **Ignored**: `*.db*`, `daemon.*`, `bd.sock`, `export-state/`, `.sync.lock`
 
 ---
@@ -49,63 +159,63 @@ export/import artifact, not the live source of truth. Use `AGENTS.md` for the op
 
 ### 2.1 Core Issue Fields (SQLite `issues` Table)
 
-|Field|Type|Constraints|Description|
-|-------|------|-------------|-------------|
-|`id`|TEXT|PRIMARY KEY|Issue ID (e.g., `mcb-123`, `bd-xyz`)|
-|`content_hash`|TEXT||Hash of issue content for change detection|
-|`title`|TEXT|NOT NULL, ≤500 chars|Issue title|
-|`description`|TEXT|DEFAULT ''|Full description|
-|`design`|TEXT|DEFAULT ''|Design notes/specification|
-|`acceptance_criteria`|TEXT|DEFAULT ''|Acceptance criteria|
-|`notes`|TEXT|DEFAULT ''|Additional notes|
-|`status`|TEXT|DEFAULT 'open'|Status (see 2.2)|
-|`priority`|INTEGER|0-4, DEFAULT 2|Priority level (0=critical, 4=backlog)|
-|`issue_type`|TEXT|DEFAULT 'task'|Type (see 2.3)|
-|`assignee`|TEXT||Assigned person|
-|`estimated_minutes`|INTEGER||Time estimate|
-|`created_at`|DATETIME|NOT NULL|Creation timestamp|
-|`created_by`|TEXT|DEFAULT ''|Creator name|
-|`owner`|TEXT|DEFAULT ''|Owner email/identifier|
-|`updated_at`|DATETIME|NOT NULL|Last update timestamp|
-|`closed_at`|DATETIME||Closure timestamp (NULL if open)|
-|`closed_by_session`|TEXT|DEFAULT ''|Session ID that closed it|
-|`close_reason`|TEXT|DEFAULT ''|Reason for closure|
-|`external_ref`|TEXT|UNIQUE|External reference (e.g., `gh-123`, `jira-ABC`)|
-|`compaction_level`|INTEGER|DEFAULT 0|Compaction level for history|
-|`compacted_at`|DATETIME||Compaction timestamp|
-|`compacted_at_commit`|TEXT||Git commit of compaction|
-|`original_size`|INTEGER||Original size before compaction|
-|`deleted_at`|DATETIME||Deletion timestamp|
-|`deleted_by`|TEXT|DEFAULT ''|Who deleted it|
-|`delete_reason`|TEXT|DEFAULT ''|Reason for deletion|
-|`original_type`|TEXT|DEFAULT ''|Original type before change|
-|`sender`|TEXT|DEFAULT ''|Sender (for messages)|
-|`ephemeral`|INTEGER|DEFAULT 0|1 if ephemeral (not exported)|
-|`pinned`|INTEGER|DEFAULT 0|1 if pinned|
-|`is_template`|INTEGER|DEFAULT 0|1 if template molecule|
-|`crystallizes`|INTEGER|DEFAULT 0|1 if crystallizes work|
-|`mol_type`|TEXT|DEFAULT ''|Molecule type (swarm, patrol, work)|
-|`work_type`|TEXT|DEFAULT 'Mutex'|Work type (Mutex, open_competition)|
-|`quality_score`|REAL|0.0-1.0|Quality score (set by refineries)|
-|`source_system`|TEXT|DEFAULT ''|Federation source system|
-|`event_kind`|TEXT|DEFAULT ''|Event kind (for event issues)|
-|`actor`|TEXT|DEFAULT ''|Actor URI (for events)|
-|`target`|TEXT|DEFAULT ''|Target URI (for events)|
-|`payload`|TEXT|DEFAULT ''|Event payload (JSON)|
-|`source_repo`|TEXT|DEFAULT '.'|Source repository|
-|`await_type`|TEXT||Await type (gate coordination)|
-|`await_id`|TEXT||Await ID (gate coordination)|
-|`timeout_ns`|INTEGER||Timeout in nanoseconds|
-|`waiters`|TEXT||Waiters list (JSON)|
-|`hook_bead`|TEXT|DEFAULT ''|Hook bead ID|
-|`role_bead`|TEXT|DEFAULT ''|Role bead ID|
-|`agent_state`|TEXT|DEFAULT ''|Agent state (JSON)|
-|`last_activity`|DATETIME||Last activity timestamp|
-|`role_type`|TEXT|DEFAULT ''|Role type|
-|`rig`|TEXT|DEFAULT ''|Rig name (partition)|
-|`due_at`|DATETIME||Due date/time|
-|`defer_until`|DATETIME||Defer until date/time|
-|`metadata`|TEXT|DEFAULT '{}'|Custom metadata (JSON)|
+| Field                 | Type     | Constraints          | Description                                     |
+| --------------------- | -------- | -------------------- | ----------------------------------------------- |
+| `id`                  | TEXT     | PRIMARY KEY          | Issue ID (e.g., `mcb-123`, `bd-xyz`)            |
+| `content_hash`        | TEXT     |                      | Hash of issue content for change detection      |
+| `title`               | TEXT     | NOT NULL, ≤500 chars | Issue title                                     |
+| `description`         | TEXT     | DEFAULT ''           | Full description                                |
+| `design`              | TEXT     | DEFAULT ''           | Design notes/specification                      |
+| `acceptance_criteria` | TEXT     | DEFAULT ''           | Acceptance criteria                             |
+| `notes`               | TEXT     | DEFAULT ''           | Additional notes                                |
+| `status`              | TEXT     | DEFAULT 'open'       | Status (see 2.2)                                |
+| `priority`            | INTEGER  | 0-4, DEFAULT 2       | Priority level (0=critical, 4=backlog)          |
+| `issue_type`          | TEXT     | DEFAULT 'task'       | Type (see 2.3)                                  |
+| `assignee`            | TEXT     |                      | Assigned person                                 |
+| `estimated_minutes`   | INTEGER  |                      | Time estimate                                   |
+| `created_at`          | DATETIME | NOT NULL             | Creation timestamp                              |
+| `created_by`          | TEXT     | DEFAULT ''           | Creator name                                    |
+| `owner`               | TEXT     | DEFAULT ''           | Owner email/identifier                          |
+| `updated_at`          | DATETIME | NOT NULL             | Last update timestamp                           |
+| `closed_at`           | DATETIME |                      | Closure timestamp (NULL if open)                |
+| `closed_by_session`   | TEXT     | DEFAULT ''           | Session ID that closed it                       |
+| `close_reason`        | TEXT     | DEFAULT ''           | Reason for closure                              |
+| `external_ref`        | TEXT     | UNIQUE               | External reference (e.g., `gh-123`, `jira-ABC`) |
+| `compaction_level`    | INTEGER  | DEFAULT 0            | Compaction level for history                    |
+| `compacted_at`        | DATETIME |                      | Compaction timestamp                            |
+| `compacted_at_commit` | TEXT     |                      | Git commit of compaction                        |
+| `original_size`       | INTEGER  |                      | Original size before compaction                 |
+| `deleted_at`          | DATETIME |                      | Deletion timestamp                              |
+| `deleted_by`          | TEXT     | DEFAULT ''           | Who deleted it                                  |
+| `delete_reason`       | TEXT     | DEFAULT ''           | Reason for deletion                             |
+| `original_type`       | TEXT     | DEFAULT ''           | Original type before change                     |
+| `sender`              | TEXT     | DEFAULT ''           | Sender (for messages)                           |
+| `ephemeral`           | INTEGER  | DEFAULT 0            | 1 if ephemeral (not exported)                   |
+| `pinned`              | INTEGER  | DEFAULT 0            | 1 if pinned                                     |
+| `is_template`         | INTEGER  | DEFAULT 0            | 1 if template molecule                          |
+| `crystallizes`        | INTEGER  | DEFAULT 0            | 1 if crystallizes work                          |
+| `mol_type`            | TEXT     | DEFAULT ''           | Molecule type (swarm, patrol, work)             |
+| `work_type`           | TEXT     | DEFAULT 'Mutex'      | Work type (Mutex, open_competition)             |
+| `quality_score`       | REAL     | 0.0-1.0              | Quality score (set by refineries)               |
+| `source_system`       | TEXT     | DEFAULT ''           | Federation source system                        |
+| `event_kind`          | TEXT     | DEFAULT ''           | Event kind (for event issues)                   |
+| `actor`               | TEXT     | DEFAULT ''           | Actor URI (for events)                          |
+| `target`              | TEXT     | DEFAULT ''           | Target URI (for events)                         |
+| `payload`             | TEXT     | DEFAULT ''           | Event payload (JSON)                            |
+| `source_repo`         | TEXT     | DEFAULT '.'          | Source repository                               |
+| `await_type`          | TEXT     |                      | Await type (gate coordination)                  |
+| `await_id`            | TEXT     |                      | Await ID (gate coordination)                    |
+| `timeout_ns`          | INTEGER  |                      | Timeout in nanoseconds                          |
+| `waiters`             | TEXT     |                      | Waiters list (JSON)                             |
+| `hook_bead`           | TEXT     | DEFAULT ''           | Hook bead ID                                    |
+| `role_bead`           | TEXT     | DEFAULT ''           | Role bead ID                                    |
+| `agent_state`         | TEXT     | DEFAULT ''           | Agent state (JSON)                              |
+| `last_activity`       | DATETIME |                      | Last activity timestamp                         |
+| `role_type`           | TEXT     | DEFAULT ''           | Role type                                       |
+| `rig`                 | TEXT     | DEFAULT ''           | Rig name (partition)                            |
+| `due_at`              | DATETIME |                      | Due date/time                                   |
+| `defer_until`         | DATETIME |                      | Defer until date/time                           |
+| `metadata`            | TEXT     | DEFAULT '{}'         | Custom metadata (JSON)                          |
 
 ### 2.2 Status Values
 
@@ -155,8 +265,8 @@ CREATE TABLE labels (
 );
 ```
 
-**Purpose**: Many-to-many relationship for issue labels
-**Example**: `mcb-123` → `["phase-6", "memory", "v0.2.0"]`
+**Purpose**: Many-to-many relationship for issue labels **Example**: `mcb-123` →
+`["phase-6", "memory", "v0.2.0"]`
 
 ### 3.2 Dependencies Table
 
@@ -386,15 +496,17 @@ CREATE VIEW blocked_issues AS
 
 - One JSON object per line (JSONL format)
 - Each line is a complete issue record
-- Legacy/interchange export. Current repo coordination sync uses Dolt (`bd dolt push`/`pull`) and backups use
-  `bd backup`; do not hand-edit or publish JSONL as the active database.
+- Legacy/interchange export. Current repo coordination sync uses Dolt
+  (`bd dolt push`/`pull`) and backups use `bd backup`; do not hand-edit or publish JSONL
+  as the active database.
 
 ### 5.2 JSONL Issue Record Example
 
 ```json
 {
   "id": "mcb-7xi",
-  "title": "MEM-04a: Implement memory (action=list, resource=observation) tool (token-efficient index)",
+  "title": "MEM-04a: Implement memory (action=list, resource=observation) tool
+  (token-efficient index)",
   "status": "closed",
   "priority": 2,
   "issue_type": "task",
@@ -433,7 +545,6 @@ CREATE VIEW blocked_issues AS
 ## 6. Configuration File (config.yaml)
 
 ```yaml
-
 # Issue prefix for this repository
 
 # issue-prefix: "mcb"
@@ -446,7 +557,6 @@ dolt:
   user: root
   database: mcb
   auto-commit: off
-
 # no-auto-import: false
 
 # Enable JSON output by default
@@ -509,17 +619,20 @@ dolt:
 1. **Full backup**:
 
 - `bd backup init <path-or-url>` configures a full Dolt backup.
-- `bd backup sync` preserves branches, commit history, working sets, and non-issue tables.
+- `bd backup sync` preserves branches, commit history, working sets, and non-issue
+  tables.
 - `bd backup restore --force <path>` restores after a safe reinitialization.
 
 1. **JSONL export/import**:
 
 - `bd export`/`bd import` are migration and interoperability tools only.
-- Do not edit `.beads/issues.jsonl` manually and do not use `bd export -o` as a normal sync path.
+- Do not edit `.beads/issues.jsonl` manually and do not use `bd export -o` as a normal
+  sync path.
 
 ### 8.2 Worktrees
 
-- Beads uses Dolt shared-server plus `bd backup` / `bd dolt` for durable coordination state.
+- Beads uses Dolt shared-server plus `bd backup` / `bd dolt` for durable coordination
+  state.
 - Git worktrees are not the sync source of truth for the live queue.
 - Parallel agents coordinate through bead claims, dependencies, and reports.
 
@@ -527,7 +640,8 @@ dolt:
 
 - Git hooks are installed with `bd hooks install --chain`.
 - Verify hook state with `bd hooks list --json`.
-- `prepare-commit-msg` must be guarded so agent trailers run only with explicit `BD_ALLOW_AGENT_COMMIT_TRAILERS=1`.
+- `prepare-commit-msg` must be guarded so agent trailers run only with explicit
+  `BD_ALLOW_AGENT_COMMIT_TRAILERS=1`.
 
 ---
 
@@ -566,7 +680,7 @@ bd create "Title" [flags]
 ### 9.2 Update Issue
 
 ```bash
-bd update <id> [flags]
+bd update < id > [flags]
 ```
 
 ### Data Requirements (1)
@@ -617,14 +731,15 @@ bd list [flags]
 - `--json` - JSON output
 - `--long` - Detailed output
 - `--pretty` / `--tree` - Tree format
-- `--sort` - Sort by field (priority, created, updated, closed, status, id, title, type, assignee)
+- `--sort` - Sort by field (priority, created, updated, closed, status, id, title, type,
+  assignee)
 - `--limit` / `-n` - Limit results (default: 50)
 - `--reverse` / `-r` - Reverse sort order
 
 ### 9.4 Show Issue
 
 ```bash
-bd show <id> [flags]
+bd show < id > [flags]
 ```
 
 ### Options
@@ -652,12 +767,13 @@ bd dep <blocker> --blocks <blocked>
 
 - `issue` - The dependent issue
 - `depends-on` - The issue it depends on
-- `--type` - Dependency type (blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for)
+- `--type` - Dependency type (blocks, discovered-from, parent-child, relates-to,
+  duplicate-of, superseded-by, waits-for)
 
 ### 9.6 Close Issue
 
 ```bash
-bd close <id> [flags]
+bd close < id > [flags]
 ```
 
 ### Data Requirements (3)
@@ -674,7 +790,8 @@ bd backup sync
 bd backup status --json
 ```
 
-Use `bd dolt push`/`pull` only when a Dolt remote is configured. Use `bd backup sync` for full database backup.
+Use `bd dolt push`/`pull` only when a Dolt remote is configured. Use `bd backup sync`
+for full database backup.
 
 ---
 
@@ -807,7 +924,8 @@ issues (1) ──→ (many) issue_snapshots
 
 - **Timestamps**: Use DATETIME or TIMESTAMP with timezone support
 - **JSON fields**: Store as TEXT (metadata, payload, agent_state, waiters)
-- **Enums**: Store as TEXT (status, issue_type, priority, mol_type, work_type, event_kind, await_type)
+- **Enums**: Store as TEXT (status, issue_type, priority, mol_type, work_type,
+  event_kind, await_type)
 - **Booleans**: Store as INTEGER (0/1) for SQLite compatibility
 
 ### 13.4 Indexes to Maintain
@@ -934,11 +1052,12 @@ ORDER BY due_at ASC;
 
 ### 17.3 Dolt Modes
 
-- **Shared-server mode**: one Dolt SQL server under `~/.beads/shared-server/` serves multiple repos, each isolated by
-  database name.
+- **Shared-server mode**: one Dolt SQL server under `~/.beads/shared-server/` serves
+  multiple repos, each isolated by database name.
 - **Server mode**: repo connects to an externally managed Dolt SQL server.
 - **Embedded mode**: single-writer in-process Dolt for solo use.
-- **Legacy SQLite/no-db modes**: historical only; do not use for current multi-agent coordination.
+- **Legacy SQLite/no-db modes**: historical only; do not use for current multi-agent
+  coordination.
 
 ---
 
@@ -959,7 +1078,7 @@ ORDER BY due_at ASC;
 
 ### 18.3 Molecules
 
-- Swarms: Multi-polecat coordination
+- Swarms: Multi-agent (pool/session) coordination
 - Patrols: Recurring operations
 - Work: Standard work items
 
@@ -984,8 +1103,10 @@ ORDER BY due_at ASC;
 ### Database locked
 
 - Confirm the repo is using shared-server with `bd dolt show`.
-- Check the active database and issue count with `bd context --json` and `bd status --json`.
-- Freeze writers, preserve `.beads/`, and recover with `bd backup restore` or `bd bootstrap` after a dry run.
+- Check the active database and issue count with `bd context --json` and
+  `bd status --json`.
+- Freeze writers, preserve `.beads/`, and recover with `bd backup restore` or
+  `bd bootstrap` after a dry run.
 
 ### Sync conflicts
 
@@ -995,8 +1116,10 @@ ORDER BY due_at ASC;
 
 ### Stale data
 
-- Run `bd dolt pull` when a remote is configured, or `bd backup restore` from a known-good full backup.
-- Use `bd status --json` and `bd dep cycles --json` to validate graph health after recovery.
+- Run `bd dolt pull` when a remote is configured, or `bd backup restore` from a
+  known-good full backup.
+- Use `bd status --json` and `bd dep cycles --json` to validate graph health after
+  recovery.
 
 ### Corrupted database
 
@@ -1006,17 +1129,19 @@ ORDER BY due_at ASC;
 ### 19.2 Diagnostic Commands
 
 ```bash
-bd doctor              # Check installation health
-bd info               # Show database and daemon info
-bd status             # Show statistics
-bd preflight          # PR readiness checklist
+bd doctor    # Check installation health
+bd info      # Show database and daemon info
+bd status    # Show statistics
+bd preflight # PR readiness checklist
 ```
 
 ---
 
 ## 20. References
 
-- **Official Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
-- **Documentation**: [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
+- **Official Repository**:
+  [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
+- **Documentation**:
+  [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
 - **Quick Start**: Run `bd quickstart`
 - **Help**: Run `bd <command> --help`

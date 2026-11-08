@@ -1,14 +1,32 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Tier 1: Unit Tests](#tier-1-unit-tests)
+  - [Tier 2: Integration Tests](#tier-2-integration-tests)
+  - [Tier 3: Property-Based Tests](#tier-3-property-based-tests)
+- [v0.1.1 Test Organization](#v011-test-organization)
+- [Test Migration Plan](#test-migration-plan)
+  - [v0.2.0 (Structure)](#v020-structure)
+  - [v0.3.0 (Migration)](#v030-migration)
+  - [v0.4.0 (Extended)](#v040-extended)
+  - [v1.0.0 (Complete)](#v100-complete)
+- [Consequences](#consequences)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 20
-title: Testing Strategy for Integrated Code
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [12, 13, 17]
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 20 title: Testing Strategy for Integrated Code status: ACCEPTED created: updated:
+2026-02-05 related: [12, 13, 17] supersedes: [] superseded_by: [] implementation_status:
+Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,10 +35,10 @@ implementation_status: Complete
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Accepted** (v0.2.0 - Structure, v0.3.0 - Migration)
-**Date**: 2026-01-14
+**Accepted** (v0.2.0 - Structure, v0.3.0 - Migration) **Date**: 2026-01-14
 
 ## Context
 
@@ -157,9 +175,12 @@ Mitigation:
 
 ## Related ADRs
 
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Test container setup
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Test location per crate
-- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Test migration timeline
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Test
+  container setup
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Test location per crate
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Test
+  migration timeline
 
 ---
 

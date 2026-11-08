@@ -129,7 +129,10 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
-        MemoryHandler::new(state.mcp_server.memory_service()),
+        MemoryHandler::new(
+            state.mcp_server.memory_service(),
+            mcb_utils::utils::vcs_context::capture_vcs_context(),
+        ),
         temp_dir,
     ))
 }

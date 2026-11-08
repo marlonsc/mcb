@@ -10,31 +10,27 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-
 from flext_cli import cli
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
-from mcb_scripts.settings import McbSettings
-from pydantic import Field
 
+from flext_core import m, p
+from mcb_scripts.core import McbScriptsBaseSettings, get_logger, r
 from mcb_scripts.docs import utils
+from mcb_scripts.settings import McbScriptsSettings
 
 logger = get_logger(__name__)
 
 
-class CheckLinksSettings(BaseMcbSettings):
+class CheckLinksSettings(McbScriptsBaseSettings):
     """Settings for the broken-link documentation check."""
 
-    root: Path = Field(default=Path(), description="Project root directory")
-
-
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-CheckLinksSettings.model_rebuild()
+    root: Path = m.Field(default=Path(), description="Project root directory")
 
 
 def _process_links(
-    links: list[tuple[str, str]], filepath: str, rel_filepath: str, project_root: Path
+    links: list[tuple[str, str]],
+    filepath: str,
+    rel_filepath: str,
+    project_root: Path,
 ) -> tuple[list[tuple[str, str, str, str]], int]:
     broken_in_file: list[tuple[str, str, str, str]] = []
     checked_in_file = 0
@@ -61,11 +57,13 @@ def _process_links(
 
 
 def _check_files(
-    docs_dir: str, project_root: Path
-) -> tuple[list[tuple[str, str, str, str]], int, int]:
+    docs_dir: str,
+    project_root: Path,
+) -> tuple[list[tuple[str, str, str, str]], int, int, list[str]]:
     broken: list[tuple[str, str, str, str]] = []
     checked_files = 0
     checked_links = 0
+    unreadable: list[str] = []
 
     md_files = utils.find_md_files(docs_dir)
 
@@ -75,40 +73,56 @@ def _check_files(
 
         try:
             content = Path(filepath).read_text(encoding="utf-8")
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Error reading {rel_filepath}: {e}")
+        except OSError as e:
+            # An unreadable doc must fail the check, never vanish from it.
+            unreadable.append(f"{rel_filepath}: {e}")
             continue
 
         links = utils.extract_links(content)
         file_broken, file_links = _process_links(
-            links, filepath, rel_filepath, project_root
+            links,
+            filepath,
+            rel_filepath,
+            project_root,
         )
 
         broken.extend(file_broken)
         checked_links += file_links
 
-    return broken, checked_files, checked_links
+    return broken, checked_files, checked_links, unreadable
 
 
-def run(settings: CheckLinksSettings) -> r[int]:
-    """Check broken internal links in documentation."""
+def run(settings: CheckLinksSettings) -> p.Result[int]:
+    """Check broken internal links in documentation.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+    """
     project_root = Path(settings.root).resolve()
     if settings.root == Path():
         project_root = utils.get_project_root()
 
-    docs_dir = os.path.join(project_root, str(McbSettings().docs_dir))
+    docs_dir = os.path.join(project_root, str(McbScriptsSettings().docs_dir))
 
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
-    broken, checked_files, checked_links = _check_files(docs_dir, project_root)
+    broken, checked_files, checked_links, unreadable = _check_files(
+        docs_dir,
+        project_root,
+    )
 
-    logger.info(f"Checked {checked_files} files, {checked_links} internal links.")
+    logger.info("Checked %s files, %s internal links.", checked_files, checked_links)
+
+    if unreadable:
+        for entry in sorted(unreadable):
+            logger.error("Unreadable documentation file: %s", entry)
+        return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if broken:
-        logger.info(f"Found {len(broken)} broken internal links:")
+        logger.info("Found %s broken internal links:", len(broken))
         for fp, text, link, target in sorted(broken):
-            logger.info(f"  {fp}: [{text}]({link}) -> {target} (missing)")
+            logger.info("  %s: [%s](%s) -> %s (missing)", fp, text, link, target)
         return r[int].fail(f"{len(broken)} broken internal link(s) found")
 
     logger.info("No broken internal links found.")
@@ -117,7 +131,8 @@ def run(settings: CheckLinksSettings) -> r[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-links", help_text="Check broken internal links in docs."
+        name="check-links",
+        help_text="Check broken internal links in docs.",
     )
     cli.register_result_command(
         app,
@@ -126,9 +141,7 @@ def main() -> None:
         model_cls=CheckLinksSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-links")
-    if result.failure:
-        raise SystemExit(1)
+    cli.finalize_result(cli.execute_app(app, prog_name="check-links"))
 
 
 if __name__ == "__main__":

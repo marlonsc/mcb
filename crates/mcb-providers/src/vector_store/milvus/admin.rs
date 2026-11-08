@@ -5,12 +5,10 @@ use mcb_domain::ports::VectorStoreAdmin;
 use mcb_domain::value_objects::CollectionId;
 use std::collections::HashMap;
 
-use mcb_utils::constants::http::{PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use mcb_utils::constants::vector_store::{
     MILVUS_ERROR_RATE_LIMIT, STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS,
     STATS_FIELD_VECTORS_COUNT, STATUS_ACTIVE,
 };
-use mcb_utils::utils::retry::{RetryConfig, retry_with_backoff};
 
 #[async_trait]
 impl VectorStoreAdmin for MilvusVectorStoreProvider {
@@ -67,27 +65,20 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
 
     async fn flush(&self, collection: &CollectionId) -> Result<()> {
         let name_str = to_milvus_name(collection);
-        let result = retry_with_backoff(
-            RetryConfig::new(
-                PROVIDER_RETRY_COUNT,
-                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
-            ),
-            |_| self.client.flush_collections(vec![&name_str]),
-            |e| {
+        // Single attempt: a rate-limited flush fails visibly for the caller
+        // to handle; no retry machinery absorbs it.
+        self.client
+            .flush_collections(vec![&name_str])
+            .await
+            .map(|_| ())
+            .map_err(|e| {
                 let err_str = e.to_string();
-                err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit")
-            },
-        )
-        .await;
-
-        result.map(|_| ()).map_err(|e| {
-            let err_str = e.to_string();
-            if err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit") {
-                Error::vector_db(format!("Failed to flush collection after retries: {e}"))
-            } else {
-                Error::vector_db(format!("Failed to flush collection: {e}"))
-            }
-        })
+                if err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit") {
+                    Error::vector_db(format!("Failed to flush collection (rate limited): {e}"))
+                } else {
+                    Error::vector_db(format!("Failed to flush collection: {e}"))
+                }
+            })
     }
 
     fn provider_name(&self) -> &str {

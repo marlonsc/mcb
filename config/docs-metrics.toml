@@ -1,0 +1,30 @@
+# Metrics source selection for the generated project overview.
+source_root = "crates"
+adr_dir = "docs/adr"
+module_docs_dir = "docs/modules"
+
+[categories.language]
+root = "crates/mcb-providers/src/language"
+exclude = ["mod", "common", "helpers", "engine"]
+
+[categories.language.labels]
+javascript = "JavaScript/TypeScript"
+cpp = "C++"
+csharp = "C#"
+
+[categories.embedding]
+root = "crates/mcb-providers/src/embedding"
+exclude = ["mod", "helpers"]
+
+[categories.embedding.labels]
+openai = "OpenAI"
+voyageai = "VoyageAI"
+fastembed = "FastEmbed"
+
+[categories.vector_store]
+root = "crates/mcb-providers/src/vector_store"
+exclude = ["mod", "filesystem", "helpers"]
+
+[categories.vector_store.labels]
+edgevec = "EdgeVec"
+in_memory = "In-Memory"

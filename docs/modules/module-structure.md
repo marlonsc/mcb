@@ -1,7 +1,18 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Module Structure
 
-This document shows the current module hierarchy for the Memory Context Browser workspace.
+<!-- TOC START -->
+
+- [Crate Structure](#crate-structure)
+- [Architecture Layers](#architecture-layers)
+- [Feature Flags](#feature-flags)
+  - [Updated: 2026-02-12 - Reflects modular crate architecture (v0.2.1)](#updated-2026-02-12-reflects-modular-crate-architecture-v021)
+
+<!-- TOC END -->
+
+This document shows the current module hierarchy for the Memory Context Browser
+workspace.
 
 ## Crate Structure
 
@@ -92,28 +103,28 @@ mcb/
 
 ## Architecture Layers
 
-| Layer | Crate | Purpose |
-| ------- | ------- | --------- |
-| Domain | `mcb-domain` | Entities, value objects, domain ports |
-| Infrastructure | `mcb-infrastructure` | DI, config, routing, technical services |
-| Providers | `mcb-providers` | External adapters and implementations |
-| Server | `mcb-server` | MCP protocol handlers and admin/web surfaces |
-| Validation | `mcb-validate` | Architecture and quality gates |
-| Facade | `mcb` | Public API re-exports |
+| Layer          | Crate                | Purpose                                      |
+| -------------- | -------------------- | -------------------------------------------- |
+| Domain         | `mcb-domain`         | Entities, value objects, domain ports        |
+| Infrastructure | `mcb-infrastructure` | DI, config, routing, technical services      |
+| Providers      | `mcb-providers`      | External adapters and implementations        |
+| Server         | `mcb-server`         | MCP protocol handlers and admin/web surfaces |
+| Validation     | `mcb-validate`       | Architecture and quality gates               |
+| Facade         | `mcb`                | Public API re-exports                        |
 
 ## Feature Flags
 
-| Feature | Default | Description |
-| --------- | --------- | ------------- |
-| `embedding-ollama` | Yes | Ollama embedding provider |
-| `embedding-openai` | No | OpenAI embedding provider |
-| `embedding-voyageai` | No | VoyageAI embedding provider |
-| `embedding-gemini` | No | Google Gemini embedding provider |
-| `embedding-fastembed` | No | FastEmbed local embeddings |
-| `vectorstore-memory` | Yes | In-memory vector store |
-| `vectorstore-encrypted` | No | AES-GCM encrypted store |
-| `cache-moka` | Yes | Moka cache provider |
-| `cache-redis` | No | Redis cache provider |
-| `lang-all` | Yes | 13 languages (12 parsers; JavaScript processor handles TypeScript mode) |
+| Feature                 | Default | Description                                                             |
+| ----------------------- | ------- | ----------------------------------------------------------------------- |
+| `embedding-ollama`      | Yes     | Ollama embedding provider                                               |
+| `embedding-openai`      | No      | OpenAI embedding provider                                               |
+| `embedding-voyageai`    | No      | VoyageAI embedding provider                                             |
+| `embedding-gemini`      | No      | Google Gemini embedding provider                                        |
+| `embedding-fastembed`   | No      | FastEmbed local embeddings                                              |
+| `vectorstore-memory`    | Yes     | In-memory vector store                                                  |
+| `vectorstore-encrypted` | No      | AES-GCM encrypted store                                                 |
+| `cache-moka`            | Yes     | Moka cache provider                                                     |
+| `cache-redis`           | No      | Redis cache provider                                                    |
+| `lang-all`              | Yes     | 13 languages (12 parsers; JavaScript processor handles TypeScript mode) |
 
 ### Updated: 2026-02-12 - Reflects modular crate architecture (v0.2.1)

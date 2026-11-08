@@ -23,7 +23,7 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
         let name_str = name.to_string();
 
         // Check in-memory cache first for fast path
-        if self.collections.contains_key(&name_str) {
+        if self.core.collections.contains_key(&name_str) {
             return Ok(true);
         }
 

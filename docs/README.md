@@ -1,5 +1,26 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Memory Context Browser - Documentation
+
+<!-- TOC START -->
+
+- [Comprehensive documentation for the Memory Context Browser project](#comprehensive-documentation-for-the-memory-context-browser-project)
+- [📚 Documentation Structure](#documentation-structure)
+  - [📖 User Guide](#user-guide)
+  - [🛠️ Developer Guide](#developer-guide)
+  - [🏗️ Architecture](#architecture)
+  - [📦 Modules (v0.2.1 Crate Structure)](#modules-v021-crate-structure)
+  - [🚀 Operations](#operations)
+  - [📋 Templates](#templates)
+  - [📚 Additional References](#additional-references)
+- [🔧 Documentation Automation](#documentation-automation)
+- [📊 Documentation Quality](#documentation-quality)
+- [🎯 Documentation Principles](#documentation-principles)
+- [📈 Documentation Metrics](#documentation-metrics)
+- [🤝 Contributing to Documentation](#contributing-to-documentation)
+- [🔍 Finding Information](#finding-information)
+
+<!-- TOC END -->
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
 [![Version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/marlonsc/mcb/releases)
@@ -17,19 +38,18 @@ purposes:
 
 User-facing documentation for installation, usage, and features.
 
-- **[README](user-guide/README.md)** - Project overview, quick start, and
-  basic usage
+- **[README](user-guide/README.md)** - Project overview, quick start, and basic usage
 - **[Features](user-guide/README.md)** - Current capabilities and features
 
 ### 🛠️ Developer Guide
 
 Documentation for developers contributing to the project.
 
-- **[Contributing](developer/CONTRIBUTING.md)** - Development setup and
-  contribution guidelines
+- **[Contributing](developer/CONTRIBUTING.md)** - Development setup and contribution
+  guidelines
 - **[Quick Reference](developer/QUICK_REFERENCE.md)** - One-pager for daily MCB work
-- **[FLEXT to MCB Mapping](developer/FLEXT_TO_MCB_MAPPING.md)** - Pattern translation
-  from the FLEXT workspace
+- **[Agent Operations](developer/AGENT-OPERATIONS.md)** - Runbook for agent sessions
+  (lanes, gates, triage, handoffs)
 - **[Skill Index](developer/SKILL_INDEX.md)** - Project ECC skills
 - **[Roadmap](developer/ROADMAP.md)** - Development roadmap and milestones
 
@@ -38,19 +58,28 @@ Documentation for developers contributing to the project.
 Technical architecture documentation following C4 model principles.
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
-- **[Architecture Overview](architecture/ARCHITECTURE.md)** - Comprehensive system architecture
-- **[Architecture Diagrams](diagrams/)** - Visual architecture documentation (PlantUML sources)
-- **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (52 ADRs total)
+
+- **[Architecture Overview](architecture/ARCHITECTURE.md)** - Comprehensive system
+  architecture
+- **[Architecture Diagrams](diagrams/)** - Visual architecture documentation (PlantUML
+  sources)
+- **[Architecture Decision Records](adr/README.md)** - Historical architectural
+  decisions (52 ADRs total)
 - [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
 - [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
 - [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
-- [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - historical
-- [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - historical
-- [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029 (superseded by ADR-050)
-- [ADR 029: Hexagonal Architecture](adr/050-manual-composition-root-dill-removal.md) - Superseded by ADR-050 (manual composition root)
+- [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) -
+  historical
+- [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) -
+  historical
+- [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md)
+  → ADR-029 (superseded by ADR-050)
+- [ADR 029: Hexagonal Architecture](adr/050-manual-composition-root-dill-removal.md) -
+  Superseded by ADR-050 (manual composition root)
 - [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
 - [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
-- [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.4.0-v0.5.0)
+- [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046
+  (v0.4.0-v0.5.0)
 - [Full ADR Index](adr/README.md) - 52 ADRs total
 
 ### 📦 Modules (v0.2.1 Crate Structure)
@@ -60,7 +89,8 @@ Module documentation organized by the six-crate architecture:
 - **[Module Index](modules/README.md)** - Complete module documentation
 - [Domain Layer](modules/domain.md) - Core business logic (`mcb-domain`)
 - [Providers](modules/providers.md) - External integrations (`mcb-providers`)
-- [Infrastructure](modules/infrastructure.md) - DI, use cases, cross-cutting concerns (`mcb-infrastructure`)
+- [Infrastructure](modules/infrastructure.md) - DI, use cases, cross-cutting concerns
+  (`mcb-infrastructure`)
 - [Server](modules/server.md) - MCP protocol (`mcb-server`)
 - [Validation](modules/validate.md) - Architecture validation (`mcb-validate`)
 
@@ -68,65 +98,51 @@ Module documentation organized by the six-crate architecture:
 
 Operational documentation for deployment and maintenance.
 
-- **[Deployment Guide](operations/DEPLOYMENT.md)** - Deployment configurations
-  and environments
+- **[Deployment Guide](operations/DEPLOYMENT.md)** - Deployment configurations and
+  environments
 - **[Changelog](operations/CHANGELOG.md)** - Version history and release notes
 
 ### 📋 Templates
 
 Documentation templates and standards.
 
-- **[ADR Template](templates/adr-template.md)** - Template for new
-  Architecture Decision Records
+- **[ADR Template](templates/adr-template.md)** - Template for new Architecture Decision
+  Records
 
 ### 📚 Additional References
 
 - **[Tool Specification](MCP_TOOLS.md)** - Definitions of all available MCP tools
-- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full environment variable matrix
+- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full environment
+  variable matrix
 - **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml` reference
 - **[Testing Integration](testing/E2E_INTEGRATION.md)** - End-to-end testing strategy
-- **[v0.5.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Future context system specification (Draft)
+- **[v0.5.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Future context
+  system specification (Draft)
 
 ## 🔧 Documentation Automation
 
-This documentation is fully automated and validated. Use these commands:
+The repository Make lifecycle generates metrics and validates documentation:
 
 ```bash
-
-# Generate all documentation (metrics, Rust API docs, mdbook)
-make build WHAT=docs
-
-# Validate documentation (ADRs, structure, links). QUICK=1 skips external link checks
-make build WHAT=docs ACT=validate
-make build WHAT=docs ACT=validate QUICK=1
-
-# Lint markdown. FIX=1 runs markdownlint -f to auto-fix
-make build WHAT=docs ACT=lint
-make build WHAT=docs ACT=lint FIX=1
-
-# Fix markdown (metrics + markdownlint -f). Run before commit
-make build WHAT=docs ACT=lint FIX=1
-
-# Generate architecture diagrams (PlantUML)
-make build WHAT=docs ACT=diagrams
-
-# List ADRs / create new ADR
-make build WHAT=docs ACT=adr
-make build WHAT=docs ACT=adr-new
+make setup
+make docs
+mcb-scripts adr --title "New Decision" --status Proposed
 ```
 
-`make build WHAT=docs ACT=lint` and `make build WHAT=docs ACT=validate` do not require a Rust build (useful
-when `target/` is broken or for docs-only CI).
+`make docs` derives [current metrics](generated/METRICS.md) from Rust and documentation
+sources, then runs the generated documentation checks. Historical documents are never
+rewritten with current metrics. The ADR CLI renders the
+[ADR template](templates/adr-template.md) with validated title and status.
 
 ## 📊 Documentation Quality
 
-| Aspect | Status | Description |
-| -------- | -------- | ------------- |
-| **Automation** | ✅ Automated | Fully automated generation and validation |
-| **Consistency** | ✅ Validated | Cross-references and structure validation |
-| **Architecture** | ✅ C4 Model | Structured architectural documentation |
-| **Diagrams** | ✅ Generated | PlantUML-generated architecture diagrams |
-| **Validation** | ✅ CI/CD | Automated validation in CI pipeline |
+| Aspect           | Status       | Description                               |
+| ---------------- | ------------ | ----------------------------------------- |
+| **Automation**   | ✅ Automated | Fully automated generation and validation |
+| **Consistency**  | ✅ Validated | Cross-references and structure validation |
+| **Architecture** | ✅ C4 Model  | Structured architectural documentation    |
+| **Diagrams**     | ✅ Generated | PlantUML-generated architecture diagrams  |
+| **Validation**   | ✅ CI/CD     | Automated validation in CI pipeline       |
 
 ## 🎯 Documentation Principles
 
@@ -149,7 +165,7 @@ When contributing to documentation:
 
 1. **Use Templates**- Follow established templates for consistency
 2. **Automate Updates**- Ensure documentation updates are automated
-3. **Validate Changes** - Run `make build WHAT=docs ACT=validate` before committing
+3. **Validate Changes** - Run `make docs` before committing
 4. **Update References**- Keep cross-references current
 5. **Follow Standards**- Adhere to established formatting and structure
 
@@ -162,4 +178,5 @@ When contributing to documentation:
 
 ---
 
-**Last updated:** Generated automatically - see [CI Status](https://github.com/marlonsc/mcb/actions)
+**Last updated:** Generated automatically - see
+[CI Status](https://github.com/marlonsc/mcb/actions)

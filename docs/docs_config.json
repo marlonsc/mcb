@@ -1,0 +1,19 @@
+{
+  "audit": {
+    "placeholder_patterns": [
+      "TODO",
+      "FIXME",
+      "placeholder",
+      "Lorem"
+    ],
+    "forbidden_terms": [
+      "make sync",
+      "check_changed_projects",
+      "text_rules.yml",
+      "scripts/hooks"
+    ],
+    "machine_path_exempt_paths": [
+      "docs/plans/"
+    ]
+  }
+}

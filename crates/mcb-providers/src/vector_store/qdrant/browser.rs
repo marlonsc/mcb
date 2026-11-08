@@ -3,10 +3,11 @@
 use async_trait::async_trait;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchResult};
 
 use super::QdrantVectorStoreProvider;
+use crate::utils::vector_store::sort_by_start_line;
 
 #[async_trait]
 impl VectorStoreBrowser for QdrantVectorStoreProvider {
@@ -44,10 +45,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
         collection: &CollectionId,
         limit: usize,
     ) -> Result<Vec<FileInfo>> {
-        let results = self.list_vectors(collection, limit).await?;
-        Ok(crate::utils::vector_store::build_file_info_from_results(
-            results,
-        ))
+        crate::utils::vector_store::standard_list_file_paths(self, collection, limit).await
     }
 
     async fn get_chunks_by_file(
@@ -79,7 +77,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
             "search_result.payload",
         )?;
 
-        results.sort_by_key(|r| r.start_line);
+        sort_by_start_line(&mut results);
         Ok(results)
     }
 }

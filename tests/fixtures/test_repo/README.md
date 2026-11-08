@@ -21,18 +21,16 @@ This repository contains sample code in multiple languages to test:
 
 The following queries should return relevant results:
 
-| Query | Expected File |
-| ------- | --------------- |
-| "function that adds numbers" | calculator.rs |
-| "reverse a String" | String_utils.py |
-| "format a date" | utils.js |
-| "check if palindrome" | String_utils.py |
-| "debounce function" | utils.js |
+| Query                        | Expected File   |
+| ---------------------------- | --------------- |
+| "function that adds numbers" | calculator.rs   |
+| "reverse a String"           | String_utils.py |
+| "format a date"              | utils.js        |
+| "check if palindrome"        | String_utils.py |
+| "debounce function"          | utils.js        |
 
 ## Usage in Golden Tests
 
-This fixture is used by tests in `tests/golden/`:
-
-- `test_index_repository.rs` - Indexes this repo
-- `test_search_validation.rs` - Searches with known queries
-- `test_end_to_end.rs` - Complete workflow test
+This fixture is retained as sample repository data (see the
+`tests/fixtures/test_repo` exclusion in `config/workspace.yaml`). It is not
+referenced by any compiled test target.

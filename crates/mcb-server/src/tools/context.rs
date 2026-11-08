@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use rmcp::model::{CallToolRequestParams, Meta};
+use rmcp::model::{CallToolRequestParams, MetaObject};
 use serde_json::Value;
 
 use crate::tools::defaults::RuntimeDefaults;
@@ -51,8 +51,8 @@ impl ToolExecutionContext {
     /// Collect request/context metadata into canonical override keys.
     #[must_use]
     pub fn metadata_overrides(
-        request_meta: Option<&Meta>,
-        context_meta: &Meta,
+        request_meta: Option<&MetaObject>,
+        context_meta: &MetaObject,
     ) -> HashMap<String, String> {
         let mut overrides = HashMap::new();
         for &(canonical, aliases) in STRING_FIELD_ALIASES {
@@ -161,7 +161,7 @@ impl ToolExecutionContext {
 }
 
 /// Extract a string value from metadata by checking all aliases.
-fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
+fn meta_value_as_string(meta: &MetaObject, keys: &[&str]) -> Option<String> {
     for key in keys {
         let Some(value) = meta.get(*key) else {
             continue;
@@ -191,8 +191,8 @@ fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
 
 /// Resolve a string value from request or context metadata.
 fn resolve_context_value(
-    request_meta: Option<&Meta>,
-    context_meta: &Meta,
+    request_meta: Option<&MetaObject>,
+    context_meta: &MetaObject,
     keys: &[&str],
 ) -> Option<String> {
     request_meta
@@ -201,7 +201,7 @@ fn resolve_context_value(
 }
 
 /// Extract a boolean value from metadata by checking all aliases.
-fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
+fn meta_value_as_bool(meta: &MetaObject, keys: &[&str]) -> Option<bool> {
     for key in keys {
         let Some(value) = meta.get(*key) else {
             continue;
@@ -230,8 +230,8 @@ fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
 
 /// Resolve a boolean value from request or context metadata.
 fn resolve_context_bool(
-    request_meta: Option<&Meta>,
-    context_meta: &Meta,
+    request_meta: Option<&MetaObject>,
+    context_meta: &MetaObject,
     keys: &[&str],
 ) -> Option<bool> {
     request_meta

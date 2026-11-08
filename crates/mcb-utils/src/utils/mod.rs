@@ -21,8 +21,6 @@ pub mod time;
 
 /// Range and interval utilities (line overlap checks).
 pub mod range;
-/// Retry utilities with exponential backoff.
-pub mod retry;
 
 /// Cryptographic hashing and token utilities.
 pub mod crypto;

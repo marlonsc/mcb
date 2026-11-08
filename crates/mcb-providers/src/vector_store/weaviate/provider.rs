@@ -17,7 +17,7 @@ use crate::utils::vector_store::search_result_from_json_metadata;
 impl VectorStoreProvider for WeaviateVectorStoreProvider {
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         let name_str = name.to_string();
-        if self.collections.contains_key(&name_str) {
+        if self.core.collections.contains_key(&name_str) {
             return Err(Error::vector_db(format!(
                 "Collection '{name}' already exists"
             )));
@@ -30,7 +30,7 @@ impl VectorStoreProvider for WeaviateVectorStoreProvider {
         });
         self.request(reqwest::Method::POST, "/v1/schema", Some(body))
             .await?;
-        self.collections.insert(name_str, dimensions);
+        self.core.collections.insert(name_str, dimensions);
         Ok(())
     }
 
@@ -42,7 +42,7 @@ impl VectorStoreProvider for WeaviateVectorStoreProvider {
             None,
         )
         .await?;
-        self.collections.remove(&name.to_string());
+        self.core.collections.remove(&name.to_string());
         Ok(())
     }
 

@@ -10,7 +10,15 @@ let authHeaders: Record<string, string>;
 test.describe('Admin Functional Tests - Real Data Processing', () => {
   test.beforeAll(async () => {
     authHeaders = (await ensureE2eAdminAuth()).headers;
-    const testDataDir = path.join(process.cwd(), 'fixtures', 'sample_codebase');
+    const testDataDir = path.join(
+      process.cwd(),
+      '..',
+      'crates',
+      'mcb-server',
+      'tests',
+      'fixtures',
+      'sample_codebase',
+    );
     if (!fs.existsSync(testDataDir)) {
       console.warn(`Test data directory not found: ${testDataDir}`);
     }

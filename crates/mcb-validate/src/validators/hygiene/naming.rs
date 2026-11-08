@@ -1,12 +1,10 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::filters::LanguageId;
-use crate::scan::for_each_file_under_root;
+use crate::utils::source::for_each_test_file;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
-use crate::ValidationConfigExt;
 
 /// Naming suggestion for an `integration/` test file lacking a purpose marker.
 fn integration_naming(file_name: &str) -> Option<(String, Severity)> {
@@ -62,19 +60,12 @@ fn expected_naming_for_parent(parent_dir: &str, file_name: &str) -> Option<(Stri
 pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViolation>> {
     let mut violations = Vec::new();
 
-    for crate_dir in config.get_source_dirs()? {
-        let tests_dir = crate_dir.join("tests");
-        if !tests_dir.exists() {
-            continue;
+    for_each_test_file(config, |entry| {
+        if let Some(violation) = check_test_file_naming(&entry.absolute_path) {
+            violations.push(violation);
         }
-
-        for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
-            if let Some(violation) = check_test_file_naming(&entry.absolute_path) {
-                violations.push(violation);
-            }
-            Ok(())
-        })?;
-    }
+        Ok(())
+    })?;
 
     Ok(violations)
 }

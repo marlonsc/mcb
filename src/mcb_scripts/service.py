@@ -8,21 +8,20 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextService
-from pydantic import Field
-
-from mcb_scripts.settings import BaseMcbSettings
+from flext_core import FlextService, m
+from mcb_scripts.settings import McbScriptsBaseSettings
 
 
 class McbScriptsService(FlextService):
     """Per-class singleton service base wired to MCB settings."""
 
     settings_type: Annotated[
-        type | None,
-        Field(
-            exclude=True, description="Settings class used to initialize the service."
+        type[McbScriptsBaseSettings] | None,
+        m.Field(
+            exclude=True,
+            description="Settings class used to initialize the service.",
         ),
-    ] = BaseMcbSettings
+    ] = McbScriptsBaseSettings
 
 
 McbService = McbScriptsService

@@ -13,6 +13,8 @@ pub struct ValidationConfig {
     pub additional_src_paths: Vec<PathBuf>,
     /// Glob patterns for excluding files or directories.
     pub exclude_patterns: Vec<String>,
+    /// Numeric limits injected into validators (no global singleton).
+    pub thresholds: super::ValidationThresholds,
 }
 
 impl ValidationConfig {
@@ -24,7 +26,15 @@ impl ValidationConfig {
             workspace_root: canonical,
             additional_src_paths: Vec::new(),
             exclude_patterns: Vec::new(),
+            thresholds: super::ValidationThresholds::default(),
         }
+    }
+
+    /// Override the injected validation thresholds.
+    #[must_use]
+    pub fn with_thresholds(mut self, thresholds: super::ValidationThresholds) -> Self {
+        self.thresholds = thresholds;
+        self
     }
 
     /// Add an extra directory to include in the validation scan.

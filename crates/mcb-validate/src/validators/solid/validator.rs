@@ -12,7 +12,6 @@
 
 use super::violation::SolidViolation;
 use super::{isp, lsp, ocp, srp};
-use crate::thresholds::thresholds;
 use crate::{Result, ValidationConfig};
 
 crate::create_validator!(
@@ -37,7 +36,7 @@ impl SolidValidator {
     ///
     /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_srp(config: &ValidationConfig) -> Result<Vec<SolidViolation>> {
-        srp::validate_srp(config, thresholds().max_struct_lines)
+        srp::validate_srp(config, config.thresholds.max_struct_lines)
     }
 
     /// OCP: Check for excessive match statements
@@ -46,7 +45,7 @@ impl SolidValidator {
     ///
     /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_ocp(config: &ValidationConfig) -> Result<Vec<SolidViolation>> {
-        ocp::validate_ocp(config, thresholds().max_match_arms)
+        ocp::validate_ocp(config, config.thresholds.max_match_arms)
     }
 
     /// OCP: Check for string-based type dispatch
@@ -64,7 +63,7 @@ impl SolidValidator {
     ///
     /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_isp(config: &ValidationConfig) -> Result<Vec<SolidViolation>> {
-        isp::validate_isp(config, thresholds().max_trait_methods)
+        isp::validate_isp(config, config.thresholds.max_trait_methods)
     }
 
     /// LSP: Check for partial trait implementations (panic!/todo! in trait methods).
@@ -82,6 +81,6 @@ impl SolidValidator {
     ///
     /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_impl_method_count(config: &ValidationConfig) -> Result<Vec<SolidViolation>> {
-        srp::validate_impl_method_count(config, thresholds().max_impl_methods)
+        srp::validate_impl_method_count(config, config.thresholds.max_impl_methods)
     }
 }

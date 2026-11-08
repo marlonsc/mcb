@@ -14,6 +14,6 @@ pub use crate::linters::{
 pub use crate::metrics::*;
 pub use crate::rules::*;
 pub use crate::run_context::{FileInventorySource, InventoryEntry, ValidationRunContext};
-pub use crate::thresholds::{ValidationThresholds, thresholds};
+pub use mcb_domain::ports::validation::ValidationThresholds;
 
 pub use crate::validators::*;

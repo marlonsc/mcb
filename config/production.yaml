@@ -10,9 +10,9 @@ logger:
   format: compact
 
 server:
-  port: 8080
+  port: 8187
   binding: 127.0.0.1
-  host: http://127.0.0.1:8080
+  host: http://127.0.0.1:8187
   middlewares:
     static:
       enable: false
@@ -36,7 +36,7 @@ cache:
 settings:
   mode:
     type: standalone
-    server_url: "http://127.0.0.1:8080"
+    server_url: "http://127.0.0.1:8187"
     session_prefix: ""
     timeout_secs: 30
     auto_reconnect: true

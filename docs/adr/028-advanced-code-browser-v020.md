@@ -1,14 +1,49 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Navigation Features](#1-navigation-features)
+  - [2. Code Display](#2-code-display)
+  - [3. Search Integration](#3-search-integration)
+  - [4. Metadata Panel](#4-metadata-panel)
+  - [5. Advanced Features](#5-advanced-features)
+  - [6. Performance](#6-performance)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Monaco Editor Integration](#alternative-1-monaco-editor-integration)
+  - [Alternative 2: CodeMirror 6](#alternative-2-codemirror-6)
+  - [Alternative 3: Keep Basic Browse](#alternative-3-keep-basic-browse)
+- [Implementation Notes](#implementation-notes)
+  - [Phase 1: Tree View (Essential)](#phase-1-tree-view-essential)
+  - [Phase 2: Enhanced Code Display](#phase-2-enhanced-code-display)
+  - [Phase 3: Search Integration](#phase-3-search-integration)
+  - [Phase 4: Advanced UX](#phase-4-advanced-ux)
+  - [Phase 5: Real-time Features](#phase-5-real-time-features)
+- [Files to Create (v0.2.0)](#files-to-create-v020)
+- [Files to Modify (v0.2.0)](#files-to-modify-v020)
+- [Success Metrics](#success-metrics)
+  - [Dependencies](#dependencies)
+- [Technical Approach](#technical-approach)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 28
-title: Advanced Code Browser UI v0.2.0
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [7, 8, 26]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 28 title: Advanced Code Browser UI v0.2.0 status: IMPLEMENTED created: updated:
+2026-02-05 related: [7, 8, 26] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -35,8 +70,8 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Context
 
-v0.1.2 provides basic code browsing with file listing and chunk display. Users
-need IDE-like capabilities for deep code exploration.
+v0.1.2 provides basic code browsing with file listing and chunk display. Users need
+IDE-like capabilities for deep code exploration.
 
 Current v0.1.2 capabilities:
 
@@ -234,34 +269,34 @@ Events:
 
 ## Files to Create (v0.2.0)
 
-| File | Purpose |
-| ------ | --------- |
-| `crates/mcb-server/src/admin/web/templates/browse_tree.html` | Tree view component |
-| `crates/mcb-server/src/admin/web/templates/browse_code.html` | Enhanced code view |
-| `crates/mcb-server/src/admin/web/templates/browse_search.html` | Search results page |
-| `crates/mcb-server/src/admin/browse_sse.rs` | SSE events for browse |
-| `crates/mcb-server/src/admin/web/assets/tree-view.js` | Tree view JS component |
-| `crates/mcb-server/src/admin/web/assets/keyboard-nav.js` | Keyboard navigation |
+| File                                                           | Purpose                |
+| -------------------------------------------------------------- | ---------------------- |
+| `crates/mcb-server/src/admin/web/templates/browse_tree.html`   | Tree view component    |
+| `crates/mcb-server/src/admin/web/templates/browse_code.html`   | Enhanced code view     |
+| `crates/mcb-server/src/admin/web/templates/browse_search.html` | Search results page    |
+| `crates/mcb-server/src/admin/browse_sse.rs`                    | SSE events for browse  |
+| `crates/mcb-server/src/admin/web/assets/tree-view.js`          | Tree view JS component |
+| `crates/mcb-server/src/admin/web/assets/keyboard-nav.js`       | Keyboard navigation    |
 
 ## Files to Modify (v0.2.0)
 
-| File | Change |
-| ------ | -------- |
-| `crates/mcb-server/src/admin/browse_handlers.rs` | Add tree and search endpoints |
-| `crates/mcb-server/src/admin/routes.rs` | Mount new routes |
-| `crates/mcb-server/src/admin/web/handlers.rs` | Add page handlers |
-| `crates/mcb-server/src/admin/web/router.rs` | Mount UI routes |
+| File                                                    | Change                          |
+| ------------------------------------------------------- | ------------------------------- |
+| `crates/mcb-server/src/admin/browse_handlers.rs`        | Add tree and search endpoints   |
+| `crates/mcb-server/src/admin/routes.rs`                 | Mount new routes                |
+| `crates/mcb-server/src/admin/web/handlers.rs`           | Add page handlers               |
+| `crates/mcb-server/src/admin/web/router.rs`             | Mount UI routes                 |
 | `crates/mcb-domain/src/ports/providers/vector_store.rs` | Extend VectorStoreBrowser trait |
 
 ## Success Metrics
 
-| Metric | v0.1.2 | Target v0.2.0 |
-| -------- | -------- | --------------- |
-| File navigation | List view | Tree view |
-| Code display | Basic Prism.js | Tree-sitter + chunks |
-| Search integration | None | Inline highlighting |
-| Keyboard nav | None | Full vim-like |
-| Real-time updates | None | SSE events |
+| Metric             | v0.1.2         | Target v0.2.0        |
+| ------------------ | -------------- | -------------------- |
+| File navigation    | List view      | Tree view            |
+| Code display       | Basic Prism.js | Tree-sitter + chunks |
+| Search integration | None           | Inline highlighting  |
+| Keyboard nav       | None           | Full vim-like        |
+| Real-time updates  | None           | SSE events           |
 
 ### Dependencies
 
@@ -293,12 +328,12 @@ Rust Crates (existing):
 
 ## Related ADRs
 
-- [ADR-051: SeaQL + Loco.rs Platform Rebuild]
-(051-seaql-loco-platform-rebuild.md) - Base admin UI
-- [ADR-008: Git-Aware Semantic Indexing]
-(008-git-aware-semantic-indexing-v0.2.0.md) - Git metadata for diff view
-- [ADR-026: Routing Refactor Rocket]
-(049-axum-return-rmcp-tower-compatibility.md) - Rocket web framework
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild] (051-seaql-loco-platform-rebuild.md) -
+  Base admin UI
+- [ADR-008: Git-Aware Semantic Indexing] (008-git-aware-semantic-indexing-v0.2.0.md) -
+  Git metadata for diff view
+- [ADR-026: Routing Refactor Rocket] (049-axum-return-rmcp-tower-compatibility.md) -
+  Rocket web framework
 
 ## References
 

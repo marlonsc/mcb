@@ -65,16 +65,17 @@ mcb_run() {
   fi
 }
 
-# --- retry helper ------------------------------------------------------------
-mcb_retry() { local n="$1" s="$2"; shift 2; local t=1; while ! "$@"; do [ "$t" -ge "$n" ] && return 1; sleep "$s"; t=$((t+1)); done; }
-
 # --- SSOT readers ------------------------------------------------------------
 mcb_version() { grep -m1 '^version =' "$MCB_ROOT/Cargo.toml" | sed 's/.*"\([^"]*\)".*/\1/'; }
 
-# Binary lookup chain: workspace target > PATH > cargo run
 mcb_bin() {
-  [ -x "$MCB_ROOT/target/debug/mcb" ]   && { echo "$MCB_ROOT/target/debug/mcb";   return 0; }
-  [ -x "$MCB_ROOT/target/release/mcb" ] && { echo "$MCB_ROOT/target/release/mcb"; return 0; }
+  local debug="$MCB_ROOT/target/debug/mcb" release="$MCB_ROOT/target/release/mcb"
+  local newest=""
+  [ -x "$debug" ] && newest="$debug"
+  if [ -x "$release" ]; then
+    if [ -z "$newest" ] || [ "$release" -nt "$newest" ]; then newest="$release"; fi
+  fi
+  [ -n "$newest" ] && { echo "$newest"; return 0; }
   command -v mcb 2>/dev/null && return 0
   echo "cargo run --package mcb --"
 }

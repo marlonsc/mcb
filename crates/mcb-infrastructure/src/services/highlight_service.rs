@@ -38,12 +38,6 @@ impl HighlightServiceImpl {
     }
 }
 
-impl Default for HighlightServiceImpl {
-    fn default() -> Self {
-        Self::new(Arc::new(HighlightSyncService::new()))
-    }
-}
-
 #[async_trait::async_trait]
 impl HighlightServiceInterface for HighlightServiceImpl {
     async fn highlight(&self, code: &str, language: &str) -> mcb_domain::Result<HighlightedCode> {
@@ -61,11 +55,19 @@ impl HighlightServiceInterface for HighlightServiceImpl {
     }
 }
 
+/// Build the highlight service from the linkme service registry.
+///
+/// Sole construction site for [`HighlightServiceImpl`] and its sync port,
+/// keeping DI composition inside the registry (composition mechanism).
+fn build_highlight_service_from_registry(
+    _context: &dyn std::any::Any,
+) -> mcb_domain::Result<Arc<dyn HighlightServiceInterface>> {
+    Ok(Arc::new(HighlightServiceImpl::new(Arc::new(
+        HighlightSyncService::new(),
+    ))))
+}
+
 mcb_domain::register_service!(
     mcb_utils::constants::SERVICE_NAME_HIGHLIGHT,
-    ServiceBuilder::Highlight(|_context| {
-        Ok(std::sync::Arc::new(HighlightServiceImpl::new(Arc::new(
-            HighlightSyncService::new(),
-        ))))
-    }),
+    ServiceBuilder::Highlight(build_highlight_service_from_registry),
 );

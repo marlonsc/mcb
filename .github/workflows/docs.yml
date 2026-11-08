@@ -5,6 +5,8 @@ name: Docs
   push:
     branches:
       - main
+      - 0.12.0-dev
+      - 0.20.0-dev
       - develop
     paths:
       - "docs/**"
@@ -14,10 +16,7 @@ name: Docs
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
@@ -28,70 +27,103 @@ jobs:
     name: docs-quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+    # Why: GitHub-hosted runners share egress IPs, so the unauthenticated
+    # 60 req/h REST budget is exhausted before mise resolves the moving
+    # @latest backends (observed 2026-09-23: 403, rate limit 0/60, on every
+    # backend in Sync workspace toolchain), and docs generation reads the
+    # governed sibling repos. The job token authenticates both, as in CI.
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      # Why: a cold runner re-downloaded every locked Mise tool
+      # (go included) on every Docs run, and a network blip failed setup. The
+      # cache is content-addressed by the committed locks, so a warm cache is
+      # always valid for the same lock and can never hide a finding; it only
+      # removes the cold download of the pinned tarballs.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
         with:
-          python-version: "3.13"
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
-        with:
-          enable-cache: true
 
       - name: Sync workspace toolchain
         run: make setup
 
-      # mro-o6h5 (agent: kimi) — failure diagnostics: per-project logs live under
-      # .reports/workspace/docs/*.log and were invisible in CI ("0 errors" FAILs);
-      # dump them inline + per-project audit-report.md for non-zero issue counts +
-      # upload as artifact so the real error is always reachable.
-      - name: Docs audit (blocking)
+      # Why: save on every outcome — including a failing gate — so the next run
+      # starts warm. Only written when the restore missed.
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
+
+      - name: Generation drift (blocking)
         run: |
-          .venv/bin/python -m flext_infra docs audit --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
-                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' \
-                   -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
+          make gen
+          make verify-clean
 
-      - name: Docs generate (materialize contract artifacts)
-        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
+      - name: Docs lifecycle (blocking)
+        run: make docs
 
-      - name: Docs validate (blocking)
+      # The preceding generation check cannot see changes made by make docs.
+      - name: Verify docs byte-identical repository
+        run: make verify-clean
+
+      # Failure diagnostics execute only after the original Make step has
+      # already propagated its exact status to Actions.
+      - name: Dump docs reports on failure
+        if: failure()
         run: |
-          .venv/bin/python -m flext_infra docs validate --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
-                \( -path '*/validate-summary.json' -o -path '*/validate-report.md' \
-                   -o -path '*/audit-summary.json' -o -path '*/audit-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
+          set -eu
+          for report_root in .reports apps; do
+            if [ -d "$report_root" ]; then
+              find "$report_root" \
+                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
+                -type f -exec sh -eu -c '
+                  for report_file do
+                    printf "::group::%s\n" "$report_file"
+                    tail -n 80 "$report_file"
+                    printf "::endgroup::\n"
+                  done
+                ' sh {} +
+            fi
+          done
 
-      # mro-o6h5 (agent: kimi) — include-hidden-files: .reports/ is a dot-dir and
-      # upload-artifact skips hidden paths by default (artifact silently empty).
       - name: Upload docs reports on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@v7
         with:
           name: docs-reports
           # Structured docs reports only — omit raw docs log trees that may carry
@@ -105,7 +137,10 @@ jobs:
             apps/*/.reports/**/audit-report.md
             apps/*/.reports/**/validate-summary.json
             apps/*/.reports/**/validate-report.md
-          if-no-files-found: ignore
+          if-no-files-found: error
+          # The allowlisted reports live under hidden .reports directories.
+          # upload-artifact excludes hidden paths unless this is explicit.
+          include-hidden-files: true
           retention-days: 7
 
   build:
@@ -113,42 +148,73 @@ jobs:
     needs: docs-quality
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+    # Why: same authenticated toolchain and docs-source resolution as docs-quality.
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      # Why: same cold-download protection as the docs-quality job.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
         with:
-          python-version: "3.13"
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
-        with:
-          enable-cache: true
 
       - name: Sync workspace toolchain
         run: make setup
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
 
-      - name: Generate docs
-        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
 
       - name: Build site
-        run: .venv/bin/python -m flext_infra docs build --workspace . --output-dir .reports/docs
+        run: make docs
+
+      - name: Verify byte-identical repository
+        run: make verify-clean
 
       # Pages configure/upload exist only to feed deploy on main. Running them on
       # every integration push fails closed when Pages is unset and is wasted
       # work when deploy is skipped (deploy already gates on refs/heads/main).
       - name: Configure Pages
         if: github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
+        uses: actions/configure-pages@v6
 
       - name: Upload site artifact
         if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        uses: actions/upload-pages-artifact@v5
         with:
           path: .reports/docs/site
 
@@ -158,10 +224,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment:
-      name: ${{ 'github-pages' }}
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128  # v5.0.0
+        uses: actions/deploy-pages@v5

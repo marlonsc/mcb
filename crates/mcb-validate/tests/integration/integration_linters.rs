@@ -415,7 +415,7 @@ fn test_clippy_real_execution() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     println!(
         "Clippy output (first 1000 chars): {}",
-        &stdout.chars().take(1000).collect::<String>()
+        stdout.chars().take(1000).collect::<String>()
     );
 
     // Parse the real output
