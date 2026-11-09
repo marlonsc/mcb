@@ -81,6 +81,7 @@ class _ResourceValidator(Protocol):
         """Validate one rendered manifest against the Kubernetes schema."""
         ...
 
+
 KUSTOMIZE_FILES = frozenset({
     "kustomization.yaml",
     "kustomization.yml",
@@ -444,7 +445,8 @@ def _image_references(node: YamlNode) -> list[McbScriptsImageReference]:
         if isinstance(image, str):
             references.append(
                 McbScriptsImageReference(
-                    value=image, line=_line_for_key(node, "image"),
+                    value=image,
+                    line=_line_for_key(node, "image"),
                 ),
             )
         for child in view.values():

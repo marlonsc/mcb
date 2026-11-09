@@ -33,7 +33,8 @@ class McbScriptsQltyParams(m.BaseModel):
 
     scan: bool = m.Field(default=False, description="Run the qlty scan first")
     checks_file: Path | None = m.Field(
-        default=None, description="Optional checks SARIF input file",
+        default=None,
+        description="Optional checks SARIF input file",
     )
     smells_file: Path = m.Field(
         default_factory=lambda: McbScriptsSettings().qlty_smells_sarif,
@@ -43,22 +44,27 @@ class McbScriptsQltyParams(m.BaseModel):
     check: bool = m.Field(default=False, description="Include the checks report")
     smells: bool = m.Field(default=False, description="Include the smells report")
     severity: str | None = m.Field(
-        default=None, description="Minimum severity filter",
+        default=None,
+        description="Minimum severity filter",
     )
     rule: str | None = m.Field(default=None, description="Rule id filter")
     category: str | None = m.Field(default=None, description="Category filter")
     file: str | None = m.Field(default=None, description="File pattern filter")
     exclude_rule: tuple[str, ...] = m.Field(
-        default_factory=tuple[str, ...], description="Rules to exclude",
+        default_factory=tuple[str, ...],
+        description="Rules to exclude",
     )
     exclude_category: tuple[str, ...] = m.Field(
-        default_factory=tuple[str, ...], description="Categories to exclude",
+        default_factory=tuple[str, ...],
+        description="Categories to exclude",
     )
     exclude_file: tuple[str, ...] = m.Field(
-        default_factory=tuple[str, ...], description="File patterns to exclude",
+        default_factory=tuple[str, ...],
+        description="File patterns to exclude",
     )
     summary_only: bool = m.Field(
-        default=False, description="Print only the summary",
+        default=False,
+        description="Print only the summary",
     )
     report_file: Path = m.Field(
         default_factory=lambda: McbScriptsSettings().qlty_report_md,

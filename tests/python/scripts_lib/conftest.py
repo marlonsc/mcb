@@ -46,7 +46,9 @@ def settings_factory(reset_settings: Callable[[], None]) -> SettingsFactory:
             name: (type(value), value) for name, value in fields.items()
         }
         settings_cls = create_model(
-            "_Settings", __base__=McbScriptsBaseSettings, **defs,
+            "_Settings",
+            __base__=McbScriptsBaseSettings,
+            **defs,
         )
         settings_cls.model_rebuild()
         return settings_cls.fetch_global()
