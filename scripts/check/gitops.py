@@ -5,27 +5,17 @@ Copyright (c) 2025 MCB Contributors. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-# /// cosmos-command
-# verb = "check"
-# what = "gitops"
-# domain = "quality"
-# summary = "Validate GitOps manifests through the shared qlty-style pipeline"
-# description = "Discovers Helm/Kustomize targets under k8s/ and reports SKIP when the tree has no manifests yet."
-# example = "make check WHAT=gitops"
-# mutates = false
-# ///
 from __future__ import annotations
 
 from pathlib import Path
 
 from flext_cli import cli
 
-from flext_core import m, p
-from mcb_scripts.core import McbScriptsBaseCommandSettings, get_logger, r
+from flext_core import m, p, r, u
+from mcb_scripts import McbScriptsBaseCommandSettings, McbScriptsSettings
 from mcb_scripts.gitops import summarize
-from mcb_scripts.settings import McbScriptsSettings
 
-logger = get_logger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class GitopsSettings(McbScriptsBaseCommandSettings):

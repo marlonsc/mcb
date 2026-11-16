@@ -13,12 +13,11 @@ from pathlib import Path
 
 from flext_cli import cli
 
-from flext_core import m, p
-from mcb_scripts.core import McbScriptsBaseSettings, get_logger, r
+from flext_core import m, p, r, u
+from mcb_scripts import McbScriptsBaseSettings, McbScriptsSettings
 from mcb_scripts.docs import utils
-from mcb_scripts.settings import McbScriptsSettings
 
-logger = get_logger(__name__)
+logger = u.fetch_logger(__name__)
 
 OUTDATED_PATTERNS: list[tuple[str, str]] = [
     (r"v0\.1\.[0-9]+", "old version reference (v0.1.x)"),

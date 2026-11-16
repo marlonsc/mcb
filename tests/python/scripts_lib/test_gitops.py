@@ -21,7 +21,7 @@ from mcb_scripts.gitops import (
     rendered_issues,
     summarize,
 )
-from tests.python.scripts_lib._utilities.matchers import tm
+from tests.python.scripts_lib._matchers.matchers import tm
 
 ROOT = Path(__file__).resolve().parents[3]
 _VIOLATION_LINE = 10
