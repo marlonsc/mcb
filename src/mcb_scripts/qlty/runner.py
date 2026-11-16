@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shutil
-import subprocess  # ruff: ignore [suspicious-subprocess-import] -- pinned-binary runner
+import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -51,7 +51,7 @@ def run_qlty_check(
         return r[list[McbScriptsSarifIssue]].fail("qlty executable not found on PATH")
 
     try:
-        result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- argv is the mise-pinned qlty binary plus literals
+        result = subprocess.run(
             [executable, "check", "--all", "--sarif"],
             capture_output=True,
             text=True,
@@ -99,7 +99,7 @@ def run_qlty_smells(
         return r[list[McbScriptsSarifIssue]].fail("qlty executable not found on PATH")
 
     try:
-        result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- argv is the mise-pinned qlty binary plus literals
+        result = subprocess.run(
             [executable, "smells", "--all", "--sarif"],
             capture_output=True,
             text=True,

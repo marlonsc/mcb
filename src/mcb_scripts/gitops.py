@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import shutil
-import subprocess  # ruff: ignore [suspicious-subprocess-import] -- tool runner: executes the declared gitops CLI
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -380,7 +380,7 @@ def _render_target(target: McbScriptsGitOpsTarget) -> McbScriptsRenderOutcome:
     cmd = [executable, *args]
 
     try:
-        result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- cmd is built from the repository's own declared targets
+        result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
