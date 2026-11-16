@@ -11,7 +11,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-from mcb_scripts.core import get_logger
+from mcb_scripts import get_logger
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / "config" / "tests.toml"

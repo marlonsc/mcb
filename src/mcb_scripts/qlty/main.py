@@ -12,7 +12,7 @@ from pathlib import Path
 from flext_cli import cli
 
 from flext_core import m, p
-from mcb_scripts.core import get_logger, r
+from mcb_scripts import get_logger, r
 from mcb_scripts.qlty.model import (
     McbScriptsQltyCategory,
     McbScriptsSarifIssue,

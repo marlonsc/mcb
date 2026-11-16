@@ -25,7 +25,7 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.error import YAMLError
 
 from flext_core import FlextResult, p
-from mcb_scripts.core import get_logger
+from mcb_scripts import get_logger
 from mcb_scripts.qlty.model import McbScriptsSarifIssue, McbScriptsSeverity
 from mcb_scripts.qlty.report import McbScriptsAnalysisReport, analyze_issues
 

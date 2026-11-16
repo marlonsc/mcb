@@ -8,6 +8,7 @@ ledger_prefix: mcb
 ledger_id: mcb
 repository:
   name: mcb
+  kind: internal_flext
   distribution: mcb-scripts
   provider: marlonsc
   url: https://github.com/marlonsc/mcb.git

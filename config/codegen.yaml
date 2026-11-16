@@ -1,0 +1,30 @@
+Infra:
+  codegen:
+    repository:
+      kind: internal_flext
+      project:
+        package_name: mcb_scripts
+        class_stem: McbScripts
+        namespace: McbScripts
+        constant_name: mcb
+        namespace_attribute: mcb_scripts
+        alias: mcb_scripts
+        environment_prefix: MCB_
+        description: Repository-local automation helpers for MCB
+        license: MIT
+        author_name: Marlon Costa
+        author_email: marlonsc@gmail.com
+        upstream: flext_cli
+        namespace_scan_dirs: []
+        homepage: https://github.com/marlonsc/mcb
+        documentation: https://github.com/marlonsc/mcb
+        repository_root_rel: .
+        year: 2026
+      integration:
+        provider: marlonsc
+        branch: develop
+      namespace_scan_dirs: []
+      script_dispatch:
+        dispatcher: scripts/dispatch.py
+        roots:
+        - scripts

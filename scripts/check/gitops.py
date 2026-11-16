@@ -21,7 +21,7 @@ from pathlib import Path
 from flext_cli import cli
 
 from flext_core import m, p
-from mcb_scripts.core import McbScriptsBaseCommandSettings, get_logger, r
+from mcb_scripts import McbScriptsBaseCommandSettings, get_logger, r
 from mcb_scripts.gitops import summarize
 from mcb_scripts.settings import McbScriptsSettings
 

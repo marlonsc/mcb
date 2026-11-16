@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, cast
 import pytest
 from pydantic import BaseModel
 
-from mcb_scripts.core import McbResult, McbService, configure_logging, get_logger, r, s
+from mcb_scripts import McbResult, McbService, configure_logging, get_logger, r, s
 from tests.python.scripts_lib._utilities.matchers import tm
 
 if TYPE_CHECKING:
