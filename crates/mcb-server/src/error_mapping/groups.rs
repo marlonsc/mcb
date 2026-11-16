@@ -21,9 +21,9 @@ fn map_client_error(error: &Error) -> Option<String> {
         Error::InvalidRegex { pattern, message } => {
             format!("Invalid regex pattern '{pattern}': {message}")
         }
-        Error::IoSimple { .. }
+        Error::IoSimple(_)
         | Error::Io { .. }
-        | Error::Json { .. }
+        | Error::Json(_)
         | Error::Generic(_)
         | Error::Utf8(_)
         | Error::Base64(_)
@@ -114,7 +114,7 @@ fn map_system_error(error: &Error) -> Option<String> {
 }
 
 fn map_encoding_error(error: &Error) -> Option<String> {
-    if let Error::Json { source } = error {
+    if let Error::Json(source) = error {
         error!("Json", "JSON processing failed", source);
         return Some(format_error("JSON error", source));
     }
@@ -131,7 +131,7 @@ fn map_encoding_error(error: &Error) -> Option<String> {
 }
 
 fn map_io_error(error: &Error) -> Option<String> {
-    if let Error::IoSimple { source } = error {
+    if let Error::IoSimple(source) = error {
         let kind = source.kind();
         error!("Io", "I/O operation failed", &kind);
         return Some(format_error("I/O error", kind));

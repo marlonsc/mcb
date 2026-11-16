@@ -12,12 +12,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Error, Debug)]
 pub enum Error {
     /// I/O operation error (simple form)
-    #[error("I/O error: {source}")]
-    IoSimple {
-        /// The underlying I/O error
-        #[from]
-        source: std::io::Error,
-    },
+    #[error("I/O error: {0}")]
+    IoSimple(#[from] std::io::Error),
 
     /// I/O operation error (with context)
     #[error("I/O error: {message}")]
@@ -30,12 +26,8 @@ pub enum Error {
     },
 
     /// JSON parsing or serialization error
-    #[error("JSON parsing error: {source}")]
-    Json {
-        /// The underlying JSON error
-        #[from]
-        source: serde_json::Error,
-    },
+    #[error("JSON parsing error: {0}")]
+    Json(#[from] serde_json::Error),
 
     /// Generic error from external sources
     #[error("Generic error: {0}")]
