@@ -12,7 +12,7 @@ import pytest
 from pydantic import BaseModel
 
 from mcb_scripts.core import McbResult, McbService, configure_logging, get_logger, r, s
-from tests.python.scripts_lib._utilities.matchers import tm
+from tests.python.scripts_lib._matchers.matchers import tm
 
 if TYPE_CHECKING:
     from flext_core import p

@@ -16,7 +16,7 @@ public abstraction (``result``, ``settings``, ``logger``, ``service``).
 
 from __future__ import annotations
 
-from mcb_scripts.constants import McbScriptsConstants, c
+from mcb_scripts.constants import c
 from mcb_scripts.logger import configure_logging, get_logger
 from mcb_scripts.result import McbResult, r
 from mcb_scripts.service import McbScriptsService, McbService, s
@@ -26,7 +26,6 @@ __all__ = [
     "McbResult",
     "McbScriptsBaseCommandSettings",
     "McbScriptsBaseSettings",
-    "McbScriptsConstants",
     "McbScriptsService",
     "McbService",
     "c",

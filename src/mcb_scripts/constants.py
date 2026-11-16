@@ -12,7 +12,7 @@ from mcb_scripts._constants import (
     McbScriptsSeverity,
 )
 
-c = McbScriptsConstants()
+c = McbScriptsConstants
 
 __all__ = [
     "McbScriptsConstants",
