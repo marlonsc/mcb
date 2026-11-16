@@ -6,27 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import re
-import tempfile
-import tomllib
-from collections.abc import Mapping
 from pathlib import Path
-from types import MappingProxyType
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
-
-from flext_core import m
-
-
-def _empty_str_mapping() -> Mapping[str, str]:
-    """Return an immutable empty string mapping.
-
-    Returns:
-        The resulting ``Mapping[str, str]``.
-    """
-    return MappingProxyType({})
-
+from mcb_scripts import McbScriptsModels, u
 
 _TEST = re.compile(r"#\[\s*(?:tokio::)?test\s*\]")
 _ADR = re.compile(r"^[0-9]{3}-[a-z0-9-]+\.md$")
@@ -52,36 +35,10 @@ def _declared_dir(root: Path, value: str) -> Path:
     return directory
 
 
-class McbScriptsMetricsCategory(m.BaseModel):
-    """One declared docs-metrics code category."""
-
-    model_config = m.ConfigDict(extra="forbid")
-
-    root: str = m.Field(description="Declared source directory of the category")
-    exclude: tuple[str, ...] = m.Field(
-        default_factory=tuple[str, ...],
-        description="File stems excluded from the category",
-    )
-    labels: Mapping[str, str] = m.Field(
-        default_factory=_empty_str_mapping,
-        description="Display-label overrides keyed by file stem",
-    )
-
-
-class McbScriptsMetricsConfig(m.BaseModel):
-    """The docs-metrics configuration contract."""
-
-    model_config = m.ConfigDict(extra="forbid")
-
-    categories: Mapping[str, McbScriptsMetricsCategory] = m.Field(
-        description="Declared code categories",
-    )
-    source_root: str = m.Field(description="Rust source root")
-    adr_dir: str = m.Field(description="ADR directory")
-    module_docs_dir: str = m.Field(description="Module docs directory")
-
-
-def _category(root: Path, raw: McbScriptsMetricsCategory) -> tuple[str, ...]:
+def _category(
+    root: Path,
+    raw: McbScriptsModels.McbScripts.MetricsCategory,
+) -> tuple[str, ...]:
     """Resolve one configured code category without inventing missing sources.
 
     Returns:
@@ -96,15 +53,25 @@ def _category(root: Path, raw: McbScriptsMetricsCategory) -> tuple[str, ...]:
     return tuple(names)
 
 
-def _metrics_inputs(root: Path) -> tuple[McbScriptsMetricsConfig, Path, Path, Path]:
+def _metrics_inputs(
+    root: Path,
+) -> tuple[
+    McbScriptsModels.McbScripts.MetricsConfig,
+    Path,
+    Path,
+    Path,
+]:
     """Load the declared metrics config and resolve its directories.
 
     Returns:
         The resulting ``tuple[McbScriptsMetricsConfig, Path, Path, Path]``.
     """
     config_path = root / "config/docs-metrics.toml"
-    with config_path.open("rb") as source:
-        config = McbScriptsMetricsConfig.model_validate(tomllib.load(source))
+    config = McbScriptsModels.McbScripts.MetricsConfig.model_validate_json(
+        u.Cli.json_dumps(
+            dict(u.Cli.toml_read_json(config_path).unwrap()),
+        ).unwrap(),
+    )
     return (
         config,
         _declared_dir(root, config.source_root),
@@ -153,36 +120,12 @@ def _workspace_version(root: Path) -> str:
     Raises:
         TypeError: If Workspace version must be a nonempty string.
     """
-    with (root / "Cargo.toml").open("rb") as cargo_source:
-        cargo: dict[str, object] = tomllib.load(cargo_source)
-    workspace = cargo["workspace"]
-    if not isinstance(workspace, dict):
-        msg = "Workspace version must be a nonempty string"
-        raise TypeError(msg)
-    package = workspace.get("package")
-    if not isinstance(package, dict):
-        msg = "Workspace version must be a nonempty string"
-        raise TypeError(msg)
-    version = package.get("version")
+    cargo = u.Cli.toml_read_json(root / "Cargo.toml").unwrap()
+    version = u.Cli.json_walk_path(cargo, ("workspace", "package", "version"))
     if not isinstance(version, str) or not version:
         msg = "Workspace version must be a nonempty string"
         raise TypeError(msg)
     return version
-
-
-def _template_environment(root: Path) -> Environment:
-    """Build the strict Jinja environment for the metrics template.
-
-    Returns:
-        The resulting ``Environment``.
-    """
-    return Environment(
-        loader=FileSystemLoader(root / "docs/templates"),
-        undefined=StrictUndefined,
-        trim_blocks=True,
-        lstrip_blocks=True,
-        autoescape=True,
-    )
 
 
 def _metric_table_lines(values: tuple[tuple[str, str], ...]) -> list[str]:
@@ -213,7 +156,6 @@ def render_metrics(root: Path) -> str:
     source_files, test_files, test_count, source_lines = _rust_stats(source_root)
     version = _workspace_version(root)
 
-    template = _template_environment(root).get_template("metrics.md.j2")
     languages = _category(root, config.categories["language"])
     embeddings = _category(root, config.categories["embedding"])
     vector_stores = _category(root, config.categories["vector_store"])
@@ -232,7 +174,7 @@ def render_metrics(root: Path) -> str:
         ("Test Files", str(len(test_files))),
         ("Module Docs", str(len(tuple(module_docs_dir.glob("*.md"))))),
     )
-    content = template.render(
+    context = McbScriptsModels.McbScripts.MetricsContext(
         version=version,
         version_anchor="v" + re.sub(r"[^a-z0-9]", "", version.lower()),
         table="\n".join(_metric_table_lines(values)),
@@ -240,6 +182,10 @@ def render_metrics(root: Path) -> str:
         embedding_list="\n".join(f"- {name}" for name in embeddings),
         vector_store_list="\n".join(f"- {name}" for name in vector_stores),
     )
+    content = u.Cli.template_render(
+        root / "docs/templates/metrics.md.j2",
+        context,
+    ).unwrap()
     return content.rstrip() + "\n"
 
 
@@ -254,16 +200,5 @@ def generate_metrics(root: Path) -> tuple[Path, bool]:
     before = destination.read_text(encoding="utf-8") if destination.exists() else None
     if before == content:
         return destination, False
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        dir=destination.parent,
-        prefix=".metrics-stage-",
-    ) as staged:
-        staged.write(content)
-        staged.flush()
-        os.fsync(staged.fileno())
-        Path(staged.name).chmod(0o644)
-        Path(staged.name).replace(destination)
+    u.Cli.atomic_write_text_file(destination, content).unwrap()
     return destination, True

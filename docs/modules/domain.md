@@ -9,7 +9,7 @@
 - [Core Entities](#core-entities)
 - [Value Objects](#value-objects)
 - [Repository Interfaces](#repository-interfaces)
-- [Domain Events (events/domain_events.rs)](#domain-events-eventsdomain_eventsrs)
+- [Domain Events (events/domain\_events.rs)](#domain-events-eventsdomain_eventsrs)
 - [Port Interfaces (Domain Boundaries)](#port-interfaces-domain-boundaries)
   - [Provider Ports](#provider-ports)
   - [Repository Ports](#repository-ports)

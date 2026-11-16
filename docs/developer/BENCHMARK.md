@@ -12,8 +12,8 @@
 - [CI Analysis](#ci-analysis)
   - [Current CI Workflow Times (Run #27107872763)](#current-ci-workflow-times-run-27107872763)
   - [Projected CI Improvements](#projected-ci-improvements)
-- [Files Modified](#files-modified)
-- [Recommendations](#recommendations)
+- [Historical Measurement](#historical-measurement)
+- [Current Operation](#current-operation)
 
 <!-- TOC END -->
 
@@ -110,7 +110,11 @@ With the new configuration:
 3. **sccache on ALL jobs**: Shared compilation cache across all CI jobs.
    - **Impact: Common dependencies (tokio, serde, etc.) compiled once and reused**
 
-## Files Modified
+## Historical Measurement
+
+The following table describes the measured revision, not the current command
+contract. Local process cleanup and cache scripts have been retired. AI Hub owns
+managed process lifecycle; flext-infra owns the generated tooling interface.
 
 | File                           | Change                                                       |
 | ------------------------------ | ------------------------------------------------------------ |
@@ -123,13 +127,10 @@ With the new configuration:
 | `scripts/cache-maintenance.sh` | Safe prune of sccache + target/ build artifacts              |
 | `.cargo/config.toml`           | `SCCACHE_CACHE_SIZE=10G` bounds local disk cache             |
 | `.vscode/settings.json`        | rust-analyzer memory optimizations                           |
-| `docs/developer/SERENA.md`     | Documentation                                                |
 
-## Recommendations
+## Current Operation
 
-1. **Run `make check WHAT=optimize APPLY=Y` before starting new sessions** to kill
-   duplicate rust-analyzer / Serena processes and prevent RAM exhaustion; use
-   `make check WHAT=optimize ACT=cache APPLY=Y` to prune build caches.
-2. **Limit concurrent sessions to 2-3** on this machine (62GB RAM)
-3. **CI will now be significantly faster** on repeated runs due to sccache + rust-cache
-4. **Even failed CI runs are valuable** — they populate the cache for the next attempt
+Use the generated `make setup`, `make check`, and `make test` lifecycle.
+MCB-specific Rust operations extend that interface through `custom.mk` hooks.
+Process maintenance follows AI Hub's managed lifecycle; this repository supplies
+no alternate process killer or cache maintenance command.

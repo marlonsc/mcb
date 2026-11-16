@@ -15,7 +15,7 @@
 - [API Stability](#api-stability)
   - [Current Status](#current-status)
   - [Breaking Change Policy](#breaking-change-policy)
-  - [Updated 2026-02-20 — Corrected stale API names (run_server→run, removed ChunkingOrchestrator); added bidirectional code↔docs cross-reference block; verified against actual crate exports (v0.2.1)](#updated-2026-02-20-corrected-stale-api-names-run_serverrun-removed-chunkingorchestrator-added-bidirectional-codedocs-cross-reference-block-verified-against-actual-crate-exports-v021)
+  - [Updated 2026-02-20 — Corrected stale API names (run\_server→run, removed ChunkingOrchestrator); added bidirectional code↔docs cross-reference block; verified against actual crate exports (v0.2.1)](#updated-2026-02-20-corrected-stale-api-names-run_serverrun-removed-chunkingorchestrator-added-bidirectional-codedocs-cross-reference-block-verified-against-actual-crate-exports-v021)
 
 <!-- TOC END -->
 

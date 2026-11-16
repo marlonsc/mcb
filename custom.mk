@@ -6,10 +6,11 @@
 # lifecycle hooks and whole-verb `_custom-<verb>` overrides here — selector
 # handlers (`_custom_<verb>_<what>`) are prohibited because canonical verbs
 # are already the complete operation. The project-specific surfaces the old
-# selectors used to carry now live in the script-verb dispatch (see
-# config/workspace.yaml extra_verbs + scripts/<verb>/<what>.sh):
-#   rust(lint|unit|integration|doc|golden|test), validate(quick|full),
-#   guard(all), gitops(all), audit(all).
+# selectors used to carry now use the declared whole-verb handlers below.
+
+pre-gen:
+	@$(PROJECT_FLEXT_INFRA) codegen scaffold --repository-root "$(PROJECT_ROOT)"
+	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --what lazy-init --scope self --mode apply
 
 post-setup:
 	@# Hook installation is owned by beads (`bd hooks install`); Gas City
@@ -23,12 +24,11 @@ post-setup:
 	fi
 
 pre-check:
-	@bash scripts/lib/mcb.sh conflict-markers
 	@# Rust gate (mcb-hau9): the generated check surface owns the Python
 	@# gates only, so workspace fmt/clippy health enters here — every
 	@# `make check` (local, CI=Y and the CI=N complement) fails fast on
 	@# formatting drift or clippy warnings. The gate commands have a single
-	@# source: scripts/rust/lint.sh (also the `rust WHAT=lint` handler).
+	@# source: scripts/rust/lint.sh, also consumed by the `rust` handler.
 	@bash scripts/rust/lint.sh
 
 # The generated docs lifecycle invokes this repository's data-derived metrics
@@ -41,9 +41,16 @@ pre-docs:
 # pre-build hook.
 pre-build:
 	@if [ "$(RELEASE)" = "1" ]; then \
-		bash scripts/lib/mcb.sh run cargo build --release; \
+		cargo build --release; \
 	else \
-		bash scripts/lib/mcb.sh run cargo build; \
+		cargo build; \
 	fi
 
-	@bash scripts/lib/mcb.sh conflict-markers
+_custom-rust:
+	@bash scripts/rust/all.sh
+
+_custom-validate:
+	@bash scripts/validate/all.sh
+
+_custom-guard:
+	@bash scripts/guard/all.sh

@@ -68,14 +68,14 @@ jobs:
         run: |
           docker run --rm -e CI=Y -e GITHUB_TOKEN ci-matrix-${{ matrix.distro }} make help
           docker run --rm -e CI=Y -e GITHUB_TOKEN ci-matrix-${{ matrix.distro }} make check
-      - name: Upgrade, regenerate, and validate on Linux
+      - name: Regenerate and validate on Linux
         if: ${{ matrix.distro == 'ubuntu' }}
         run: >-
           docker run --rm
           -e CI=Y
           -e GITHUB_TOKEN
           ci-matrix-ubuntu
-          bash -ec 'make upg && make setup && make gen && make gen && make check && make test && make build'
+          bash -ec 'make setup && make gen && make gen && make check && make test && make build'
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
@@ -92,12 +92,100 @@ jobs:
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
+      - name: Install the mise release declared by mise.lock or .mise.toml
+        shell: bash
+        run: |
+          set -eu
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64) mise_platform=linux-x64; mise_suffix=tar.gz ;;
+            Linux-ARM64) mise_platform=linux-arm64; mise_suffix=tar.gz ;;
+            macOS-X64) mise_platform=macos-x64; mise_suffix=tar.gz ;;
+            macOS-ARM64) mise_platform=macos-arm64; mise_suffix=tar.gz ;;
+            Windows-X64) mise_platform=windows-x64; mise_suffix=zip ;;
+            *) echo "ERROR: no mise release platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
+          esac
+          mise_lock_usable=0
+          if [ -f mise.lock ] && ! grep -qE '^(<<<<<<< |=======$|>>>>>>> )' mise.lock; then
+            mise_lock_usable=1
+          fi
+          mise_field() {
+            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
+              $0 == section { inside = 1; next }
+              inside && substr($0, 1, 1) == "[" { exit }
+              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
+            ' mise.lock
+          }
+          mise_pin=
+          mise_url=
+          mise_checksum=
+          if [ "${mise_lock_usable}" = 1 ]; then
+            mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+            mise_url="$(mise_field url)"
+            mise_checksum="$(mise_field checksum)"
+          fi
+          case "${mise_url}|${mise_checksum}" in
+            https://github.com/jdx/mise/releases/download/*\|sha256:*) ;;
+            *) mise_pin= ;;
+          esac
+          mise_stage="${RUNNER_TEMP}/mise-install"
+          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
+          if [ -n "${mise_pin}" ]; then
+            mise_release="${mise_pin}"
+            mise_archive="${mise_stage}/${mise_url##*/}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
+            mise_sha256="${mise_checksum#sha256:}"
+          else
+            mise_release="$(awk -F'"' '$2 == "github:jdx/mise" { print $4; exit }' .mise.toml)"
+            if [ -z "${mise_release}" ]; then
+              echo "ERROR: .mise.toml declares no github:jdx/mise release" >&2
+              exit 2
+            fi
+            mise_asset="mise-v${mise_release}-${mise_platform}.${mise_suffix}"
+            mise_base="https://github.com/jdx/mise/releases/download/v${mise_release}"
+            mise_archive="${mise_stage}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_base}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_stage}/SHASUMS256.txt" "${mise_base}/SHASUMS256.txt"
+            mise_sha256="$(awk -v asset="${mise_asset}" '$2 == asset || $2 == "./" asset { print $1; exit }' "${mise_stage}/SHASUMS256.txt")"
+            if [ -z "${mise_sha256}" ]; then
+              echo "ERROR: SHASUMS256.txt of mise v${mise_release} lists no ${mise_asset}" >&2
+              exit 2
+            fi
+          fi
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
+          else
+            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
+          fi
+          case "${mise_archive}" in
+            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
+            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
+          esac
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
+          else
+            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
+          fi
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          if [ "${mise_lock_usable}" = 0 ]; then
+            # An unreadable lock is never read: no parse warning, no failure.
+            export MISE_LOCKFILE=false
+          fi
+          if [ -n "${mise_pin}" ]; then
+            "${HOME}/.local/bin/mise" install --locked github:jdx/mise
+          else
+            MISE_LOCKFILE=false "${HOME}/.local/bin/mise" install github:jdx/mise
+          fi
+          mise_path="$("${HOME}/.local/bin/mise" which mise)"
+          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
+          if [ "${mise_receipt}" != "${mise_release}" ]; then
+            printf 'ERROR: provisioned Mise %s differs from the declared release %s\n' "${mise_receipt}" "${mise_release}" >&2
+            exit 2
+          fi
+          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
+
       - name: Bootstrap
         run: CI=Y make setup
-      - name: Upgrade and frozen bootstrap
-        run: |
-          CI=Y make upg
-          CI=Y make setup
       - name: Generate twice
         run: |
           CI=Y make gen
@@ -123,14 +211,101 @@ jobs:
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
+      - name: Install the mise release declared by mise.lock or .mise.toml
+        shell: bash
+        run: |
+          set -eu
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64) mise_platform=linux-x64; mise_suffix=tar.gz ;;
+            Linux-ARM64) mise_platform=linux-arm64; mise_suffix=tar.gz ;;
+            macOS-X64) mise_platform=macos-x64; mise_suffix=tar.gz ;;
+            macOS-ARM64) mise_platform=macos-arm64; mise_suffix=tar.gz ;;
+            Windows-X64) mise_platform=windows-x64; mise_suffix=zip ;;
+            *) echo "ERROR: no mise release platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
+          esac
+          mise_lock_usable=0
+          if [ -f mise.lock ] && ! grep -qE '^(<<<<<<< |=======$|>>>>>>> )' mise.lock; then
+            mise_lock_usable=1
+          fi
+          mise_field() {
+            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
+              $0 == section { inside = 1; next }
+              inside && substr($0, 1, 1) == "[" { exit }
+              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
+            ' mise.lock
+          }
+          mise_pin=
+          mise_url=
+          mise_checksum=
+          if [ "${mise_lock_usable}" = 1 ]; then
+            mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+            mise_url="$(mise_field url)"
+            mise_checksum="$(mise_field checksum)"
+          fi
+          case "${mise_url}|${mise_checksum}" in
+            https://github.com/jdx/mise/releases/download/*\|sha256:*) ;;
+            *) mise_pin= ;;
+          esac
+          mise_stage="${RUNNER_TEMP}/mise-install"
+          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
+          if [ -n "${mise_pin}" ]; then
+            mise_release="${mise_pin}"
+            mise_archive="${mise_stage}/${mise_url##*/}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
+            mise_sha256="${mise_checksum#sha256:}"
+          else
+            mise_release="$(awk -F'"' '$2 == "github:jdx/mise" { print $4; exit }' .mise.toml)"
+            if [ -z "${mise_release}" ]; then
+              echo "ERROR: .mise.toml declares no github:jdx/mise release" >&2
+              exit 2
+            fi
+            mise_asset="mise-v${mise_release}-${mise_platform}.${mise_suffix}"
+            mise_base="https://github.com/jdx/mise/releases/download/v${mise_release}"
+            mise_archive="${mise_stage}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_base}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_stage}/SHASUMS256.txt" "${mise_base}/SHASUMS256.txt"
+            mise_sha256="$(awk -v asset="${mise_asset}" '$2 == asset || $2 == "./" asset { print $1; exit }' "${mise_stage}/SHASUMS256.txt")"
+            if [ -z "${mise_sha256}" ]; then
+              echo "ERROR: SHASUMS256.txt of mise v${mise_release} lists no ${mise_asset}" >&2
+              exit 2
+            fi
+          fi
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
+          else
+            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
+          fi
+          case "${mise_archive}" in
+            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
+            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
+          esac
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
+          else
+            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
+          fi
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          if [ "${mise_lock_usable}" = 0 ]; then
+            # An unreadable lock is never read: no parse warning, no failure.
+            export MISE_LOCKFILE=false
+          fi
+          if [ -n "${mise_pin}" ]; then
+            "${HOME}/.local/bin/mise" install --locked github:jdx/mise
+          else
+            MISE_LOCKFILE=false "${HOME}/.local/bin/mise" install github:jdx/mise
+          fi
+          mise_path="$("${HOME}/.local/bin/mise" which mise)"
+          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
+          if [ "${mise_receipt}" != "${mise_release}" ]; then
+            printf 'ERROR: provisioned Mise %s differs from the declared release %s\n' "${mise_receipt}" "${mise_release}" >&2
+            exit 2
+          fi
+          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
+
       - name: Bootstrap
         shell: bash
         run: CI=Y make setup
-      - name: Upgrade and frozen bootstrap
-        shell: bash
-        run: |
-          CI=Y make upg
-          CI=Y make setup
       - name: Generate twice
         shell: bash
         run: |

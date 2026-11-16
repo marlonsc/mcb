@@ -27,9 +27,8 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `McbScriptsBaseCommandSettings`, `McbScriptsBaseSettings`,
-  `McbScriptsConstants`, `McbScriptsQltyCategory`, `McbScriptsService`,
-  `McbScriptsSettings` (+1 more)
-- Generated module pages: `9`
+- Primary facades: `McbScriptsConstants`, `McbScriptsModels`, `McbScriptsProtocols`,
+  `McbScriptsTypes`, `McbScriptsUtilities`
+- Generated module pages: `6`
 
 Back to [project docs](../index.md).

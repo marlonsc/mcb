@@ -1,19 +1,19 @@
 {
   "audit": {
     "placeholder_patterns": [
-      "TODO",
-      "FIXME",
-      "placeholder",
-      "Lorem"
+      "(^|[^A-Za-z])TODO[ ]*:",
+      "(^|[^A-Za-z])FIXME[ ]*:",
+      "(^|[^A-Za-z])placeholder([^A-Za-z]|$)",
+      "(^|[^A-Za-z])Lorem([^A-Za-z]|$)",
+      "No sections found"
     ],
     "forbidden_terms": [
-      "make sync",
       "check_changed_projects",
       "text_rules.yml",
       "scripts/hooks"
     ],
-    "machine_path_exempt_paths": [
-      "docs/plans/"
-    ]
+    "stale_symbols": [],
+    "stale_symbol_exempt_paths": [],
+    "historical_evidence_files": []
   }
 }

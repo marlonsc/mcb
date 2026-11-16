@@ -1,6 +1,6 @@
 # Handwritten topology SSOT consumed by `flext-infra codegen conform`.
 # conform never overwrites this input. Declare members/exclusions here, then
-# run `make gen WHAT=apply APPLY=Y`.
+# run `make gen`.
 version: 3
 name: mcb
 # Why (mro-5j8p): short issue-prefix (bd max 20 chars) + Dolt-safe ledger_id.
@@ -23,20 +23,14 @@ repository:
   # package must be installed into the runtime venv, not merely present on disk.
   editable: true
   read_only: false
-  # mcb owns two Python roots: the library at src/mcb_scripts/ and the command
-  # tree at scripts/<verb>/<what>, executed by scripts/dispatch.py. Declaring
-  # the dispatch seam is what makes the generated Makefile append
-  # $(PROJECT_ROOT)/scripts to RUFF_PATHS/MYPY_PATHS, so the official ruff and
-  # mypy gates reach the command tree instead of only the library.
-  script_dispatch:
-    dispatcher: scripts/dispatch.py
-    roots:
-      - scripts
-  # Project-owned public verbs are DISCOVERED from scripts/<verb>/all.sh (the
-  # filesystem is the SSOT; no manual verb list is declared here). Surfaces:
-  #   rust(all|lint|unit|integration|doc|golden|test), validate(quick|full),
-  #   guard(all), gitops(all). The old `audit` selector is covered by the
-  # canonical `audit` verb at this generator revision.
+  # Only domain operations extend the generated, selector-free Make interface.
+  extra_verbs:
+    - name: rust
+      description: Run the complete Rust lint and test lifecycle.
+    - name: validate
+      description: Run the MCB product structural validator.
+    - name: guard
+      description: Validate declared MCB Rust source rules.
 project:
   package_name: "mcb_scripts"
   class_stem: "McbScripts"
@@ -50,6 +44,8 @@ project:
   author_name: "Marlon Costa"
   author_email: "marlonsc@gmail.com"
   upstream: "flext_cli"
+  runtime_dependency_overlay:
+    - flext-cli
   homepage: "https://github.com/marlonsc/mcb"
   documentation: "https://github.com/marlonsc/mcb"
   repository_root_rel: "."

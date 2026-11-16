@@ -11,12 +11,14 @@ from pathlib import Path
 import pytest
 
 from mcb_scripts.docs.adr import create_adr
-from mcb_scripts.docs.utils import get_project_root
 
 
-def test_create_adr_renders_and_publishes_exclusively(tmp_path: Path) -> None:
+def test_create_adr_renders_and_publishes_exclusively(
+    tmp_path: Path,
+    pytestconfig: pytest.Config,
+) -> None:
     """Sequential records use the template and never overwrite existing output."""
-    template = get_project_root() / "docs/templates/adr-template.md"
+    template = pytestconfig.rootpath / "docs/templates/adr-template.md"
     target_template = tmp_path / "docs/templates/adr-template.md"
     target_template.parent.mkdir(parents=True)
     target_template.write_bytes(template.read_bytes())

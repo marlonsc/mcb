@@ -4,16 +4,8 @@
 # leaving the make surface.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-if cargo nextest --version >/dev/null 2>&1; then
-	if [ -n "${MATCH:-}" ]; then
-		bash scripts/lib/mcb.sh run cargo nextest run --workspace -E "$MATCH"
-	else
-		bash scripts/lib/mcb.sh run cargo nextest run --workspace
-	fi
+if [ -n "${MATCH:-}" ]; then
+	cargo test --workspace --all-targets "$MATCH"
 else
-	if [ -n "${MATCH:-}" ]; then
-		bash scripts/lib/mcb.sh run cargo test --workspace --all-targets "$MATCH"
-	else
-		bash scripts/lib/mcb.sh run cargo test --workspace --all-targets
-	fi
+	cargo test --workspace --all-targets
 fi

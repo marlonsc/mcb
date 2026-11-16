@@ -18,16 +18,13 @@
   Python Modules, Typing :: Typed
 - Project class: `domain`
 - Keywords: `clean-architecture`, `flext`, `integration`, `typed`
-- Main facades: `McbScriptsBaseCommandSettings`, `McbScriptsBaseSettings`,
-  `McbScriptsConstants`, `McbScriptsQltyCategory`, `McbScriptsService`,
-  `McbScriptsSettings`, `McbScriptsSeverity`
-- Alias exports: `c`, `r`, `s`
-- Public symbol exports: `McbResult`, `McbScriptsBaseCommandSettings`,
-  `McbScriptsBaseSettings`, `McbScriptsConstants`, `McbScriptsQltyCategory`,
-  `McbScriptsService`, `McbScriptsSettings`, `McbScriptsSeverity`, `McbService`,
-  `configure_logging` (+1 more)
-- Exported module shortcuts: `docs`, `qlty`
-- Generated module pages: `9`
+- Main facades: `McbScriptsConstants`, `McbScriptsModels`, `McbScriptsProtocols`,
+  `McbScriptsTypes`, `McbScriptsUtilities`
+- Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
+- Public symbol exports: `McbScriptsConstants`, `McbScriptsModels`,
+  `McbScriptsProtocols`, `McbScriptsTypes`, `McbScriptsUtilities`
+- Exported module shortcuts: `docs`
+- Generated module pages: `6`
 
 ## Next Pages
 

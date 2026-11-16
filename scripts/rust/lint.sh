@@ -4,5 +4,5 @@
 # script; the commands are declared here and nowhere else.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-bash scripts/lib/mcb.sh run cargo fmt --all -- --check
-bash scripts/lib/mcb.sh run cargo clippy --all-targets -- -D warnings
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings

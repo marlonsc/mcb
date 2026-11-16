@@ -2,23 +2,42 @@
 repos:
   - repo: local
     hooks:
-    # Why: each make verb is its own pre-commit/pre-push hook so the developer
-    # sees per-step status (Passed/Failed) natively via the pre-commit runner.
-    # Every step owns its CI context instead of inheriting the caller's token.
-    # pre-commit is the fast mutation pass and runs the fast check partition
-    # (CI=Y), derived from the gate registry kind: only
-    # external gates, never type checkers or flext-infra validators.
-    # pre-push check unsets CI to run
-    # every active gate; its other verbs retain CI=N.
-    # Pytest deselects tooling.tools.pytest.ci_excluded_markers
-    # only with CI=Y, shared by CI and pre-commit. Local and
-    # pre-push runs retain those tests; deselection is recorded in test reports.
-    # Every hook step owns a shell because Git exports repository-local state,
-    # including GIT_INDEX_FILE during pre-commit. A member hook that delegates
-    # setup to its repository root must clear those variables first or the root
-    # reads the member's temporary index and reports governed gitlinks missing.
-    # Inherited Make flags are cleared in the same prefix so each hook step
-    # executes its independently declared operation.
-    # Stage gates: each stage renders only when its
-    # config gate (make.pre_commit / make.pre_push) is enabled. Disabled by
-    # default; re-enable case by case in config/codegen.yaml.
+    # pre-commit: the fast external gates only (make pre-commit); pre-push:
+    # every pre_push workflow row. CI runs the ci workflow rows itself.
+      - id: flext-pre-commit
+        name: make pre-commit
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); CI=Y make pre-commit'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+
+      - id: flext-pre-push-check
+        name: make check
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS ; unset CI; make check'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-test
+        name: make test
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS ; CI=N make test'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-verify-clean
+        name: make verify-clean
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS ; CI=N make verify-clean'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+

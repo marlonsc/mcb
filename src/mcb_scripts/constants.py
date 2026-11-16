@@ -1,22 +1,23 @@
-"""MCB Python tooling constants facade (re-exports the _constants SSOT).
+"""Constants for mcbscripts.
 
-Copyright (c) 2025 MCB Contributors. All rights reserved.
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+src/mcb_scripts/constants
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from mcb_scripts._constants import (
-    McbScriptsConstants,
-    McbScriptsQltyCategory,
-    McbScriptsSeverity,
-)
+from flext_cli import FlextCliConstants
 
-c = McbScriptsConstants()
 
-__all__ = [
-    "McbScriptsConstants",
-    "McbScriptsQltyCategory",
-    "McbScriptsSeverity",
-    "c",
-]
+
+class McbScriptsConstants(FlextCliConstants):
+    """Constants for mcbscripts."""
+
+    class McbScripts:
+        """MCB constant namespace consumed by scaffolded test facades."""
+
+
+c = McbScriptsConstants
+
+__all__: list[str] = ["McbScriptsConstants", "c"]

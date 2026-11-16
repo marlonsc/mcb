@@ -5,3 +5,4 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 bash rust/lint.sh
 bash rust/test.sh
+cargo test --workspace --doc

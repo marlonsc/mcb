@@ -15,7 +15,7 @@
   - [Usage Example](#usage-example)
 - [Event Bus Configuration](#event-bus-configuration)
   - [Event Bus Backend Selection](#event-bus-backend-selection)
-  - [NATS Configuration (when MCP_EVENT_BUS_TYPE=nats)](#nats-configuration-when-mcp_event_bus_typenats)
+  - [NATS Configuration (when MCP\_EVENT\_BUS\_TYPE=nats)](#nats-configuration-when-mcp_event_bus_typenats)
   - [Usage](#usage_1)
 - [Authentication Configuration](#authentication-configuration)
   - [JWT and Auth Settings](#jwt-and-auth-settings)

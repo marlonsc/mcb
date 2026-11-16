@@ -1,0 +1,13 @@
+id: rust-fallible-boundaries
+language: Rust
+severity: error
+message: Propagate fallible operations through the domain result contract.
+files:
+  - crates/**/src/**/*.rs
+rule:
+  any:
+    - pattern: $VALUE.unwrap()
+    - pattern: $VALUE.expect($$$ARGS)
+    - pattern: panic!($$$ARGS)
+    - pattern: todo!($$$ARGS)
+    - pattern: unimplemented!($$$ARGS)

@@ -10,74 +10,60 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from mcb_scripts import docs, qlty
-    from mcb_scripts.constants import (
-        McbScriptsConstants,
-        McbScriptsQltyCategory,
-        McbScriptsSeverity,
-        c,
-    )
-    from mcb_scripts.core import (
-        McbScriptsBaseCommandSettings,
-        McbScriptsBaseSettings,
-        McbService,
-        configure_logging,
-        get_logger,
-        r,
-    )
-    from mcb_scripts.result import McbResult
-    from mcb_scripts.service import McbScriptsService, s
-    from mcb_scripts.settings import McbScriptsSettings
+    from flext_cli import d, e, h, r, s, x
+
+    from mcb_scripts import docs
+    from mcb_scripts.constants import McbScriptsConstants, c
+    from mcb_scripts.models import McbScriptsModels, m
+    from mcb_scripts.protocols import McbScriptsProtocols, p
+    from mcb_scripts.typings import McbScriptsTypes, t
+    from mcb_scripts.utilities import McbScriptsUtilities, u
 
 
 __all__: tuple[str, ...] = (
-    "McbResult",
-    "McbScriptsBaseCommandSettings",
-    "McbScriptsBaseSettings",
     "McbScriptsConstants",
-    "McbScriptsQltyCategory",
-    "McbScriptsService",
-    "McbScriptsSettings",
-    "McbScriptsSeverity",
-    "McbService",
+    "McbScriptsModels",
+    "McbScriptsProtocols",
+    "McbScriptsTypes",
+    "McbScriptsUtilities",
     "c",
-    "configure_logging",
+    "d",
     "docs",
-    "get_logger",
-    "qlty",
+    "e",
+    "h",
+    "m",
+    "p",
     "r",
     "s",
+    "t",
+    "u",
+    "x",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".constants": (
-                "McbScriptsConstants",
-                "McbScriptsQltyCategory",
-                "McbScriptsSeverity",
-                "c",
-            ),
-            ".core": (
-                "McbScriptsBaseCommandSettings",
-                "McbScriptsBaseSettings",
-                "McbService",
-                "configure_logging",
-                "get_logger",
-                "r",
-            ),
-            ".docs": ("docs",),
-            ".qlty": ("qlty",),
-            ".result": ("McbResult",),
-            ".service": ("McbScriptsService", "s"),
-            ".settings": ("McbScriptsSettings",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "McbScriptsConstants": ".constants",
+        "McbScriptsModels": ".models",
+        "McbScriptsProtocols": ".protocols",
+        "McbScriptsTypes": ".typings",
+        "McbScriptsUtilities": ".utilities",
+        "c": ".constants",
+        "d": "flext_cli",
+        "docs": ".docs",
+        "e": "flext_cli",
+        "h": "flext_cli",
+        "m": ".models",
+        "p": ".protocols",
+        "r": "flext_cli",
+        "s": "flext_cli",
+        "t": ".typings",
+        "u": ".utilities",
+        "x": "flext_cli",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

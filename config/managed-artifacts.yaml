@@ -1,16 +1,16 @@
-# Project-owned managed-artifact additions consumed by
-# `flext_infra.deps.phases.ensure_ruff` (`_project_per_file_ignores`).
+# Project-owned managed-artifact additions loaded as one typed configuration
+# snapshot by flext-infra and injected into generation and dependency phases.
 #
 # Why this file exists: conform owns `[tool.ruff.lint.per-file-ignores]` in
 # pyproject.toml and deletes every pattern absent from the composed canonical
 # set, so an entry written straight into pyproject.toml is removed on the next
-# `make gen`. This is the sanctioned extension surface; the generator unions
-# these rules with global policy.
+# `make gen`. The generator composes these rules with shared policy without
+# publishing MCB-specific exemptions to other repositories.
 #
 # Why `scripts/**`: this tree holds repository-local automation helpers, not
-# shipped library code. Its CLI entrypoints print to stdout, drive subprocesses,
-# and use `os.path`; the `sys.path` bootstrap they need forces module-level
-# imports to follow executable code.
+# shipped library code. Its CLI entrypoints print to stdout and use `os.path`;
+# the `sys.path` bootstrap they need forces module-level imports to follow
+# executable code. Child processes still use the public process owner.
 #
 # Why `Gitignore.patterns`: `.gitignore` is a generated projection and the
 # generator renders project-owned rules only from this surface (the
@@ -18,6 +18,12 @@
 # config and session residue into develop as if they were source; PR #201
 # removed them and declared these rules as the barrier against a repeat.
 ManagedArtifacts:
+  Ruff:
+    per_file_ignores:
+      # MCB repository automation only; keep subprocess execution governed by
+      # the public process owner. These additions do not reach other projects.
+      scripts/**: [any-type, unused-function-argument, undocumented-public-class, undocumented-public-method, undocumented-public-function, undocumented-public-init, unnecessary-multiline-docstring, blank-line-after-function, missing-blank-line-after-summary, multi-line-summary-first-line, raw-string-in-exception, f-string-in-exception, commented-out-code, shebang-not-executable, boolean-type-hint-positional-argument, boolean-default-value-positional-argument, read-whole-file, write-whole-file, if-exp-instead-of-or-operator, repeated-append, logging-string-concat, non-lowercase-variable-in-function, invalid-module-name, manual-list-comprehension, manual-list-copy, multiple-starts-ends-with, missing-maxsplit-arg, import-private-name, magic-value-comparison, literal-membership, unspecified-encoding, os-path-abspath, os-path-exists, os-path-join, os-path-dirname, builtin-open, path-constructor-current-directory, avoidable-escaped-quote, unsorted-dunder-all, used-dummy-variable, unused-noqa, noqa-comments, print, runtime-cast-value, banned-api, relative-imports, raise-vanilla-args, error-instead-of-exception, verbose-raise]
+      "**/tests/python/**": [raise-vanilla-args]
   Gitignore:
     patterns:
       # Recovery archive written by the archive-not-delete rule. It preserves

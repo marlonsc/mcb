@@ -12,8 +12,8 @@ FROM alpine:3.21
 # The seed is the whole host contract: curl fetches mise, git is what uv shells
 # out to for the flext-infra git+https requirement (uv embeds no git of its
 # own), and make invokes the verbs. bash is for the project scripts.
-# libstdc++ is musl-specific: node and bun link against libstdc++.so.6 at
-# runtime, so on Alpine they install cleanly and then fail with "Error loading
+# libstdc++ is musl-specific: node links against libstdc++.so.6 at
+# runtime, so on Alpine it installs cleanly and then fails with "Error loading
 # shared library". Glibc images ship it in the base system.
 RUN apk add --no-cache \
       bash build-base ca-certificates curl git make libstdc++ \
@@ -21,27 +21,25 @@ RUN apk add --no-cache \
     && adduser -S -G runner runner
 # End SECTION: base packages
 
-# === SECTION: managed tool bootstrap (managed) ===
-# Source: generated bin/mise + .mise.toml
-# The canonical make setup verb below owns the committed Mise bootstrap
-# and the frozen installation of every tool the committed mise.lock pins, as
-# the same unprivileged runtime user.
-# The setup RUN receives GitHub's credential only through a BuildKit secret.
-# Never persist build credentials in ARG, ENV, layers, or image configuration.
+# === SECTION: native mise bootstrap (managed) ===
+# Source: template (clean-machine native mise provisioning)
+# mise self-manages: the host installer only provides one mise binary, and
+# `make setup` provisions the pinned github:jdx/mise release plus every tool
+# from the committed mise.lock as the same unprivileged runtime user.
 ARG RUNNER_USER=runner
 ENV HOME=/home/${RUNNER_USER}
 ENV XDG_DATA_HOME=${HOME}/.local/share \
     XDG_CACHE_HOME=${HOME}/.cache \
-    XDG_STATE_HOME=${HOME}/.local/state \
-    MISE_DATA_DIR=${HOME}/.local/share/mise
+    XDG_STATE_HOME=${HOME}/.local/state
+RUN curl -fsSL https://mise.run | sh
+ENV PATH="${XDG_DATA_HOME}/mise/shims:${HOME}/.local/bin:${PATH}"
 WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
     && chown -R runner:runner /workspace
 COPY --from=git --chown=runner:runner . /workspace/.git/
 USER runner
-ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
-# End SECTION: managed tool bootstrap
+# End SECTION: native mise bootstrap
 
 # === SECTION: bootstrap proof (managed) ===
 # Source: template (clean-machine bootstrap through the canonical verb)
@@ -51,6 +49,8 @@ ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
 # revision wrapped this in `set +e` and soft-passed whenever the output
 # mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
 # broken bootstrap still produced a green image.
+# The setup RUN receives GitHub's credential only through a BuildKit secret.
+# Never persist build credentials in ARG, ENV, layers, or image configuration.
 ENV CI=Y
 RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN,required=true \
     make setup

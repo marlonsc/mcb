@@ -9,5 +9,6 @@
 a new numbered ADR. Its title and status are validated, and publication never replaces
 an existing record. Use `--dry-run` to see the destination.
 
-The remaining shell scripts under this directory support project-specific validation and
-diagram tasks. They do not own metrics or ADR generation.
+Generic documentation checks are supplied by flext-infra through `make docs`.
+This repository retains only its own ADR template, Rust metrics, and domain
+documentation rendering. It provides no parallel Markdown scanner or validator.

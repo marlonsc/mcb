@@ -11,7 +11,7 @@
 - [Minimal working example](#minimal-working-example)
   - [A) HTTP request with custom provenance headers](#a-http-request-with-custom-provenance-headers)
   - [B) rmcp handler access via Extensions](#b-rmcp-handler-access-via-extensions)
-  - [C) Applying this to MCB build_execution_context()](#c-applying-this-to-mcb-build_execution_context)
+  - [C) Applying this to MCB build\_execution\_context()](#c-applying-this-to-mcb-build_execution_context)
 - [Notes and caveats](#notes-and-caveats)
 
 <!-- TOC END -->

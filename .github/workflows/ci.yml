@@ -12,6 +12,7 @@ name: CI
 # workflow_call changes no direct-run behavior and declares the optional
 # cross-repo dependency-credential secret contract in workflow scope.
 "on":
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -60,71 +61,13 @@ jobs:
     timeout-minutes: 60
     env:
       CI: Y
-      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           submodules: false
+          persist-credentials: false
           fetch-depth: 0
-      # Cross-repo private git dependencies: the workflow token is scoped to
-      # this repository only, so it cannot clone siblings that turn private.
-      # Every declared sibling is public today and resolves anonymously; the
-      # credential exists for the private-sibling scenario. When the org
-      # installs its cross-repo dependency GitHub App and exposes
-      # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
-      # short-lived installation token and scope it to github.com clones.
-      # Absent secrets make this step a recorded NOT EXECUTED while the
-      # repository has not declared the credential requirement; a repository
-      # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
-      # job non-zero with a typed message and without exposing any secret
-      # value (absence normalized as success is a defect).
-      - name: Mint cross-repo dependency credential
-        env:
-          CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
-          CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
-          CI_DEPS_REQUIRED: '0'
-        run: |
-          set -euo pipefail
-          if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
-            case "$CI_DEPS_REQUIRED" in
-              1 | true | TRUE | True | yes | YES | Yes)
-                echo "ERROR[CI_CREDENTIAL_REQUIRED]: CI_DEPENDENCIES_APP_ID/CI_DEPENDENCIES_APP_PRIVATE_KEY are declared required by this repository and are absent or empty" >&2
-                exit 1
-                ;;
-              *)
-                echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
-                exit 0
-                ;;
-            esac
-          fi
-          identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
-          install -d -m 700 "$identity_root"
-          key_path="$identity_root/app-key.pem"
-          printf '%s\n' "$CI_DEPS_APP_KEY" > "$key_path.new"
-          chmod 600 "$key_path.new"
-          mv "$key_path.new" "$key_path"
-          b64url() {
-            openssl base64 -A | tr '+/' '-_' | tr -d '='
-          }
-          now=$(date +%s)
-          header='{"alg":"RS256","typ":"JWT"}'
-          payload=$(printf '{"iat":%s,"exp":%s,"iss":"%s"}' "$((now - 60))" "$((now + 540))" "$CI_DEPS_APP_ID")
-          input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
-          signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
-          jwt="$input.$signature"
-          # Credential mint without curl-pipe-to-shell (semgrep gha-curl-pipe-shell):
-          # responses land in a temp file and are parsed from disk, never piped.
-          response_file="$identity_root/github-api-response.json"
-          curl -sfS -X GET -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" https://api.github.com/app/installations
-          installation_id=$(python3 -c 'import json, sys; entries = json.load(open(sys.argv[1])); assert len(entries) == 1, f"expected exactly one app installation, got {len(entries)}"; print(entries[0]["id"])' "$response_file")
-          curl -sfS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" "https://api.github.com/app/installations/$installation_id/access_tokens"
-          access_token=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["token"])' "$response_file")
-          rm -f "$response_file"
-          echo "::add-mask::$access_token"
-          git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
-          rm -f "$key_path"
-
       # Why: GitHub runners expose umask 002, so git checkout materializes
       # group-writable modes (0664) for tracked files. Canonical Mise
       # artifacts demand exact modes (0o644) and the conform gate fails loud
@@ -140,6 +83,10 @@ jobs:
       # Why: the same pair keeps the locked Mise tool storage, so
       # a cold runner never re-downloads the pinned tarballs, where a network
       # blip failed setup.
+      # Why: the cache keeps Mise's installs and downloads but never its shims.
+      # A restored shim points at the Mise binary of an earlier run, which Mise
+      # treats as unmanaged ("not replacing unmanaged file in shims directory",
+      # one warning per tool); Mise regenerates the shims from mise.lock.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -154,6 +101,7 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-3.13-tools-
@@ -169,55 +117,146 @@ jobs:
       # and selects the whole suite. Restore the newest database of any earlier
       # run: testmon revalidates every recorded file by checksum, so a restored
       # database never hides a changed dependency of a selected test.
+      - name: Resolve project testmon database
+        id: testmon_path
+        run: |
+          set -eu
+          cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}"
+          database="$(realpath -m "$cache_home/flext/infra/testmon/mcb-scripts/.testmondata")"
+          case "$database" in /*) ;; *) exit 2 ;; esac
+          printf 'database=%s\n' "$database" >> "$GITHUB_OUTPUT"
       - name: Restore testmon database
         uses: actions/cache/restore@v6
         with:
-          path: ~/.cache/flext/infra/testmon
-          key: ${{ runner.os }}-3.13-flext-testmon-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.testmon_path.outputs.database }}
+          key: ${{ runner.os }}-3.13-flext-testmon-mcb-scripts-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ${{ runner.os }}-3.13-flext-testmon-
+            ${{ runner.os }}-3.13-flext-testmon-mcb-scripts-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
 
-      - name: setup (blocking)
-        # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+      - name: Install the mise release declared by mise.lock or .mise.toml
+        shell: bash
+        run: |
+          set -eu
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64) mise_platform=linux-x64; mise_suffix=tar.gz ;;
+            Linux-ARM64) mise_platform=linux-arm64; mise_suffix=tar.gz ;;
+            macOS-X64) mise_platform=macos-x64; mise_suffix=tar.gz ;;
+            macOS-ARM64) mise_platform=macos-arm64; mise_suffix=tar.gz ;;
+            Windows-X64) mise_platform=windows-x64; mise_suffix=zip ;;
+            *) echo "ERROR: no mise release platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
+          esac
+          mise_lock_usable=0
+          if [ -f mise.lock ] && ! grep -qE '^(<<<<<<< |=======$|>>>>>>> )' mise.lock; then
+            mise_lock_usable=1
+          fi
+          mise_field() {
+            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
+              $0 == section { inside = 1; next }
+              inside && substr($0, 1, 1) == "[" { exit }
+              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
+            ' mise.lock
+          }
+          mise_pin=
+          mise_url=
+          mise_checksum=
+          if [ "${mise_lock_usable}" = 1 ]; then
+            mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+            mise_url="$(mise_field url)"
+            mise_checksum="$(mise_field checksum)"
+          fi
+          case "${mise_url}|${mise_checksum}" in
+            https://github.com/jdx/mise/releases/download/*\|sha256:*) ;;
+            *) mise_pin= ;;
+          esac
+          mise_stage="${RUNNER_TEMP}/mise-install"
+          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
+          if [ -n "${mise_pin}" ]; then
+            mise_release="${mise_pin}"
+            mise_archive="${mise_stage}/${mise_url##*/}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
+            mise_sha256="${mise_checksum#sha256:}"
+          else
+            mise_release="$(awk -F'"' '$2 == "github:jdx/mise" { print $4; exit }' .mise.toml)"
+            if [ -z "${mise_release}" ]; then
+              echo "ERROR: .mise.toml declares no github:jdx/mise release" >&2
+              exit 2
+            fi
+            mise_asset="mise-v${mise_release}-${mise_platform}.${mise_suffix}"
+            mise_base="https://github.com/jdx/mise/releases/download/v${mise_release}"
+            mise_archive="${mise_stage}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_base}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_stage}/SHASUMS256.txt" "${mise_base}/SHASUMS256.txt"
+            mise_sha256="$(awk -v asset="${mise_asset}" '$2 == asset || $2 == "./" asset { print $1; exit }' "${mise_stage}/SHASUMS256.txt")"
+            if [ -z "${mise_sha256}" ]; then
+              echo "ERROR: SHASUMS256.txt of mise v${mise_release} lists no ${mise_asset}" >&2
+              exit 2
+            fi
+          fi
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
+          else
+            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
+          fi
+          case "${mise_archive}" in
+            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
+            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
+          esac
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
+          else
+            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
+          fi
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          if [ "${mise_lock_usable}" = 0 ]; then
+            # An unreadable lock is never read: no parse warning, no failure.
+            export MISE_LOCKFILE=false
+          fi
+          if [ -n "${mise_pin}" ]; then
+            "${HOME}/.local/bin/mise" install --locked github:jdx/mise
+          else
+            MISE_LOCKFILE=false "${HOME}/.local/bin/mise" install github:jdx/mise
+          fi
+          mise_path="$("${HOME}/.local/bin/mise" which mise)"
+          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
+          if [ "${mise_receipt}" != "${mise_release}" ]; then
+            printf 'ERROR: provisioned Mise %s differs from the declared release %s\n' "${mise_receipt}" "${mise_release}" >&2
+            exit 2
+          fi
+          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
+
+      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      - name: make setup (blocking)
+        id: approval-setup
         run: CI=Y make setup
-      - name: gen fixed point (blocking)
-        # Why (docs-gen private sources): the docs generation resolves the
-        # governed workspaces' documentation state, which fetches private
-        # sibling repos — unauthenticated fetches fail with "docs generation
-        # source state is absent or unauthenticated". The job token
-        # authenticates those reads without changing the toolchain contract.
-        run: |
-          set -eu
-          CI=Y make gen
-          git status --short
-          candidate_status="$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
-          test -z "$candidate_status"
-
-      # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
-      # and never rewrites it; the deps audit proves that locked graph.
-      - name: deps check (blocking)
+      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      - name: make audit (blocking)
+        id: approval-audit
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict (an audit lock drift) never hides the others.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make audit
-
-      - name: check (blocking)
-        # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      - name: make check (blocking)
+        id: approval-check
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict (an audit lock drift) never hides the others.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check
-        # Fast partition only, derived from the gate registry kind:
-        # lint security markdown duplication loc-cap runtime-census fresh-import index-declarations codemod layout direnv.
-        # Type checkers and flext-infra validators block locally and at
-        # pre-push (CI=N runs pyrefly mypy pyright).
-
-      - name: test (blocking)
-        # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      - name: make test (blocking)
+        id: approval-test
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict (an audit lock drift) never hides the others.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make test
-
-      # Mutating gates and tests must validate the committed candidate.
-      # Repairs left in the runner checkout require a new commit and CI run.
-      - name: Candidate cleanliness (blocking)
-        run: |
-          set -eu
-          git status --short
-          candidate_status="$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
-          test -z "$candidate_status"
+      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      - name: make verify-clean (blocking)
+        id: approval-verify-clean
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict (an audit lock drift) never hides the others.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
+        run: CI=Y make verify-clean
 
       - name: Dump reports on failure
         if: ${{ failure() }}
@@ -249,20 +288,20 @@ jobs:
             .reports/**/junit.xml
             .reports/**/coverage.xml
             .reports/**/coverage.json
-            apps/*/.reports/**/junit.xml
-            apps/*/.reports/**/coverage.xml
-            apps/*/.reports/**/coverage.json
+            .reports/check/**/*.sarif
+            .reports/check/**/*.md
+            .reports/tests/**/run-accounting.json
+            .reports/tests/**/cache-after.json
           if-no-files-found: ignore
           retention-days: 7
-      # Why: save on every outcome, a failing or budget-stopped make test
-      # included, under a key unique to this run, so every run hands the
-      # results it recorded to the next selection.
+      # Completed failing tests may save; cancelled/incomplete/corrupt runs cannot.
       - name: Save testmon database
-        if: ${{ always() }}
+        if: >-
+          ${{ always() && !cancelled() && github.event_name == 'push' && steps.approval.outputs.testmon_saveable == 'true' && steps.approval.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval.outputs.testmon_digest != '' && contains(fromJSON('["main", "0.12.0-dev", "develop"]'), github.ref_name) && startsWith(github.ref, 'refs/heads/') }}
         uses: actions/cache/save@v6
         with:
-          path: ~/.cache/flext/infra/testmon
-          key: ${{ runner.os }}-3.13-flext-testmon-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.approval.outputs.testmon_database }}
+          key: ${{ runner.os }}-3.13-flext-testmon-mcb-scripts-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
 
       # Why: save on every outcome — including a failing gate — so
@@ -281,6 +320,7 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
 
   # End SECTION: ci job
@@ -299,77 +339,111 @@ jobs:
     timeout-minutes: 30
     env:
       CI: Y
-      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: false
-      # Cross-repo private git dependencies: the workflow token is scoped to
-      # this repository only, so it cannot clone siblings that turn private.
-      # Every declared sibling is public today and resolves anonymously; the
-      # credential exists for the private-sibling scenario. When the org
-      # installs its cross-repo dependency GitHub App and exposes
-      # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
-      # short-lived installation token and scope it to github.com clones.
-      # Absent secrets make this step a recorded NOT EXECUTED while the
-      # repository has not declared the credential requirement; a repository
-      # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
-      # job non-zero with a typed message and without exposing any secret
-      # value (absence normalized as success is a defect).
-      - name: Mint cross-repo dependency credential
-        env:
-          CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
-          CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
-          CI_DEPS_REQUIRED: '0'
+          persist-credentials: false
+      - name: Install the mise release declared by mise.lock or .mise.toml
+        shell: bash
         run: |
-          set -euo pipefail
-          if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
-            case "$CI_DEPS_REQUIRED" in
-              1 | true | TRUE | True | yes | YES | Yes)
-                echo "ERROR[CI_CREDENTIAL_REQUIRED]: CI_DEPENDENCIES_APP_ID/CI_DEPENDENCIES_APP_PRIVATE_KEY are declared required by this repository and are absent or empty" >&2
-                exit 1
-                ;;
-              *)
-                echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
-                exit 0
-                ;;
-            esac
+          set -eu
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64) mise_platform=linux-x64; mise_suffix=tar.gz ;;
+            Linux-ARM64) mise_platform=linux-arm64; mise_suffix=tar.gz ;;
+            macOS-X64) mise_platform=macos-x64; mise_suffix=tar.gz ;;
+            macOS-ARM64) mise_platform=macos-arm64; mise_suffix=tar.gz ;;
+            Windows-X64) mise_platform=windows-x64; mise_suffix=zip ;;
+            *) echo "ERROR: no mise release platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
+          esac
+          mise_lock_usable=0
+          if [ -f mise.lock ] && ! grep -qE '^(<<<<<<< |=======$|>>>>>>> )' mise.lock; then
+            mise_lock_usable=1
           fi
-          identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
-          install -d -m 700 "$identity_root"
-          key_path="$identity_root/app-key.pem"
-          printf '%s\n' "$CI_DEPS_APP_KEY" > "$key_path.new"
-          chmod 600 "$key_path.new"
-          mv "$key_path.new" "$key_path"
-          b64url() {
-            openssl base64 -A | tr '+/' '-_' | tr -d '='
+          mise_field() {
+            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
+              $0 == section { inside = 1; next }
+              inside && substr($0, 1, 1) == "[" { exit }
+              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
+            ' mise.lock
           }
-          now=$(date +%s)
-          header='{"alg":"RS256","typ":"JWT"}'
-          payload=$(printf '{"iat":%s,"exp":%s,"iss":"%s"}' "$((now - 60))" "$((now + 540))" "$CI_DEPS_APP_ID")
-          input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
-          signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
-          jwt="$input.$signature"
-          # Credential mint without curl-pipe-to-shell (semgrep gha-curl-pipe-shell):
-          # responses land in a temp file and are parsed from disk, never piped.
-          response_file="$identity_root/github-api-response.json"
-          curl -sfS -X GET -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" https://api.github.com/app/installations
-          installation_id=$(python3 -c 'import json, sys; entries = json.load(open(sys.argv[1])); assert len(entries) == 1, f"expected exactly one app installation, got {len(entries)}"; print(entries[0]["id"])' "$response_file")
-          curl -sfS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" "https://api.github.com/app/installations/$installation_id/access_tokens"
-          access_token=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["token"])' "$response_file")
-          rm -f "$response_file"
-          echo "::add-mask::$access_token"
-          git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
-          rm -f "$key_path"
+          mise_pin=
+          mise_url=
+          mise_checksum=
+          if [ "${mise_lock_usable}" = 1 ]; then
+            mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+            mise_url="$(mise_field url)"
+            mise_checksum="$(mise_field checksum)"
+          fi
+          case "${mise_url}|${mise_checksum}" in
+            https://github.com/jdx/mise/releases/download/*\|sha256:*) ;;
+            *) mise_pin= ;;
+          esac
+          mise_stage="${RUNNER_TEMP}/mise-install"
+          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
+          if [ -n "${mise_pin}" ]; then
+            mise_release="${mise_pin}"
+            mise_archive="${mise_stage}/${mise_url##*/}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
+            mise_sha256="${mise_checksum#sha256:}"
+          else
+            mise_release="$(awk -F'"' '$2 == "github:jdx/mise" { print $4; exit }' .mise.toml)"
+            if [ -z "${mise_release}" ]; then
+              echo "ERROR: .mise.toml declares no github:jdx/mise release" >&2
+              exit 2
+            fi
+            mise_asset="mise-v${mise_release}-${mise_platform}.${mise_suffix}"
+            mise_base="https://github.com/jdx/mise/releases/download/v${mise_release}"
+            mise_archive="${mise_stage}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_base}/${mise_asset}"
+            curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_stage}/SHASUMS256.txt" "${mise_base}/SHASUMS256.txt"
+            mise_sha256="$(awk -v asset="${mise_asset}" '$2 == asset || $2 == "./" asset { print $1; exit }' "${mise_stage}/SHASUMS256.txt")"
+            if [ -z "${mise_sha256}" ]; then
+              echo "ERROR: SHASUMS256.txt of mise v${mise_release} lists no ${mise_asset}" >&2
+              exit 2
+            fi
+          fi
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
+          else
+            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
+          fi
+          case "${mise_archive}" in
+            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
+            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
+          esac
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
+          else
+            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
+          fi
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          if [ "${mise_lock_usable}" = 0 ]; then
+            # An unreadable lock is never read: no parse warning, no failure.
+            export MISE_LOCKFILE=false
+          fi
+          if [ -n "${mise_pin}" ]; then
+            "${HOME}/.local/bin/mise" install --locked github:jdx/mise
+          else
+            MISE_LOCKFILE=false "${HOME}/.local/bin/mise" install github:jdx/mise
+          fi
+          mise_path="$("${HOME}/.local/bin/mise" which mise)"
+          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
+          if [ "${mise_receipt}" != "${mise_release}" ]; then
+            printf 'ERROR: provisioned Mise %s differs from the declared release %s\n' "${mise_receipt}" "${mise_release}" >&2
+            exit 2
+          fi
+          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
 
       - name: Boot
         run: CI=Y make setup
       - name: Release plan and guard
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: make release-plan
+        run: CI=Y make release-plan
   # End SECTION: release-plan job
 
   # === SECTION: merge-guard job (managed) ===

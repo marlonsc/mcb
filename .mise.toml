@@ -6,57 +6,59 @@
 # Source: template (base/.mise.toml.j2)
 # Free: no
 # End SECTION: header
-# NOTE: mise carries the Python runtime and native tools from the config SSOT.
-# Python dependency declarations remain owned by pyproject.toml. Tools are declared
-# `latest`; only `make upg` resolves them and writes the committed mise.lock.
-# Setup installs frozen from that lock and never re-resolves.
+# NOTE: mise carries itself, the Python runtime and the native tools from the
+# config SSOT. The self-managed github:jdx/mise entry is the pinned release:
+# `mise install` provisions it from mise.lock and every later `mise` resolved
+# through the mise-managed shims runs exactly that release. Python dependency
+# declarations remain owned by pyproject.toml. Tools are declared `latest`;
+# only `make upg` resolves them and writes the committed mise.lock. Mise uses
+# the lock wherever it pins a tool; an entry the lock does not carry yet
+# resolves normally instead of failing, so an outdated lock never blocks
+# `mise install`, `mise use`, setup or any verb (no strict locked mode).
 
 # === SECTION: settings (managed) ===
-# Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms /
+# Source: config:codegen.toolchain.mise_lockfile / mise_lockfile_platforms /
 #         dependency_cooldown_days (one fleet supply-chain cooldown, operator 2026-10-01)
 [settings]
-minimum_release_age = "7d"
+minimum_release_age = "10d"
 lockfile = true
-locked = true
+# The mise release moves only through mise.lock (`make upg`); a newer release
+# notice is not actionable here and only adds noise to every command.
+disable_update_warning = true
+# Third-party releases in the manifest (jscpd, qlty) publish no SLSA
+# attestations, so strict lock-time provenance verification can never pass
+# for them. API outages degrade to best-effort instead of failing the lock;
+# release checksums still enforce integrity, and verification resumes
+# automatically wherever attestations exist.
+provenance_api_failures_fatal = false
+locked_verify_provenance = false
 lockfile_platforms = ["linux-x64", "linux-x64-musl", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
 [settings.python]
 compile = false
-[settings.npm]
-# Aube replays the locked dependency graph. Only the configured ast-grep
-# package is approved below to run its native binary-selection lifecycle.
-package_manager = "aube"
-[tool_config]
-locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===
-# Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
-#         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_selector/ast_grep_version,
-#          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
-#          node_version, jscpd_selector/jscpd_version,
-#          prettier_selector/prettier_version, waza_selector/waza_version/waza_version_prefix,
-#          go_version, make_version)
+# Source: config:python_version + config:codegen.toolchain mise_selector /
+#         mise_version (the self-managed mise entry) + toolchain.tools entries
+#         (name, selector, version, version_prefix, form; entry order is the
+#         projection order, form fixes the rendered shape)
 [tools]
 python = "3.13"
+# mise self-management: the [tools] entry pins the release `mise install`
+# provisions from mise.lock; a host bootstrap mise only needs to read that lock.
+"github:jdx/mise" = "2026.10.3"
+# Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 uv = "latest"
-# Native toolchain (single source: Infra.codegen.toolchain in codegen.yaml).
-kubectl = "latest"
-helm = "latest"
-kind = "latest"
 direnv = "latest"
 taplo = "latest"
-"npm:@ast-grep/cli" = { version = "latest", allow_builds = ["@ast-grep/cli"] }
+"aqua:ast-grep/ast-grep" = "latest"
 gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
-kubeconform = "latest"
 node = "latest"
-"npm:prettier" = "3.5.3"
-go = "latest"
-make = "latest"
 [tools."github:qltysh/qlty"]
-version = "latest"
+version = "0.645.0"
 [tools."github:kucherenko/jscpd"]
-version = "5.3.3"
+version = "5.3.2"
 [tools."github:microsoft/waza"]
 version = "latest"
 version_prefix = "v"

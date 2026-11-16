@@ -9,15 +9,17 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
+import pytest
+
 from mcb_scripts.docs.metrics import generate_metrics
-from mcb_scripts.docs.utils import get_project_root
 
 
 def test_generate_metrics_tracks_declared_sources_and_is_idempotent(
     tmp_path: Path,
+    pytestconfig: pytest.Config,
 ) -> None:
     """A source change updates the document once; repeated runs retain its bytes."""
-    project = get_project_root()
+    project = pytestconfig.rootpath
     config_source = project / "config/docs-metrics.toml"
     config = tomllib.loads(config_source.read_text(encoding="utf-8"))
     target_config = tmp_path / "config/docs-metrics.toml"
