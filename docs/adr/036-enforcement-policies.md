@@ -677,7 +677,7 @@ fn configurable_guard_factory(
   enabled/disabled
 - Integration tests: Lifecycle points (compile-time, pre-commit, pre-push,
   pre-transition, CI-time, post-merge)
-- Estimated: **~80+ tests** (11 policies × 2 + integration + composition + semantics)
+- Estimated: **~80+ tests** (11 policies x 2 + integration + composition + semantics)
 
 ### Performance Targets
 

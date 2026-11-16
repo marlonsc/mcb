@@ -47,10 +47,14 @@ class McbScriptsSarifRegion(m.BaseModel):
     model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
     start_line: int = m.Field(
-        default=0, alias="startLine", description="First line of the region",
+        default=0,
+        alias="startLine",
+        description="First line of the region",
     )
     end_line: int | None = m.Field(
-        default=None, alias="endLine", description="Last line of the region",
+        default=None,
+        alias="endLine",
+        description="Last line of the region",
     )
 
 
@@ -65,7 +69,9 @@ class McbScriptsSarifPhysicalLocation(m.BaseModel):
         description="Artifact referenced by this location",
     )
     region: McbScriptsSarifRegion | None = m.Field(
-        default=None, alias="region", description="Region inside the artifact",
+        default=None,
+        alias="region",
+        description="Region inside the artifact",
     )
 
 
@@ -95,7 +101,9 @@ class McbScriptsSarifRun(m.BaseModel):
     model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
     results: tuple[McbScriptsSarifResult, ...] = m.Field(
-        default=(), alias="results", description="Results in this run",
+        default=(),
+        alias="results",
+        description="Results in this run",
     )
 
 
@@ -105,10 +113,14 @@ class McbScriptsSarifResult(m.BaseModel):
     model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
     rule_id: str = m.Field(
-        default="unknown", alias="ruleId", description="Identifier of the rule",
+        default="unknown",
+        alias="ruleId",
+        description="Identifier of the rule",
     )
     level: str = m.Field(
-        default="note", alias="level", description="SARIF severity level token",
+        default="note",
+        alias="level",
+        description="SARIF severity level token",
     )
     message: McbScriptsSarifMessage = m.Field(
         default_factory=McbScriptsSarifMessage,
@@ -116,7 +128,9 @@ class McbScriptsSarifResult(m.BaseModel):
         description="Human-readable message",
     )
     locations: tuple[McbScriptsSarifLocation, ...] = m.Field(
-        default=(), alias="locations", description="Locations of the finding",
+        default=(),
+        alias="locations",
+        description="Locations of the finding",
     )
     properties: t.JsonMapping = m.Field(
         default_factory=_empty_json_mapping,
@@ -145,7 +159,8 @@ class McbScriptsSarifIssue(m.BaseModel):
     file_path: str = m.Field(description="File the finding refers to")
     start_line: int = m.Field(description="First line of the finding")
     end_line: int | None = m.Field(
-        default=None, description="Last line of the finding",
+        default=None,
+        description="Last line of the finding",
     )
     # Open vocabulary: external tools name their own categories (gitops,
     # rustfmt, zizmor, ...). McbScriptsQltyCategory is the SSOT only for the values OUR

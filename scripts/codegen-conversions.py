@@ -316,7 +316,9 @@ def _from_model_int_cast(field: str, domain_field: str, conv: ConverterConfig) -
 
 
 def _from_model_opt_int_cast(
-    field: str, domain_field: str, conv: ConverterConfig,
+    field: str,
+    domain_field: str,
+    conv: ConverterConfig,
 ) -> str:
     return f"            {domain_field}: m.{field}.map(|v| v as i32),"
 
@@ -335,13 +337,17 @@ def _from_model_json_array(field: str, domain_field: str, conv: ConverterConfig)
 
 
 def _from_model_json_object(
-    field: str, domain_field: str, conv: ConverterConfig,
+    field: str,
+    domain_field: str,
+    conv: ConverterConfig,
 ) -> str:
     return _from_model_json_opt_deser(field, domain_field)
 
 
 def _from_model_json_array_required(
-    field: str, domain_field: str, conv: ConverterConfig,
+    field: str,
+    domain_field: str,
+    conv: ConverterConfig,
 ) -> str:
     return (
         f"            {domain_field}: serde_json::from_str(&m.{field})\n"
@@ -351,7 +357,9 @@ def _from_model_json_array_required(
 
 
 def _from_model_json_object_opt(
-    field: str, domain_field: str, conv: ConverterConfig,
+    field: str,
+    domain_field: str,
+    conv: ConverterConfig,
 ) -> str:
     obj_type = conv.get("object_type", "")
     return (
@@ -370,7 +378,9 @@ def _from_model_json_value(field: str, domain_field: str, conv: ConverterConfig)
 
 
 def _from_model_unwrap_default(
-    field: str, domain_field: str, conv: ConverterConfig,
+    field: str,
+    domain_field: str,
+    conv: ConverterConfig,
 ) -> str:
     return f"            {domain_field}: m.{field}.unwrap_or_default(),"
 

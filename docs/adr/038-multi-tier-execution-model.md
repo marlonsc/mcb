@@ -999,7 +999,7 @@ Configurable timeouts:
 
 ### Negative Consequences
 
-- ❌ **Complexity**: 5 entity types × 2 state machines × 3 concurrency levels =
+- ❌ **Complexity**: 5 entity types x 2 state machines x 3 concurrency levels =
   significant cognitive load for implementers
 - ❌ **Git overhead**: Worktree per session consumes disk space (~500MB per worktree for
   large repos). ~10 concurrent sessions → 5GB disk overhead. Needs monitoring.
@@ -1011,8 +1011,8 @@ Configurable timeouts:
   operator is slow or unavailable
 - ❌ **Database transactions**: SQLite concurrency (multiple writers) requires careful
   transaction design; easy to introduce race conditions
-- ❌ **Testing complexity**: Integration tests must cover FSM transitions × policy
-  combinations × compensation strategies. ~200+ test cases needed.
+- ❌ **Testing complexity**: Integration tests must cover FSM transitions x policy
+  combinations x compensation strategies. ~200+ test cases needed.
 
 ## Alternatives Considered
 
@@ -1163,7 +1163,7 @@ Phase 3: Orchestration & MCP (Weeks 5-6, 50 hours)
 - Implement operator decision flow (approve/reject/request changes)
 - Write integration tests (90+ test cases)
 
-Total: ~150–200 hours (5 engineers × 4 weeks)
+Total: ~150–200 hours (5 engineers x 4 weeks)
 
 ### Testing Strategy
 

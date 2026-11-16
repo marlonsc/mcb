@@ -104,7 +104,7 @@ expected_files for E2E via handlers)
 
 | Test                                             | Contract                                                                                                                                                                                                    |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `golden_e2e_golden_queries_setup`                | index (action=clear), index (action=start), then poll index (action=status) until Idle/processed (bounded wait: 20 × 50ms).                                                                                 |
+| `golden_e2e_golden_queries_setup`                | index (action=clear), index (action=start), then poll index (action=status) until Idle/processed (bounded wait: 20 x 50ms).                                                                                 |
 | `golden_e2e_golden_queries_one_query`            | After clear + index, one search (resource=code) call succeeds and response is not error.                                                                                                                    |
 | `golden_e2e_golden_queries_all_handlers_succeed` | After clear + index, run all queries from golden_queries.JSON; every search (resource=code) must succeed and return at least the query-specific minimum result count and one expected sample-codebase file. |
 

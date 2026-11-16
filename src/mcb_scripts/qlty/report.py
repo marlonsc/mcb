@@ -163,7 +163,9 @@ class McbScriptsAnalysisReport:
             lines.extend((f"*...and {count - limit} more issues.*", ""))
 
     def _generate_severity_section(
-        self, lines: list[str], sev: McbScriptsSeverity,
+        self,
+        lines: list[str],
+        sev: McbScriptsSeverity,
     ) -> None:
         sev_issues = [i for i in self.issues if i.level == sev]
         if not sev_issues:
@@ -210,7 +212,8 @@ class McbScriptsAnalysisReport:
 
 
 def _populate_severity_counts(
-    report: McbScriptsAnalysisReport, issues: list[McbScriptsSarifIssue],
+    report: McbScriptsAnalysisReport,
+    issues: list[McbScriptsSarifIssue],
 ) -> None:
     for issue in issues:
         report.by_severity[issue.level] += 1
@@ -226,7 +229,8 @@ def _populate_category_and_rule_counts(
 
 
 def _populate_file_counts(
-    report: McbScriptsAnalysisReport, issues: list[McbScriptsSarifIssue],
+    report: McbScriptsAnalysisReport,
+    issues: list[McbScriptsSarifIssue],
 ) -> None:
     for issue in issues:
         report.by_file[issue.file_path] += 1
